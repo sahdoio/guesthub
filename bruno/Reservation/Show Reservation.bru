@@ -1,7 +1,7 @@
 meta {
   name: Show Reservation
   type: http
-  seq: 2
+  seq: 3
 }
 
 get {
@@ -12,4 +12,18 @@ get {
 
 headers {
   Accept: application/json
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should return reservation data", function() {
+    const data = res.getBody().data;
+    expect(data.id).to.equal(bru.getVar("reservationId"));
+    expect(data.guest).to.be.an('object');
+    expect(data.period).to.be.an('object');
+    expect(data.period.nights).to.be.a('number');
+  });
 }

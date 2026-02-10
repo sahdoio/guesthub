@@ -6,6 +6,7 @@ namespace Modules\Reservation\Presentation\Http\Controllers;
 
 use DateTimeImmutable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Modules\Reservation\Application\Command\AddSpecialRequest;
 use Modules\Reservation\Application\Command\CancelReservation;
 use Modules\Reservation\Application\Command\CheckInGuest;
@@ -29,6 +30,24 @@ use Modules\Reservation\Presentation\Http\Resources\ReservationResource;
 
 final class ReservationController
 {
+    public function index(Request $request, ReservationRepository $repository): JsonResponse
+    {
+        $page = max(1, (int) $request->query('page', 1));
+        $perPage = min(100, max(1, (int) $request->query('per_page', 15)));
+
+        $result = $repository->paginate($page, $perPage);
+
+        return response()->json([
+            'data' => ReservationResource::collection($result->items)->resolve(),
+            'meta' => [
+                'current_page' => $result->currentPage,
+                'last_page' => $result->lastPage,
+                'per_page' => $result->perPage,
+                'total' => $result->total,
+            ],
+        ]);
+    }
+
     public function store(
         CreateReservationRequest $request,
         CreateReservationHandler $handler,
@@ -45,7 +64,7 @@ final class ReservationController
             roomType: $request->validated('room_type'),
         ));
 
-        $reservation = $repository->findById($id);
+        $reservation = $repository->findByUuid($id);
 
         return (new ReservationResource($reservation))
             ->response()
@@ -54,7 +73,7 @@ final class ReservationController
 
     public function show(string $id, ReservationRepository $repository): ReservationResource
     {
-        $reservation = $repository->findById(ReservationId::fromString($id))
+        $reservation = $repository->findByUuid(ReservationId::fromString($id))
             ?? throw ReservationNotFoundException::withId(ReservationId::fromString($id));
 
         return new ReservationResource($reservation);

@@ -11,9 +11,6 @@ use Illuminate\Support\Facades\DB;
  */
 abstract class BaseRepository
 {
-    /** @return class-string<T> */
-    abstract protected function entityClass(): string;
-
     abstract protected function tableName(): string;
 
     /** @return T */
@@ -23,9 +20,11 @@ abstract class BaseRepository
     abstract protected function toRecord(object $entity): array;
 
     /** @return T|null */
-    public function ofId(int|string $id): ?object
+    public function findByUuid(string $uuid): ?object
     {
-        $record = DB::table($this->tableName())->find($id);
+        $record = DB::table($this->tableName())
+            ->where('uuid', $uuid)
+            ->first();
 
         return $record ? $this->toEntity($record) : null;
     }
@@ -44,15 +43,24 @@ abstract class BaseRepository
     {
         $data = $this->toRecord($entity);
 
-        DB::table($this->tableName())->updateOrInsert(
-            ['id' => $data['id']],
-            $data,
-        );
+        $existing = DB::table($this->tableName())
+            ->where('uuid', $data['uuid'])
+            ->first();
+
+        if ($existing) {
+            DB::table($this->tableName())
+                ->where('id', $existing->id)
+                ->update($data);
+        } else {
+            DB::table($this->tableName())->insert($data);
+        }
     }
 
     /** @param T $entity */
     public function remove(object $entity): void
     {
-        DB::table($this->tableName())->delete($entity->id());
+        DB::table($this->tableName())
+            ->where('uuid', (string) $entity->id())
+            ->delete();
     }
 }

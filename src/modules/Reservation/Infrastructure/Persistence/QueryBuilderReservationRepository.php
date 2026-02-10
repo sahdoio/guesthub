@@ -11,6 +11,7 @@ use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ReservationId;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\ValueObject\Email;
+use Modules\Shared\Domain\PaginatedResult;
 use Modules\Reservation\Domain\ValueObject\Guest;
 use Modules\Reservation\Domain\ValueObject\Phone;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
@@ -27,15 +28,24 @@ final class QueryBuilderReservationRepository implements ReservationRepository
     {
         $data = $this->toRecord($reservation);
 
-        DB::table(self::TABLE)->updateOrInsert(
-            ['id' => $data['id']],
-            $data,
-        );
+        $existing = DB::table(self::TABLE)
+            ->where('uuid', $reservation->uuid()->value)
+            ->first();
+
+        if ($existing) {
+            DB::table(self::TABLE)
+                ->where('id', $existing->id)
+                ->update($data);
+        } else {
+            DB::table(self::TABLE)->insert($data);
+        }
     }
 
-    public function findById(ReservationId $id): ?Reservation
+    public function findByUuid(ReservationId $uuid): ?Reservation
     {
-        $record = DB::table(self::TABLE)->find($id->value);
+        $record = DB::table(self::TABLE)
+            ->where('uuid', $uuid->value)
+            ->first();
 
         return $record ? $this->toEntity($record) : null;
     }
@@ -49,6 +59,25 @@ final class QueryBuilderReservationRepository implements ReservationRepository
             ->all();
     }
 
+    public function paginate(int $page = 1, int $perPage = 15): PaginatedResult
+    {
+        $paginator = DB::table(self::TABLE)
+            ->orderByDesc('id')
+            ->paginate(perPage: $perPage, page: $page);
+
+        $items = collect($paginator->items())
+            ->map(fn(object $record) => $this->toEntity($record))
+            ->all();
+
+        return new PaginatedResult(
+            items: $items,
+            total: $paginator->total(),
+            perPage: $paginator->perPage(),
+            currentPage: $paginator->currentPage(),
+            lastPage: $paginator->lastPage(),
+        );
+    }
+
     public function nextIdentity(): ReservationId
     {
         return ReservationId::generate();
@@ -57,7 +86,7 @@ final class QueryBuilderReservationRepository implements ReservationRepository
     private function toRecord(Reservation $reservation): array
     {
         return [
-            'id' => $reservation->reservationId()->value,
+            'uuid' => $reservation->uuid()->value,
             'status' => $reservation->status()->value,
             'guest_full_name' => $reservation->guest()->fullName,
             'guest_email' => $reservation->guest()->email->value,
@@ -80,8 +109,8 @@ final class QueryBuilderReservationRepository implements ReservationRepository
 
     private function toEntity(object $record): Reservation
     {
-        $reservation = ReservationReflector::reconstruct(
-            id: ReservationId::fromString($record->id),
+        return ReservationReflector::reconstruct(
+            uuid: ReservationId::fromString($record->uuid),
             guest: Guest::create(
                 $record->guest_full_name,
                 Email::fromString($record->guest_email),
@@ -104,8 +133,6 @@ final class QueryBuilderReservationRepository implements ReservationRepository
             cancelledAt: $record->cancelled_at ? new DateTimeImmutable($record->cancelled_at) : null,
             cancellationReason: $record->cancellation_reason,
         );
-
-        return $reservation;
     }
 
     /** @param SpecialRequest[] $requests */

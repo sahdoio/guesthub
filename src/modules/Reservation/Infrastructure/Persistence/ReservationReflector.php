@@ -21,7 +21,7 @@ final class ReservationReflector
 {
     /** @param SpecialRequest[] $specialRequests */
     public static function reconstruct(
-        ReservationId $id,
+        ReservationId $uuid,
         Guest $guest,
         ReservationPeriod $period,
         string $roomType,
@@ -38,7 +38,7 @@ final class ReservationReflector
         $ref = new ReflectionClass(Reservation::class);
         $reservation = $ref->newInstanceWithoutConstructor();
 
-        self::set($ref, $reservation, 'id', $id);
+        self::set($ref, $reservation, 'uuid', $uuid);
         self::set($ref, $reservation, 'guest', $guest);
         self::set($ref, $reservation, 'period', $period);
         self::set($ref, $reservation, 'roomType', $roomType);

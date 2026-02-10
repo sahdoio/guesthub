@@ -1,0 +1,39 @@
+meta {
+  name: Update Guest
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/guests/{{guestId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "full_name": "Jane Smith",
+    "email": "jane.smith@hotel.com",
+    "phone": "+5521888888888",
+    "loyalty_tier": "gold",
+    "preferences": ["ocean_view", "king_bed", "minibar"]
+  }
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should return updated data", function() {
+    const data = res.getBody().data;
+    expect(data.full_name).to.equal('Jane Smith');
+    expect(data.email).to.equal('jane.smith@hotel.com');
+    expect(data.loyalty_tier).to.equal('gold');
+  });
+}

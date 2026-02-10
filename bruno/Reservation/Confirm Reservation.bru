@@ -1,7 +1,7 @@
 meta {
   name: Confirm Reservation
   type: http
-  seq: 3
+  seq: 4
 }
 
 post {
@@ -12,4 +12,14 @@ post {
 
 headers {
   Accept: application/json
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should confirm reservation", function() {
+    expect(res.getBody().message).to.equal('Reservation confirmed.');
+  });
 }

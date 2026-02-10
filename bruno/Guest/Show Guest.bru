@@ -1,0 +1,29 @@
+meta {
+  name: Show Guest
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/guests/{{guestId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should return guest data", function() {
+    const data = res.getBody().data;
+    expect(data.id).to.equal(bru.getVar("guestId"));
+    expect(data.full_name).to.be.a('string');
+    expect(data.email).to.be.a('string');
+    expect(data.loyalty_tier).to.be.a('string');
+  });
+}

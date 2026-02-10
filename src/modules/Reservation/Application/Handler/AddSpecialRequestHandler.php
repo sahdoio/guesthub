@@ -22,7 +22,7 @@ final class AddSpecialRequestHandler
     public function handle(AddSpecialRequest $command): SpecialRequestId
     {
         $id = ReservationId::fromString($command->reservationId);
-        $reservation = $this->repository->findById($id)
+        $reservation = $this->repository->findByUuid($id)
             ?? throw ReservationNotFoundException::withId($id);
 
         $requestId = $reservation->addSpecialRequest(

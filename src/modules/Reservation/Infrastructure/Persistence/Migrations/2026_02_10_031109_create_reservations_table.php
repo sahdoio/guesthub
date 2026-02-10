@@ -9,7 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reservations', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
+            $table->uuid('uuid')->unique();
             $table->string('status');
             $table->string('guest_full_name');
             $table->string('guest_email');

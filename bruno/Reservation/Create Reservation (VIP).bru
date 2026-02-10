@@ -1,0 +1,60 @@
+meta {
+  name: Create Reservation (VIP)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/reservations
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "guest_full_name": "Bob Williams",
+    "guest_email": "bob.vip@hotel.com",
+    "guest_phone": "+5511888888888",
+    "guest_document": "98765432100",
+    "is_vip": true,
+    "check_in": "{{checkIn}}",
+    "check_out": "{{checkOut}}",
+    "room_type": "SUITE"
+  }
+}
+
+vars:post-response {
+  reservationId: res.body.data.id
+}
+
+script:pre-request {
+  const today = new Date();
+  const checkIn = new Date(today);
+  checkIn.setDate(today.getDate() + 2);
+  const checkOut = new Date(today);
+  checkOut.setDate(today.getDate() + 7);
+
+  const fmt = (d) => d.toISOString().split('T')[0];
+
+  bru.setVar("checkIn", fmt(checkIn));
+  bru.setVar("checkOut", fmt(checkOut));
+}
+
+tests {
+  test("should return 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("guest should be VIP", function() {
+    expect(res.getBody().data.guest.is_vip).to.equal(true);
+  });
+
+  test("room type should be SUITE", function() {
+    expect(res.getBody().data.room_type).to.equal('SUITE');
+  });
+}

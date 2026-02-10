@@ -22,12 +22,44 @@ body:json {
     "guest_phone": "+5511999999999",
     "guest_document": "12345678900",
     "is_vip": false,
-    "check_in": "2026-03-01",
-    "check_out": "2026-03-05",
+    "check_in": "{{checkIn}}",
+    "check_out": "{{checkOut}}",
     "room_type": "DOUBLE"
   }
 }
 
+vars:pre-request {
+  checkIn: {{process.env.CHECK_IN || ''}}
+  checkOut: {{process.env.CHECK_OUT || ''}}
+}
+
 vars:post-response {
   reservationId: res.body.data.id
+}
+
+script:pre-request {
+  const today = new Date();
+  const checkIn = new Date(today);
+  checkIn.setDate(today.getDate() + 1);
+  const checkOut = new Date(today);
+  checkOut.setDate(today.getDate() + 5);
+
+  const fmt = (d) => d.toISOString().split('T')[0];
+
+  bru.setVar("checkIn", fmt(checkIn));
+  bru.setVar("checkOut", fmt(checkOut));
+}
+
+tests {
+  test("should return 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("should return reservation id", function() {
+    expect(res.getBody().data.id).to.be.a('string');
+  });
+
+  test("status should be pending", function() {
+    expect(res.getBody().data.status).to.equal('pending');
+  });
 }

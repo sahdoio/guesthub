@@ -17,7 +17,7 @@ final class ReservationResource extends JsonResource
         $reservation = $this->resource;
 
         return [
-            'id' => (string) $reservation->reservationId(),
+            'id' => (string) $reservation->uuid(),
             'status' => $reservation->status()->value,
             'guest' => [
                 'full_name' => $reservation->guest()->fullName,

@@ -19,7 +19,7 @@ final class OnGuestCheckedIn
 
     public function handle(GuestCheckedIn $event): void
     {
-        $reservation = $this->repository->findById($event->reservationId)
+        $reservation = $this->repository->findByUuid($event->reservationId)
             ?? throw ReservationNotFoundException::withId($event->reservationId);
 
         $this->dispatcher->dispatch(new GuestCheckedInEvent(

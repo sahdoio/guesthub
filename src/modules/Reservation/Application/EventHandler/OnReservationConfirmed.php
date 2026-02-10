@@ -19,7 +19,7 @@ final class OnReservationConfirmed
 
     public function handle(ReservationConfirmed $event): void
     {
-        $reservation = $this->repository->findById($event->reservationId)
+        $reservation = $this->repository->findByUuid($event->reservationId)
             ?? throw ReservationNotFoundException::withId($event->reservationId);
 
         $this->dispatcher->dispatch(new ReservationConfirmedEvent(

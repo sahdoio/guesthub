@@ -41,7 +41,7 @@ final class Reservation extends AggregateRoot
     private ?string $cancellationReason = null;
 
     public function __construct(
-        private readonly ReservationId $id,
+        private readonly ReservationId $uuid,
         private Guest $guest,
         private readonly ReservationPeriod $period,
         private readonly string $roomType,
@@ -49,22 +49,22 @@ final class Reservation extends AggregateRoot
         $this->status = ReservationStatus::PENDING;
         $this->createdAt = new DateTimeImmutable();
 
-        $this->recordEvent(new ReservationCreated($this->id));
+        $this->recordEvent(new ReservationCreated($this->uuid));
     }
 
     // --- Identity ---
 
     public function id(): Identity
     {
-        return $this->id;
+        return $this->uuid;
+    }
+
+    public function uuid(): ReservationId
+    {
+        return $this->uuid;
     }
 
     // --- Getters ---
-
-    public function reservationId(): ReservationId
-    {
-        return $this->id;
-    }
 
     public function status(): ReservationStatus
     {
@@ -138,7 +138,7 @@ final class Reservation extends AggregateRoot
         $this->status = ReservationStatus::CONFIRMED;
         $this->confirmedAt = new DateTimeImmutable();
 
-        $this->recordEvent(new ReservationConfirmed($this->id));
+        $this->recordEvent(new ReservationConfirmed($this->uuid));
     }
 
     public function checkIn(string $roomNumber): void
@@ -151,7 +151,7 @@ final class Reservation extends AggregateRoot
         $this->assignedRoomNumber = $roomNumber;
         $this->checkedInAt = new DateTimeImmutable();
 
-        $this->recordEvent(new GuestCheckedIn($this->id, $roomNumber));
+        $this->recordEvent(new GuestCheckedIn($this->uuid, $roomNumber));
     }
 
     public function checkOut(): void
@@ -163,7 +163,7 @@ final class Reservation extends AggregateRoot
         $this->status = ReservationStatus::CHECKED_OUT;
         $this->checkedOutAt = new DateTimeImmutable();
 
-        $this->recordEvent(new GuestCheckedOut($this->id));
+        $this->recordEvent(new GuestCheckedOut($this->uuid));
     }
 
     public function cancel(string $reason): void
@@ -176,7 +176,7 @@ final class Reservation extends AggregateRoot
         $this->cancellationReason = $reason;
         $this->cancelledAt = new DateTimeImmutable();
 
-        $this->recordEvent(new ReservationCancelled($this->id, $reason));
+        $this->recordEvent(new ReservationCancelled($this->uuid, $reason));
     }
 
     // --- Special Requests ---
@@ -194,7 +194,7 @@ final class Reservation extends AggregateRoot
         $requestId = SpecialRequestId::generate();
         $this->specialRequests[] = new SpecialRequest($requestId, $type, $description, new DateTimeImmutable());
 
-        $this->recordEvent(new SpecialRequestAdded($this->id, $requestId));
+        $this->recordEvent(new SpecialRequestAdded($this->uuid, $requestId));
 
         return $requestId;
     }
@@ -204,7 +204,7 @@ final class Reservation extends AggregateRoot
         $request = $this->findSpecialRequest($requestId);
         $request->fulfill();
 
-        $this->recordEvent(new SpecialRequestFulfilled($this->id, $requestId));
+        $this->recordEvent(new SpecialRequestFulfilled($this->uuid, $requestId));
     }
 
     public function removeSpecialRequest(SpecialRequestId $requestId): void

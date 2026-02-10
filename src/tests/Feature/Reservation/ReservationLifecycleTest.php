@@ -61,7 +61,7 @@ final class ReservationLifecycleTest extends TestCase
             ->assertOk()
             ->assertJsonPath('message', 'Reservation confirmed.');
 
-        $this->assertDatabaseHas('reservations', ['id' => $id, 'status' => 'confirmed']);
+        $this->assertDatabaseHas('reservations', ['uuid' => $id, 'status' => 'confirmed']);
 
         // Check-in
         $this->postJson("/api/reservations/{$id}/check-in", ['room_number' => '201'])
@@ -69,7 +69,7 @@ final class ReservationLifecycleTest extends TestCase
             ->assertJsonPath('message', 'Guest checked in.');
 
         $this->assertDatabaseHas('reservations', [
-            'id' => $id,
+            'uuid' => $id,
             'status' => 'checked_in',
             'assigned_room_number' => '201',
         ]);
@@ -79,7 +79,7 @@ final class ReservationLifecycleTest extends TestCase
             ->assertOk()
             ->assertJsonPath('message', 'Guest checked out.');
 
-        $this->assertDatabaseHas('reservations', ['id' => $id, 'status' => 'checked_out']);
+        $this->assertDatabaseHas('reservations', ['uuid' => $id, 'status' => 'checked_out']);
     }
 
     // --- Cancellation ---
@@ -93,7 +93,7 @@ final class ReservationLifecycleTest extends TestCase
             ->assertJsonPath('message', 'Reservation cancelled.');
 
         $this->assertDatabaseHas('reservations', [
-            'id' => $id,
+            'uuid' => $id,
             'status' => 'cancelled',
             'cancellation_reason' => 'Guest changed their travel plans',
         ]);
@@ -107,7 +107,7 @@ final class ReservationLifecycleTest extends TestCase
         $this->postJson("/api/reservations/{$id}/cancel", ['reason' => 'Emergency cancellation needed'])
             ->assertOk();
 
-        $this->assertDatabaseHas('reservations', ['id' => $id, 'status' => 'cancelled']);
+        $this->assertDatabaseHas('reservations', ['uuid' => $id, 'status' => 'cancelled']);
     }
 
     public function test_cancel_requires_reason_with_min_length(): void

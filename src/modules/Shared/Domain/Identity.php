@@ -18,7 +18,7 @@ abstract class Identity extends ValueObject
 
     public static function generate(): static
     {
-        return new static(Uuid::uuid4()->toString());
+        return new static(Uuid::uuid7()->toString());
     }
 
     public static function fromString(string $id): static

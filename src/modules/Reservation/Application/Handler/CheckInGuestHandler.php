@@ -20,7 +20,7 @@ final class CheckInGuestHandler
     public function handle(CheckInGuest $command): void
     {
         $id = ReservationId::fromString($command->reservationId);
-        $reservation = $this->repository->findById($id)
+        $reservation = $this->repository->findByUuid($id)
             ?? throw ReservationNotFoundException::withId($id);
 
         $reservation->checkIn($command->roomNumber);

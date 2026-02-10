@@ -1,0 +1,25 @@
+meta {
+  name: Delete Guest
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/guests/{{guestId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Note: This permanently deletes the guest profile. Create a new guest first if needed.
+}
+
+tests {
+  test("should return 204", function() {
+    expect(res.getStatus()).to.equal(204);
+  });
+}

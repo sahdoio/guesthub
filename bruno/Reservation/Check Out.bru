@@ -1,7 +1,7 @@
 meta {
   name: Check Out
   type: http
-  seq: 5
+  seq: 6
 }
 
 post {
@@ -12,4 +12,14 @@ post {
 
 headers {
   Accept: application/json
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should check out guest", function() {
+    expect(res.getBody().message).to.equal('Guest checked out.');
+  });
 }

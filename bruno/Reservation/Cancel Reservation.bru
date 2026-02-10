@@ -1,7 +1,7 @@
 meta {
   name: Cancel Reservation
   type: http
-  seq: 6
+  seq: 7
 }
 
 post {
@@ -19,4 +19,19 @@ body:json {
   {
     "reason": "Guest changed their travel plans and needs to reschedule"
   }
+}
+
+docs {
+  Note: Run this instead of Check In / Check Out to test the cancellation flow.
+  Create a new reservation first, then cancel it.
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should cancel reservation", function() {
+    expect(res.getBody().message).to.equal('Reservation cancelled.');
+  });
 }

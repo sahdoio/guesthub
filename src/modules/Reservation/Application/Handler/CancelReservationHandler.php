@@ -20,7 +20,7 @@ final class CancelReservationHandler
     public function handle(CancelReservation $command): void
     {
         $id = ReservationId::fromString($command->reservationId);
-        $reservation = $this->repository->findById($id)
+        $reservation = $this->repository->findByUuid($id)
             ?? throw ReservationNotFoundException::withId($id);
 
         $reservation->cancel($command->reason);

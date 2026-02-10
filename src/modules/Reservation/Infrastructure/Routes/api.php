@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Reservation\Presentation\Http\Controllers\ReservationController;
 
 Route::prefix('reservations')->group(function () {
+    Route::get('/', [ReservationController::class, 'index']);
     Route::post('/', [ReservationController::class, 'store']);
     Route::get('/{id}', [ReservationController::class, 'show']);
     Route::post('/{id}/confirm', [ReservationController::class, 'confirm']);

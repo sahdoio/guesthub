@@ -1,0 +1,29 @@
+meta {
+  name: List Guests
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/guests?page=1&per_page=15
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+tests {
+  test("should return 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("should return paginated structure", function() {
+    const body = res.getBody();
+    expect(body.data).to.be.an('array');
+    expect(body.meta).to.be.an('object');
+    expect(body.meta.current_page).to.be.a('number');
+    expect(body.meta.total).to.be.a('number');
+  });
+}
