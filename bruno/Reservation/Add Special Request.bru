@@ -1,0 +1,23 @@
+meta {
+  name: Add Special Request
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/reservations/{{reservationId}}/special-requests
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "early_check_in",
+    "description": "Please prepare the room by 10am, arriving on early flight"
+  }
+}

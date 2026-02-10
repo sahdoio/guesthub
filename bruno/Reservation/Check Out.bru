@@ -1,0 +1,15 @@
+meta {
+  name: Check Out
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/reservations/{{reservationId}}/check-out
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}

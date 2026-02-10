@@ -1,0 +1,22 @@
+meta {
+  name: Cancel Reservation
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/reservations/{{reservationId}}/cancel
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "reason": "Guest changed their travel plans and needs to reschedule"
+  }
+}

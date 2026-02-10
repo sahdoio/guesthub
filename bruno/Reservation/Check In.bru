@@ -1,0 +1,22 @@
+meta {
+  name: Check In
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/reservations/{{reservationId}}/check-in
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "room_number": "201"
+  }
+}

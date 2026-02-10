@@ -1,0 +1,33 @@
+meta {
+  name: Create Reservation
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/reservations
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "guest_full_name": "John Doe",
+    "guest_email": "john@hotel.com",
+    "guest_phone": "+5511999999999",
+    "guest_document": "12345678900",
+    "is_vip": false,
+    "check_in": "2026-03-01",
+    "check_out": "2026-03-05",
+    "room_type": "DOUBLE"
+  }
+}
+
+vars:post-response {
+  reservationId: res.body.data.id
+}
