@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Modules\IAM\Infrastructure\Integration;
+namespace Modules\IAM\Infrastructure\Services;
 
 use Illuminate\Support\Facades\Hash;
 use Modules\IAM\Domain\Service\PasswordHasher;

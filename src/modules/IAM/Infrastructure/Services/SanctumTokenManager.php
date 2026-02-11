@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Modules\IAM\Infrastructure\Integration;
+namespace Modules\IAM\Infrastructure\Services;
 
 use Modules\IAM\Domain\Service\TokenManager;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;

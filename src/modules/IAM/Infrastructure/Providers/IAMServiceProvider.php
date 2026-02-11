@@ -9,8 +9,8 @@ use Illuminate\Support\ServiceProvider;
 use Modules\IAM\Domain\Repository\ActorRepository;
 use Modules\IAM\Domain\Service\PasswordHasher;
 use Modules\IAM\Domain\Service\TokenManager;
-use Modules\IAM\Infrastructure\Integration\BcryptPasswordHasher;
-use Modules\IAM\Infrastructure\Integration\SanctumTokenManager;
+use Modules\IAM\Infrastructure\Services\BcryptPasswordHasher;
+use Modules\IAM\Infrastructure\Services\SanctumTokenManager;
 use Modules\IAM\Infrastructure\Persistence\QueryBuilderActorRepository;
 
 final class IAMServiceProvider extends ServiceProvider
