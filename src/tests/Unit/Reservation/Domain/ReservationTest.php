@@ -17,14 +17,12 @@ use Modules\Reservation\Domain\Exception\InvalidReservationStateException;
 use Modules\Reservation\Domain\Exception\MaxSpecialRequestsExceededException;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ReservationId;
-use Modules\Reservation\Domain\ValueObject\Email;
-use Modules\Reservation\Domain\ValueObject\Guest;
-use Modules\Reservation\Domain\ValueObject\Phone;
 use Modules\Reservation\Domain\ValueObject\RequestType;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 use Modules\Reservation\Domain\ValueObject\ReservationStatus;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Ramsey\Uuid\Uuid;
 
 final class ReservationTest extends TestCase
 {
@@ -32,7 +30,7 @@ final class ReservationTest extends TestCase
     {
         return new Reservation(
             ReservationId::generate(),
-            Guest::create('John Doe', Email::fromString('john@hotel.com'), Phone::fromString('+5511999999999'), '12345678900'),
+            Uuid::uuid7()->toString(),
             new ReservationPeriod(new DateTimeImmutable('+1 day'), new DateTimeImmutable('+4 days')),
             'DOUBLE',
         );
@@ -282,20 +280,19 @@ final class ReservationTest extends TestCase
         $reservation->addSpecialRequest(RequestType::OTHER, 'Too late');
     }
 
-    // --- Guest Contact ---
+    // --- Guest Profile ---
 
     #[Test]
-    public function it_changes_guest_contact(): void
+    public function it_stores_guest_profile_id(): void
     {
-        $reservation = $this->createReservation();
-
-        $reservation->changeGuestContact(
-            Email::fromString('newemail@hotel.com'),
-            Phone::fromString('+5511888888888'),
+        $guestProfileId = Uuid::uuid7()->toString();
+        $reservation = new Reservation(
+            ReservationId::generate(),
+            $guestProfileId,
+            new ReservationPeriod(new DateTimeImmutable('+1 day'), new DateTimeImmutable('+4 days')),
+            'SUITE',
         );
 
-        $this->assertSame('newemail@hotel.com', $reservation->guest()->email->value);
-        $this->assertSame('+5511888888888', $reservation->guest()->phone->value);
-        $this->assertSame('John Doe', $reservation->guest()->fullName);
+        $this->assertSame($guestProfileId, $reservation->guestProfileId());
     }
 }

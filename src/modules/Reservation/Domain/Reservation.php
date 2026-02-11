@@ -15,9 +15,6 @@ use Modules\Reservation\Domain\Event\SpecialRequestAdded;
 use Modules\Reservation\Domain\Event\SpecialRequestFulfilled;
 use Modules\Reservation\Domain\Exception\InvalidReservationStateException;
 use Modules\Reservation\Domain\Exception\MaxSpecialRequestsExceededException;
-use Modules\Reservation\Domain\ValueObject\Email;
-use Modules\Reservation\Domain\ValueObject\Guest;
-use Modules\Reservation\Domain\ValueObject\Phone;
 use Modules\Reservation\Domain\ValueObject\RequestType;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 use Modules\Reservation\Domain\ValueObject\ReservationStatus;
@@ -42,7 +39,7 @@ final class Reservation extends AggregateRoot
 
     public function __construct(
         private readonly ReservationId $uuid,
-        private Guest $guest,
+        private readonly string $guestProfileId,
         private readonly ReservationPeriod $period,
         private readonly string $roomType,
     ) {
@@ -71,9 +68,9 @@ final class Reservation extends AggregateRoot
         return $this->status;
     }
 
-    public function guest(): Guest
+    public function guestProfileId(): string
     {
-        return $this->guest;
+        return $this->guestProfileId;
     }
 
     public function period(): ReservationPeriod
@@ -218,17 +215,6 @@ final class Reservation extends AggregateRoot
                 $this->specialRequests,
                 fn(SpecialRequest $sr) => !$sr->id()->equals($requestId),
             )
-        );
-    }
-
-    public function changeGuestContact(Email $email, Phone $phone): void
-    {
-        $this->guest = Guest::create(
-            $this->guest->fullName,
-            $email,
-            $phone,
-            $this->guest->document,
-            $this->guest->isVip,
         );
     }
 

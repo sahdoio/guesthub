@@ -5,11 +5,26 @@ declare(strict_types=1);
 namespace Tests\Feature\Guest;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use Tests\TestCase;
 
 final class GuestProfileCrudTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Sanctum::actingAs(ActorModel::create([
+            'uuid' => \Ramsey\Uuid\Uuid::uuid7()->toString(),
+            'type' => 'system',
+            'name' => 'Test System',
+            'email' => 'system@test.com',
+            'password' => bcrypt('password'),
+        ]));
+    }
 
     private function createGuest(array $overrides = []): string
     {

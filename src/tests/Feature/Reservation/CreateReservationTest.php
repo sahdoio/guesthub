@@ -5,20 +5,43 @@ declare(strict_types=1);
 namespace Tests\Feature\Reservation;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use Tests\TestCase;
 
 final class CreateReservationTest extends TestCase
 {
     use RefreshDatabase;
 
+    private string $guestProfileId;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Sanctum::actingAs(ActorModel::create([
+            'uuid' => \Ramsey\Uuid\Uuid::uuid7()->toString(),
+            'type' => 'system',
+            'name' => 'Test System',
+            'email' => 'system@test.com',
+            'password' => bcrypt('password'),
+        ]));
+
+        $response = $this->postJson('/api/guests', [
+            'full_name' => 'John Doe',
+            'email' => 'john@hotel.com',
+            'phone' => '+5511999999999',
+            'document' => '12345678900',
+            'loyalty_tier' => 'bronze',
+        ]);
+
+        $this->guestProfileId = $response->json('data.id');
+    }
+
     private function validPayload(array $overrides = []): array
     {
         return array_merge([
-            'guest_full_name' => 'John Doe',
-            'guest_email' => 'john@hotel.com',
-            'guest_phone' => '+5511999999999',
-            'guest_document' => '12345678900',
-            'is_vip' => false,
+            'guest_profile_id' => $this->guestProfileId,
             'check_in' => now()->addDay()->format('Y-m-d'),
             'check_out' => now()->addDays(4)->format('Y-m-d'),
             'room_type' => 'DOUBLE',
@@ -34,7 +57,7 @@ final class CreateReservationTest extends TestCase
                 'data' => [
                     'id',
                     'status',
-                    'guest' => ['full_name', 'email', 'phone', 'document', 'is_vip'],
+                    'guest' => ['guest_profile_id', 'full_name', 'email', 'phone', 'document', 'is_vip'],
                     'period' => ['check_in', 'check_out', 'nights'],
                     'room_type',
                     'assigned_room_number',
@@ -47,7 +70,7 @@ final class CreateReservationTest extends TestCase
             ->assertJsonPath('data.room_type', 'DOUBLE');
 
         $this->assertDatabaseHas('reservations', [
-            'guest_email' => 'john@hotel.com',
+            'guest_profile_id' => $this->guestProfileId,
             'status' => 'pending',
             'room_type' => 'DOUBLE',
         ]);
@@ -55,7 +78,12 @@ final class CreateReservationTest extends TestCase
 
     public function test_it_creates_a_vip_reservation(): void
     {
-        $response = $this->postJson('/api/reservations', $this->validPayload(['is_vip' => true]));
+        // Update guest to gold tier for VIP
+        $this->putJson("/api/guests/{$this->guestProfileId}", [
+            'loyalty_tier' => 'gold',
+        ]);
+
+        $response = $this->postJson('/api/reservations', $this->validPayload());
 
         $response->assertStatus(201)
             ->assertJsonPath('data.guest.is_vip', true);
@@ -67,34 +95,21 @@ final class CreateReservationTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors([
-                'guest_full_name',
-                'guest_email',
-                'guest_phone',
-                'guest_document',
+                'guest_profile_id',
                 'check_in',
                 'check_out',
                 'room_type',
             ]);
     }
 
-    public function test_it_validates_email_format(): void
+    public function test_it_validates_guest_profile_id_format(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
-            'guest_email' => 'not-an-email',
+            'guest_profile_id' => 'not-a-uuid',
         ]));
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['guest_email']);
-    }
-
-    public function test_it_validates_phone_format(): void
-    {
-        $response = $this->postJson('/api/reservations', $this->validPayload([
-            'guest_phone' => '123456',
-        ]));
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['guest_phone']);
+            ->assertJsonValidationErrors(['guest_profile_id']);
     }
 
     public function test_it_validates_checkin_not_in_past(): void

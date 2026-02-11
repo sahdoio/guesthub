@@ -5,20 +5,43 @@ declare(strict_types=1);
 namespace Tests\Feature\Reservation;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use Tests\TestCase;
 
 final class ListReservationsTest extends TestCase
 {
     use RefreshDatabase;
 
+    private string $guestProfileId;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Sanctum::actingAs(ActorModel::create([
+            'uuid' => \Ramsey\Uuid\Uuid::uuid7()->toString(),
+            'type' => 'system',
+            'name' => 'Test System',
+            'email' => 'system@test.com',
+            'password' => bcrypt('password'),
+        ]));
+
+        $response = $this->postJson('/api/guests', [
+            'full_name' => 'John Doe',
+            'email' => 'john@hotel.com',
+            'phone' => '+5511999999999',
+            'document' => '12345678900',
+            'loyalty_tier' => 'bronze',
+        ]);
+
+        $this->guestProfileId = $response->json('data.id');
+    }
+
     private function createReservation(array $overrides = []): string
     {
         $payload = array_merge([
-            'guest_full_name' => 'John Doe',
-            'guest_email' => 'john@hotel.com',
-            'guest_phone' => '+5511999999999',
-            'guest_document' => '12345678900',
-            'is_vip' => false,
+            'guest_profile_id' => $this->guestProfileId,
             'check_in' => now()->addDay()->format('Y-m-d'),
             'check_out' => now()->addDays(4)->format('Y-m-d'),
             'room_type' => 'DOUBLE',
@@ -46,9 +69,9 @@ final class ListReservationsTest extends TestCase
 
     public function test_it_lists_reservations(): void
     {
-        $this->createReservation(['guest_full_name' => 'Alice']);
-        $this->createReservation(['guest_full_name' => 'Bob', 'guest_email' => 'bob@hotel.com']);
-        $this->createReservation(['guest_full_name' => 'Carol', 'guest_email' => 'carol@hotel.com']);
+        $this->createReservation();
+        $this->createReservation();
+        $this->createReservation();
 
         $response = $this->getJson('/api/reservations');
 
@@ -60,10 +83,7 @@ final class ListReservationsTest extends TestCase
     public function test_it_paginates_results(): void
     {
         for ($i = 0; $i < 5; $i++) {
-            $this->createReservation([
-                'guest_full_name' => "Guest {$i}",
-                'guest_email' => "guest{$i}@hotel.com",
-            ]);
+            $this->createReservation();
         }
 
         $response = $this->getJson('/api/reservations?per_page=2&page=1');
@@ -79,10 +99,7 @@ final class ListReservationsTest extends TestCase
     public function test_it_returns_second_page(): void
     {
         for ($i = 0; $i < 5; $i++) {
-            $this->createReservation([
-                'guest_full_name' => "Guest {$i}",
-                'guest_email' => "guest{$i}@hotel.com",
-            ]);
+            $this->createReservation();
         }
 
         $page1 = $this->getJson('/api/reservations?per_page=2&page=1');
@@ -109,7 +126,7 @@ final class ListReservationsTest extends TestCase
                     [
                         'id',
                         'status',
-                        'guest' => ['full_name', 'email', 'phone', 'document', 'is_vip'],
+                        'guest' => ['guest_profile_id', 'full_name', 'email', 'phone', 'document', 'is_vip'],
                         'period' => ['check_in', 'check_out', 'nights'],
                         'room_type',
                         'assigned_room_number',

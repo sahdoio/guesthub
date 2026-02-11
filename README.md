@@ -95,6 +95,10 @@ composer test
 
 Runs on SQLite in-memory. No external services needed.
 
+## Documentation
+
+- [Hotel Domain Model](docs/hotel-domain-model.md) — Domain model reference covering aggregates, entities, value objects, and bounded context boundaries.
+
 ## API Collection
 
 Bruno collection files are in `bruno/`. Open the folder in [Bruno](https://www.usebruno.com/) and select the `Local` environment.

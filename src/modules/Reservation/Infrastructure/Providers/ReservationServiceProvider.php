@@ -16,9 +16,13 @@ use Modules\Reservation\Domain\Event\GuestCheckedOut;
 use Modules\Reservation\Domain\Event\ReservationCancelled;
 use Modules\Reservation\Domain\Event\ReservationConfirmed;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
+use Modules\Reservation\Domain\Service\GuestGateway;
 use Modules\Reservation\Domain\Service\InventoryGateway;
+use Modules\Reservation\Infrastructure\Integration\GuestGatewayAdapter;
 use Modules\Reservation\Infrastructure\Integration\InventoryGatewayAdapter;
 use Modules\Reservation\Infrastructure\Persistence\QueryBuilderReservationRepository;
+use Modules\Shared\Application\EventDispatcher;
+use Modules\Shared\Infrastructure\Messaging\LaravelEventDispatcher;
 
 final class ReservationServiceProvider extends ServiceProvider
 {
@@ -28,6 +32,8 @@ final class ReservationServiceProvider extends ServiceProvider
 
         $this->app->bind(ReservationRepository::class, QueryBuilderReservationRepository::class);
         $this->app->bind(InventoryGateway::class, InventoryGatewayAdapter::class);
+        $this->app->bind(GuestGateway::class, GuestGatewayAdapter::class);
+        $this->app->bindIf(EventDispatcher::class, LaravelEventDispatcher::class);
     }
 
     public function boot(): void

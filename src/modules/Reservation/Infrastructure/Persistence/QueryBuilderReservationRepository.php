@@ -10,10 +10,7 @@ use Modules\Reservation\Domain\Entity\SpecialRequest;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ReservationId;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
-use Modules\Reservation\Domain\ValueObject\Email;
 use Modules\Shared\Domain\PaginatedResult;
-use Modules\Reservation\Domain\ValueObject\Guest;
-use Modules\Reservation\Domain\ValueObject\Phone;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 use Modules\Reservation\Domain\ValueObject\ReservationStatus;
 use Modules\Reservation\Domain\ValueObject\RequestStatus;
@@ -50,10 +47,10 @@ final class QueryBuilderReservationRepository implements ReservationRepository
         return $record ? $this->toEntity($record) : null;
     }
 
-    public function findByGuestEmail(Email $email): array
+    public function findByGuestProfileId(string $guestProfileId): array
     {
         return DB::table(self::TABLE)
-            ->where('guest_email', $email->value)
+            ->where('guest_profile_id', $guestProfileId)
             ->get()
             ->map(fn(object $record) => $this->toEntity($record))
             ->all();
@@ -88,11 +85,7 @@ final class QueryBuilderReservationRepository implements ReservationRepository
         return [
             'uuid' => $reservation->uuid()->value,
             'status' => $reservation->status()->value,
-            'guest_full_name' => $reservation->guest()->fullName,
-            'guest_email' => $reservation->guest()->email->value,
-            'guest_phone' => $reservation->guest()->phone->value,
-            'guest_document' => $reservation->guest()->document,
-            'guest_is_vip' => $reservation->guest()->isVip,
+            'guest_profile_id' => $reservation->guestProfileId(),
             'check_in' => $reservation->period()->checkIn->format('Y-m-d'),
             'check_out' => $reservation->period()->checkOut->format('Y-m-d'),
             'room_type' => $reservation->roomType(),
@@ -111,13 +104,7 @@ final class QueryBuilderReservationRepository implements ReservationRepository
     {
         return ReservationReflector::reconstruct(
             uuid: ReservationId::fromString($record->uuid),
-            guest: Guest::create(
-                $record->guest_full_name,
-                Email::fromString($record->guest_email),
-                Phone::fromString($record->guest_phone),
-                $record->guest_document,
-                (bool) $record->guest_is_vip,
-            ),
+            guestProfileId: $record->guest_profile_id,
             period: new ReservationPeriod(
                 new DateTimeImmutable($record->check_in),
                 new DateTimeImmutable($record->check_out),

@@ -1,4 +1,4 @@
-# Hotel Management System — Domain Model (Revised)
+# Hotel Management System — Domain Model Explanation
 
 ## Architecture Overview
 

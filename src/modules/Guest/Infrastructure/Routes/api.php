@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Guest\Presentation\Http\Controllers\GuestProfileController;
+use Modules\Guest\Infrastructure\Http\Controllers\GuestProfileController;
 
-Route::prefix('guests')->group(function () {
+Route::prefix('guests')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [GuestProfileController::class, 'index']);
     Route::post('/', [GuestProfileController::class, 'store']);
     Route::get('/{uuid}', [GuestProfileController::class, 'show']);

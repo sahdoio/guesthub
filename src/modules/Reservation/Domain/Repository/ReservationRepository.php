@@ -6,7 +6,6 @@ namespace Modules\Reservation\Domain\Repository;
 
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ReservationId;
-use Modules\Reservation\Domain\ValueObject\Email;
 use Modules\Shared\Domain\PaginatedResult;
 
 interface ReservationRepository
@@ -16,7 +15,7 @@ interface ReservationRepository
     public function findByUuid(ReservationId $uuid): ?Reservation;
 
     /** @return Reservation[] */
-    public function findByGuestEmail(Email $email): array;
+    public function findByGuestProfileId(string $guestProfileId): array;
 
     /** @return PaginatedResult<Reservation> */
     public function paginate(int $page = 1, int $perPage = 15): PaginatedResult;

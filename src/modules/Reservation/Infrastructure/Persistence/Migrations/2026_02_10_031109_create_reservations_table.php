@@ -12,11 +12,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->string('status');
-            $table->string('guest_full_name');
-            $table->string('guest_email');
-            $table->string('guest_phone');
-            $table->string('guest_document');
-            $table->boolean('guest_is_vip')->default(false);
+            $table->uuid('guest_profile_id')->index();
             $table->date('check_in');
             $table->date('check_out');
             $table->string('room_type');
@@ -29,7 +25,6 @@ return new class extends Migration
             $table->timestamp('checked_out_at')->nullable();
             $table->timestamp('cancelled_at')->nullable();
 
-            $table->index('guest_email');
             $table->index('status');
             $table->index('check_in');
             $table->index('check_out');

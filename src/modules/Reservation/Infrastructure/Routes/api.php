@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Reservation\Presentation\Http\Controllers\ReservationController;
+use Modules\Reservation\Infrastructure\Http\Controllers\ReservationController;
 
-Route::prefix('reservations')->group(function () {
+Route::prefix('reservations')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [ReservationController::class, 'index']);
     Route::post('/', [ReservationController::class, 'store']);
     Route::get('/{id}', [ReservationController::class, 'show']);

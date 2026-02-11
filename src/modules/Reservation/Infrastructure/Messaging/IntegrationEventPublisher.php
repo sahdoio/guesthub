@@ -6,7 +6,7 @@ namespace Modules\Reservation\Infrastructure\Messaging;
 
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\Log;
-use Modules\Shared\Infrastructure\Messaging\IntegrationEvent;
+use Modules\Shared\Application\Messaging\IntegrationEvent;
 
 final class IntegrationEventPublisher
 {
