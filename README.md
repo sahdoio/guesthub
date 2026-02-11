@@ -97,6 +97,7 @@ Runs on SQLite in-memory. No external services needed.
 
 ## Documentation
 
+- [Architecture](docs/architecture.md) — Context map, bounded contexts, event flows, inter-BC communication, persistence strategy, and IAM deep dive.
 - [Hotel Domain Model](docs/hotel-domain-model.md) — Domain model reference covering aggregates, entities, value objects, and bounded context boundaries.
 
 ## API Collection
