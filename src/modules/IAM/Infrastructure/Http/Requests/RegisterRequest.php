@@ -17,11 +17,11 @@ final class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => ['required', 'string', 'in:guest,system'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:8'],
-            'guest_profile_id' => ['sometimes', 'nullable', 'uuid'],
+            'phone' => ['required', 'string', 'regex:/^\+[1-9]\d{1,14}$/'],
+            'document' => ['required', 'string', 'max:50'],
         ];
     }
 }

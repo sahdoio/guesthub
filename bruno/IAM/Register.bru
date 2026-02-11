@@ -17,10 +17,11 @@ headers {
 
 body:json {
   {
-    "type": "guest",
     "name": "Jane Doe",
     "email": "jane@hotel.com",
-    "password": "password123"
+    "password": "password123",
+    "phone": "+5511999999999",
+    "document": "ABC123456"
   }
 }
 
@@ -35,5 +36,6 @@ tests {
     expect(data.name).to.equal('Jane Doe');
     expect(data.email).to.equal('jane@hotel.com');
     expect(data.type).to.equal('guest');
+    expect(data.guest_profile_id).to.be.a('string');
   });
 }

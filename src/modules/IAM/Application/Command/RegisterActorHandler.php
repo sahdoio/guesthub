@@ -9,6 +9,7 @@ use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Exception\ActorAlreadyExistsException;
 use Modules\IAM\Domain\Repository\ActorRepository;
+use Modules\IAM\Domain\Service\GuestProfileGateway;
 use Modules\IAM\Domain\Service\PasswordHasher;
 use Modules\IAM\Domain\ValueObject\ActorType;
 
@@ -17,6 +18,7 @@ final class RegisterActorHandler
     public function __construct(
         private readonly ActorRepository $repository,
         private readonly PasswordHasher $hasher,
+        private readonly GuestProfileGateway $guestProfileGateway,
     ) {}
 
     public function handle(RegisterActor $command): ActorId
@@ -27,15 +29,22 @@ final class RegisterActorHandler
             throw ActorAlreadyExistsException::withEmail($command->email);
         }
 
+        $guestProfileId = $this->guestProfileGateway->create(
+            name: $command->name,
+            email: $command->email,
+            phone: $command->phone,
+            document: $command->document,
+        );
+
         $id = $this->repository->nextIdentity();
 
         $actor = Actor::register(
             uuid: $id,
-            type: ActorType::from($command->type),
+            type: ActorType::GUEST,
             name: $command->name,
             email: $command->email,
             password: $this->hasher->hash($command->password),
-            guestProfileId: $command->guestProfileId,
+            guestProfileId: $guestProfileId,
             createdAt: new DateTimeImmutable(),
         );
 

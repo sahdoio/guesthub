@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
-            $table->uuid('guest_profile_id')->nullable();
+            $table->foreignId('guest_profile_id')->nullable()->constrained('guest_profiles');
             $table->timestamp('created_at');
             $table->timestamp('updated_at')->nullable();
         });

@@ -78,7 +78,7 @@ final class QueryBuilderActorRepository implements ActorRepository
             name: $record->name,
             email: $record->email,
             password: new HashedPassword($record->password),
-            guestProfileId: $record->guest_profile_id,
+            guestProfileId: $record->guest_profile_id ? (int) $record->guest_profile_id : null,
             createdAt: new DateTimeImmutable($record->created_at),
             updatedAt: $record->updated_at ? new DateTimeImmutable($record->updated_at) : null,
         );

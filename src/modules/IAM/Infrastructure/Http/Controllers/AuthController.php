@@ -25,11 +25,11 @@ final class AuthController
         ActorRepository $repository,
     ): JsonResponse {
         $id = $handler->handle(new RegisterActor(
-            type: $request->validated('type'),
             name: $request->validated('name'),
             email: $request->validated('email'),
             password: $request->validated('password'),
-            guestProfileId: $request->validated('guest_profile_id'),
+            phone: $request->validated('phone'),
+            document: $request->validated('document'),
         ));
 
         $actor = $repository->findByUuid($id);
