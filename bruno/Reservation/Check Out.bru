@@ -7,11 +7,15 @@ meta {
 post {
   url: {{baseUrl}}/api/reservations/{{reservationId}}/check-out
   body: none
-  auth: none
+  auth: bearer
 }
 
 headers {
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
 }
 
 tests {

@@ -31,7 +31,7 @@ class GuestSeeder extends Seeder
 
         foreach ($guests as [$name, $email, $phone, $document, $tier, $preferences]) {
             $id = $this->repository->nextIdentity();
-            $guest = new GuestProfile($id, $name, $email, $phone, $document, $tier, $preferences, new DateTimeImmutable());
+            $guest = GuestProfile::create($id, $name, $email, $phone, $document, $tier, $preferences, new DateTimeImmutable());
             $this->repository->save($guest);
 
             self::$guestIds[$email] = (string) $id;

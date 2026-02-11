@@ -23,7 +23,7 @@ class ReservationSeeder extends Seeder
         $guestIds = GuestSeeder::$guestIds;
 
         // 1. Pending reservation (future, regular guest)
-        $r1 = new Reservation(
+        $r1 = Reservation::create(
             $this->repository->nextIdentity(),
             $guestIds['alice@example.com'],
             new ReservationPeriod(new DateTimeImmutable('+3 days'), new DateTimeImmutable('+6 days')),
@@ -33,7 +33,7 @@ class ReservationSeeder extends Seeder
         $this->save($r1);
 
         // 2. Confirmed reservation (future, VIP guest)
-        $r2 = new Reservation(
+        $r2 = Reservation::create(
             $this->repository->nextIdentity(),
             $guestIds['bob.vip@example.com'],
             new ReservationPeriod(new DateTimeImmutable('+1 day'), new DateTimeImmutable('+5 days')),
@@ -45,7 +45,7 @@ class ReservationSeeder extends Seeder
         $this->save($r2);
 
         // 3. Checked-in reservation (current stay, regular guest)
-        $r3 = new Reservation(
+        $r3 = Reservation::create(
             $this->repository->nextIdentity(),
             $guestIds['carol@example.com'],
             new ReservationPeriod(new DateTimeImmutable('today'), new DateTimeImmutable('+3 days')),
@@ -55,11 +55,11 @@ class ReservationSeeder extends Seeder
         $r3->addSpecialRequest(RequestType::DIETARY_RESTRICTION, 'Guest is vegetarian - breakfast buffet');
         $r3->confirm();
         $r3->checkIn('305');
-        $r3->fulfillSpecialRequest($r3->specialRequests()[0]->id());
+        $r3->fulfillSpecialRequest($r3->specialRequests[0]->id());
         $this->save($r3);
 
         // 4. Cancelled reservation (VIP guest)
-        $r4 = new Reservation(
+        $r4 = Reservation::create(
             $this->repository->nextIdentity(),
             $guestIds['david.m@example.com'],
             new ReservationPeriod(new DateTimeImmutable('+10 days'), new DateTimeImmutable('+14 days')),
@@ -69,7 +69,7 @@ class ReservationSeeder extends Seeder
         $this->save($r4);
 
         // 5. Confirmed reservation with multiple special requests (future, regular)
-        $r5 = new Reservation(
+        $r5 = Reservation::create(
             $this->repository->nextIdentity(),
             $guestIds['eva.t@example.com'],
             new ReservationPeriod(new DateTimeImmutable('+7 days'), new DateTimeImmutable('+10 days')),

@@ -33,7 +33,7 @@ final class CreateReservationHandler
         }
 
         $id = $this->repository->nextIdentity();
-        $reservation = new Reservation($id, $command->guestProfileId, $period, $command->roomType);
+        $reservation = Reservation::create($id, $command->guestProfileId, $period, $command->roomType);
 
         $this->repository->save($reservation);
 

@@ -19,7 +19,7 @@ final class SpecialRequestTest extends TestCase
         RequestType $type = RequestType::EARLY_CHECK_IN,
         string $description = 'Arrive at 10am',
     ): SpecialRequest {
-        return new SpecialRequest(
+        return SpecialRequest::create(
             SpecialRequestId::generate(),
             $type,
             $description,
@@ -32,10 +32,10 @@ final class SpecialRequestTest extends TestCase
     {
         $request = $this->createRequest();
 
-        $this->assertSame(RequestStatus::PENDING, $request->status());
-        $this->assertSame(RequestType::EARLY_CHECK_IN, $request->type());
-        $this->assertSame('Arrive at 10am', $request->description());
-        $this->assertNull($request->fulfilledAt());
+        $this->assertSame(RequestStatus::PENDING, $request->status);
+        $this->assertSame(RequestType::EARLY_CHECK_IN, $request->type);
+        $this->assertSame('Arrive at 10am', $request->description);
+        $this->assertNull($request->fulfilledAt);
     }
 
     #[Test]
@@ -45,8 +45,8 @@ final class SpecialRequestTest extends TestCase
 
         $request->fulfill();
 
-        $this->assertSame(RequestStatus::FULFILLED, $request->status());
-        $this->assertInstanceOf(DateTimeImmutable::class, $request->fulfilledAt());
+        $this->assertSame(RequestStatus::FULFILLED, $request->status);
+        $this->assertInstanceOf(DateTimeImmutable::class, $request->fulfilledAt);
     }
 
     #[Test]
@@ -66,7 +66,7 @@ final class SpecialRequestTest extends TestCase
 
         $request->cancel();
 
-        $this->assertSame(RequestStatus::CANCELLED, $request->status());
+        $this->assertSame(RequestStatus::CANCELLED, $request->status);
     }
 
     #[Test]
@@ -96,7 +96,7 @@ final class SpecialRequestTest extends TestCase
 
         $request->changeDescription('Arrive at 8am instead');
 
-        $this->assertSame('Arrive at 8am instead', $request->description());
+        $this->assertSame('Arrive at 8am instead', $request->description);
     }
 
     #[Test]

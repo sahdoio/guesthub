@@ -7,12 +7,16 @@ meta {
 post {
   url: {{baseUrl}}/api/reservations/{{reservationId}}/cancel
   body: json
-  auth: none
+  auth: bearer
 }
 
 headers {
   Content-Type: application/json
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
 }
 
 body:json {

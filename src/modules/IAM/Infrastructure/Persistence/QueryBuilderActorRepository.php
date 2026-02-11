@@ -21,7 +21,7 @@ final class QueryBuilderActorRepository implements ActorRepository
         $data = $this->toRecord($actor);
 
         $existing = DB::table(self::TABLE)
-            ->where('uuid', $actor->uuid()->value)
+            ->where('uuid', $actor->uuid->value)
             ->first();
 
         if ($existing) {
@@ -59,14 +59,14 @@ final class QueryBuilderActorRepository implements ActorRepository
     private function toRecord(Actor $actor): array
     {
         return [
-            'uuid' => $actor->uuid()->value,
-            'type' => $actor->type()->value,
-            'name' => $actor->name(),
-            'email' => $actor->email(),
-            'password' => $actor->password()->value,
-            'guest_profile_id' => $actor->guestProfileId(),
-            'created_at' => $actor->createdAt()->format('Y-m-d H:i:s'),
-            'updated_at' => $actor->updatedAt()?->format('Y-m-d H:i:s'),
+            'uuid' => $actor->uuid->value,
+            'type' => $actor->type->value,
+            'name' => $actor->name,
+            'email' => $actor->email,
+            'password' => $actor->password->value,
+            'guest_profile_id' => $actor->guestProfileId,
+            'created_at' => $actor->createdAt->format('Y-m-d H:i:s'),
+            'updated_at' => $actor->updatedAt?->format('Y-m-d H:i:s'),
         ];
     }
 

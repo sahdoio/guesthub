@@ -17,13 +17,13 @@ final class ActorResource extends JsonResource
         $actor = $this->resource;
 
         return [
-            'id' => (string) $actor->uuid(),
-            'type' => $actor->type()->value,
-            'name' => $actor->name(),
-            'email' => $actor->email(),
-            'guest_profile_id' => $actor->guestProfileId(),
-            'created_at' => $actor->createdAt()->format('Y-m-d H:i:s'),
-            'updated_at' => $actor->updatedAt()?->format('Y-m-d H:i:s'),
+            'id' => (string) $actor->uuid,
+            'type' => $actor->type->value,
+            'name' => $actor->name,
+            'email' => $actor->email,
+            'guest_profile_id' => $actor->guestProfileId,
+            'created_at' => $actor->createdAt->format('Y-m-d H:i:s'),
+            'updated_at' => $actor->updatedAt?->format('Y-m-d H:i:s'),
         ];
     }
 }

@@ -7,7 +7,7 @@ meta {
 post {
   url: {{baseUrl}}/api/reservations
   body: json
-  auth: none
+  auth: bearer
 }
 
 headers {
@@ -15,22 +15,17 @@ headers {
   Accept: application/json
 }
 
+auth:bearer {
+  token: {{authToken}}
+}
+
 body:json {
   {
-    "guest_full_name": "John Doe",
-    "guest_email": "john@hotel.com",
-    "guest_phone": "+5511999999999",
-    "guest_document": "12345678900",
-    "is_vip": false,
+    "guest_profile_id": "{{guestId}}",
     "check_in": "{{checkIn}}",
     "check_out": "{{checkOut}}",
     "room_type": "DOUBLE"
   }
-}
-
-vars:pre-request {
-  checkIn: {{process.env.CHECK_IN || ''}}
-  checkOut: {{process.env.CHECK_OUT || ''}}
 }
 
 vars:post-response {
@@ -48,6 +43,12 @@ script:pre-request {
 
   bru.setVar("checkIn", fmt(checkIn));
   bru.setVar("checkOut", fmt(checkOut));
+}
+
+docs {
+  Requires a guest profile to exist first.
+  Run IAM > Register, IAM > Login, then Guest > Create Guest before this request.
+  The guestId variable is set by the Create Guest request.
 }
 
 tests {

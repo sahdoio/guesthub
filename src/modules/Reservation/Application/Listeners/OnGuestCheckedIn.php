@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Modules\Reservation\Application\EventHandler;
+namespace Modules\Reservation\Application\Listeners;
 
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Reservation\Infrastructure\IntegrationEvent\GuestCheckedInEvent;
@@ -24,7 +24,7 @@ final class OnGuestCheckedIn
         $reservation = $this->repository->findByUuid($event->reservationId)
             ?? throw ReservationNotFoundException::withId($event->reservationId);
 
-        $guestInfo = $this->guestGateway->findByUuid($reservation->guestProfileId());
+        $guestInfo = $this->guestGateway->findByUuid($reservation->guestProfileId);
 
         $this->dispatcher->dispatch(new GuestCheckedInEvent(
             reservationId: (string) $event->reservationId,

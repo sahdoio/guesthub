@@ -26,7 +26,7 @@ final class QueryBuilderReservationRepository implements ReservationRepository
         $data = $this->toRecord($reservation);
 
         $existing = DB::table(self::TABLE)
-            ->where('uuid', $reservation->uuid()->value)
+            ->where('uuid', $reservation->uuid->value)
             ->first();
 
         if ($existing) {
@@ -83,20 +83,20 @@ final class QueryBuilderReservationRepository implements ReservationRepository
     private function toRecord(Reservation $reservation): array
     {
         return [
-            'uuid' => $reservation->uuid()->value,
-            'status' => $reservation->status()->value,
-            'guest_profile_id' => $reservation->guestProfileId(),
-            'check_in' => $reservation->period()->checkIn->format('Y-m-d'),
-            'check_out' => $reservation->period()->checkOut->format('Y-m-d'),
-            'room_type' => $reservation->roomType(),
-            'assigned_room_number' => $reservation->assignedRoomNumber(),
-            'special_requests' => json_encode($this->serializeSpecialRequests($reservation->specialRequests())),
-            'cancellation_reason' => $reservation->cancellationReason(),
-            'created_at' => $reservation->createdAt()->format('Y-m-d H:i:s'),
-            'confirmed_at' => $reservation->confirmedAt()?->format('Y-m-d H:i:s'),
-            'checked_in_at' => $reservation->checkedInAt()?->format('Y-m-d H:i:s'),
-            'checked_out_at' => $reservation->checkedOutAt()?->format('Y-m-d H:i:s'),
-            'cancelled_at' => $reservation->cancelledAt()?->format('Y-m-d H:i:s'),
+            'uuid' => $reservation->uuid->value,
+            'status' => $reservation->status->value,
+            'guest_profile_id' => $reservation->guestProfileId,
+            'check_in' => $reservation->period->checkIn->format('Y-m-d'),
+            'check_out' => $reservation->period->checkOut->format('Y-m-d'),
+            'room_type' => $reservation->roomType,
+            'assigned_room_number' => $reservation->assignedRoomNumber,
+            'special_requests' => json_encode($this->serializeSpecialRequests($reservation->specialRequests)),
+            'cancellation_reason' => $reservation->cancellationReason,
+            'created_at' => $reservation->createdAt->format('Y-m-d H:i:s'),
+            'confirmed_at' => $reservation->confirmedAt?->format('Y-m-d H:i:s'),
+            'checked_in_at' => $reservation->checkedInAt?->format('Y-m-d H:i:s'),
+            'checked_out_at' => $reservation->checkedOutAt?->format('Y-m-d H:i:s'),
+            'cancelled_at' => $reservation->cancelledAt?->format('Y-m-d H:i:s'),
         ];
     }
 
@@ -126,12 +126,12 @@ final class QueryBuilderReservationRepository implements ReservationRepository
     private function serializeSpecialRequests(array $requests): array
     {
         return array_map(fn(SpecialRequest $sr) => [
-            'id' => (string) $sr->id(),
-            'type' => $sr->type()->value,
-            'description' => $sr->description(),
-            'status' => $sr->status()->value,
-            'fulfilled_at' => $sr->fulfilledAt()?->format('Y-m-d H:i:s'),
-            'created_at' => $sr->createdAt()->format('Y-m-d H:i:s'),
+            'id' => (string) $sr->id,
+            'type' => $sr->type->value,
+            'description' => $sr->description,
+            'status' => $sr->status->value,
+            'fulfilled_at' => $sr->fulfilledAt?->format('Y-m-d H:i:s'),
+            'created_at' => $sr->createdAt->format('Y-m-d H:i:s'),
         ], $requests);
     }
 

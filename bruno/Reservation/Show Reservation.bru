@@ -7,11 +7,15 @@ meta {
 get {
   url: {{baseUrl}}/api/reservations/{{reservationId}}
   body: none
-  auth: none
+  auth: bearer
 }
 
 headers {
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
 }
 
 tests {

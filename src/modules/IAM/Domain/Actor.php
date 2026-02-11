@@ -12,61 +12,40 @@ use Modules\Shared\Domain\Identity;
 
 final class Actor extends AggregateRoot
 {
-    private ?DateTimeImmutable $updatedAt = null;
-
-    public function __construct(
-        private readonly ActorId $uuid,
-        private readonly ActorType $type,
-        private readonly string $name,
-        private readonly string $email,
-        private HashedPassword $password,
-        private readonly ?string $guestProfileId,
-        private readonly DateTimeImmutable $createdAt,
+    private function __construct(
+        public readonly ActorId $uuid,
+        public readonly ActorType $type,
+        public readonly string $name,
+        public readonly string $email,
+        public private(set) HashedPassword $password,
+        public readonly ?string $guestProfileId,
+        public readonly DateTimeImmutable $createdAt,
+        public private(set) ?DateTimeImmutable $updatedAt = null,
     ) {}
+
+    public static function register(
+        ActorId $uuid,
+        ActorType $type,
+        string $name,
+        string $email,
+        HashedPassword $password,
+        ?string $guestProfileId,
+        DateTimeImmutable $createdAt,
+    ): self {
+        return new self(
+            uuid: $uuid,
+            type: $type,
+            name: $name,
+            email: $email,
+            password: $password,
+            guestProfileId: $guestProfileId,
+            createdAt: $createdAt,
+        );
+    }
 
     public function id(): Identity
     {
         return $this->uuid;
-    }
-
-    public function uuid(): ActorId
-    {
-        return $this->uuid;
-    }
-
-    public function type(): ActorType
-    {
-        return $this->type;
-    }
-
-    public function name(): string
-    {
-        return $this->name;
-    }
-
-    public function email(): string
-    {
-        return $this->email;
-    }
-
-    public function password(): HashedPassword
-    {
-        return $this->password;
-    }
-
-    public function guestProfileId(): ?string
-    {
-        return $this->guestProfileId;
-    }
-
-    public function createdAt(): DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function updatedAt(): ?DateTimeImmutable
-    {
-        return $this->updatedAt;
     }
 
     public function changePassword(HashedPassword $password): void

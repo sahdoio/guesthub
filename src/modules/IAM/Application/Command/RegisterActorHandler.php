@@ -29,7 +29,7 @@ final class RegisterActorHandler
 
         $id = $this->repository->nextIdentity();
 
-        $actor = new Actor(
+        $actor = Actor::register(
             uuid: $id,
             type: ActorType::from($command->type),
             name: $command->name,

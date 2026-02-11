@@ -7,12 +7,16 @@ meta {
 put {
   url: {{baseUrl}}/api/guests/{{guestId}}
   body: json
-  auth: none
+  auth: bearer
 }
 
 headers {
   Content-Type: application/json
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
 }
 
 body:json {

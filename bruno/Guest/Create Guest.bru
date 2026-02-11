@@ -7,7 +7,7 @@ meta {
 post {
   url: {{baseUrl}}/api/guests
   body: json
-  auth: none
+  auth: bearer
 }
 
 headers {
@@ -15,12 +15,16 @@ headers {
   Accept: application/json
 }
 
+auth:bearer {
+  token: {{authToken}}
+}
+
 body:json {
   {
     "full_name": "Jane Doe",
-    "email": "jane@hotel.com",
+    "email": "jane2@hotel.com",
     "phone": "+5511999999999",
-    "document": "ABC123456",
+    "document": "ABC123455",
     "loyalty_tier": "bronze",
     "preferences": ["late_checkout", "high_floor"]
   }
@@ -34,11 +38,11 @@ tests {
   test("should return 201", function() {
     expect(res.getStatus()).to.equal(201);
   });
-
+  
   test("should return guest id", function() {
     expect(res.getBody().data.id).to.be.a('string');
   });
-
+  
   test("should return correct data", function() {
     const data = res.getBody().data;
     expect(data.full_name).to.equal('Jane Doe');

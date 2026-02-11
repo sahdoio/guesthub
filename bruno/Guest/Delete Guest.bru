@@ -7,11 +7,15 @@ meta {
 delete {
   url: {{baseUrl}}/api/guests/{{guestId}}
   body: none
-  auth: none
+  auth: bearer
 }
 
 headers {
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
 }
 
 docs {

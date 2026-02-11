@@ -7,11 +7,15 @@ meta {
 post {
   url: {{baseUrl}}/api/reservations/{{reservationId}}/confirm
   body: none
-  auth: none
+  auth: bearer
 }
 
 headers {
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
 }
 
 tests {

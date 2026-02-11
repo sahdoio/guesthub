@@ -7,18 +7,22 @@ meta {
 get {
   url: {{baseUrl}}/api/guests/{{guestId}}
   body: none
-  auth: none
+  auth: bearer
 }
 
 headers {
   Accept: application/json
 }
 
+auth:bearer {
+  token: {{authToken}}
+}
+
 tests {
   test("should return 200", function() {
     expect(res.getStatus()).to.equal(200);
   });
-
+  
   test("should return guest data", function() {
     const data = res.getBody().data;
     expect(data.id).to.equal(bru.getVar("guestId"));

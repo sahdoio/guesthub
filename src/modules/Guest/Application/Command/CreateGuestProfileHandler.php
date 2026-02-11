@@ -20,7 +20,7 @@ final class CreateGuestProfileHandler
     {
         $id = $this->repository->nextIdentity();
 
-        $profile = new GuestProfile(
+        $profile = GuestProfile::create(
             uuid: $id,
             fullName: $command->fullName,
             email: $command->email,

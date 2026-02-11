@@ -18,7 +18,7 @@ final class ActorTest extends TestCase
     public function it_creates_a_guest_actor(): void
     {
         $id = ActorId::generate();
-        $actor = new Actor(
+        $actor = Actor::register(
             uuid: $id,
             type: ActorType::GUEST,
             name: 'John Doe',
@@ -28,18 +28,18 @@ final class ActorTest extends TestCase
             createdAt: new DateTimeImmutable(),
         );
 
-        $this->assertSame($id, $actor->uuid());
-        $this->assertSame(ActorType::GUEST, $actor->type());
-        $this->assertSame('John Doe', $actor->name());
-        $this->assertSame('john@hotel.com', $actor->email());
-        $this->assertSame('some-uuid-value-here', $actor->guestProfileId());
-        $this->assertNull($actor->updatedAt());
+        $this->assertSame($id, $actor->uuid);
+        $this->assertSame(ActorType::GUEST, $actor->type);
+        $this->assertSame('John Doe', $actor->name);
+        $this->assertSame('john@hotel.com', $actor->email);
+        $this->assertSame('some-uuid-value-here', $actor->guestProfileId);
+        $this->assertNull($actor->updatedAt);
     }
 
     #[Test]
     public function it_creates_a_system_actor(): void
     {
-        $actor = new Actor(
+        $actor = Actor::register(
             uuid: ActorId::generate(),
             type: ActorType::SYSTEM,
             name: 'Booking Engine',
@@ -49,14 +49,14 @@ final class ActorTest extends TestCase
             createdAt: new DateTimeImmutable(),
         );
 
-        $this->assertSame(ActorType::SYSTEM, $actor->type());
-        $this->assertNull($actor->guestProfileId());
+        $this->assertSame(ActorType::SYSTEM, $actor->type);
+        $this->assertNull($actor->guestProfileId);
     }
 
     #[Test]
     public function it_changes_password(): void
     {
-        $actor = new Actor(
+        $actor = Actor::register(
             uuid: ActorId::generate(),
             type: ActorType::GUEST,
             name: 'Jane Doe',
@@ -69,8 +69,8 @@ final class ActorTest extends TestCase
         $newPassword = new HashedPassword('$2y$10$newhash');
         $actor->changePassword($newPassword);
 
-        $this->assertSame('$2y$10$newhash', $actor->password()->value);
-        $this->assertNotNull($actor->updatedAt());
+        $this->assertSame('$2y$10$newhash', $actor->password->value);
+        $this->assertNotNull($actor->updatedAt);
     }
 
     #[Test]

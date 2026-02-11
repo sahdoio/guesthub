@@ -23,9 +23,9 @@ final class UpdateGuestProfileHandler
 
         if ($command->fullName !== null || $command->email !== null || $command->phone !== null) {
             $profile->updateContactInfo(
-                fullName: $command->fullName ?? $profile->fullName(),
-                email: $command->email ?? $profile->email(),
-                phone: $command->phone ?? $profile->phone(),
+                fullName: $command->fullName ?? $profile->fullName,
+                email: $command->email ?? $profile->email,
+                phone: $command->phone ?? $profile->phone,
             );
         }
 

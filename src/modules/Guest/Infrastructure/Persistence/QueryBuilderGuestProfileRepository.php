@@ -42,15 +42,15 @@ final class QueryBuilderGuestProfileRepository extends BaseRepository implements
     {
         /** @var GuestProfile $entity */
         return [
-            'uuid' => $entity->uuid()->value,
-            'full_name' => $entity->fullName(),
-            'email' => $entity->email(),
-            'phone' => $entity->phone(),
-            'document' => $entity->document(),
-            'loyalty_tier' => $entity->loyaltyTier()->value,
-            'preferences' => json_encode($entity->preferences()),
-            'created_at' => $entity->createdAt()->format('Y-m-d H:i:s'),
-            'updated_at' => $entity->updatedAt()?->format('Y-m-d H:i:s'),
+            'uuid' => $entity->uuid->value,
+            'full_name' => $entity->fullName,
+            'email' => $entity->email,
+            'phone' => $entity->phone,
+            'document' => $entity->document,
+            'loyalty_tier' => $entity->loyaltyTier->value,
+            'preferences' => json_encode($entity->preferences),
+            'created_at' => $entity->createdAt->format('Y-m-d H:i:s'),
+            'updated_at' => $entity->updatedAt?->format('Y-m-d H:i:s'),
         ];
     }
 

@@ -11,75 +11,51 @@ use Modules\Shared\Domain\Identity;
 
 final class GuestProfile extends AggregateRoot
 {
-    private ?DateTimeImmutable $updatedAt = null;
+    /**
+     * @param string[] $preferences
+     */
+    private function __construct(
+        public readonly GuestProfileId $uuid,
+        public private(set) string $fullName,
+        public private(set) string $email,
+        public private(set) string $phone,
+        public private(set) string $document,
+        public private(set) LoyaltyTier $loyaltyTier,
+        public private(set) array $preferences,
+        public readonly DateTimeImmutable $createdAt,
+        public private(set) ?DateTimeImmutable $updatedAt = null,
+    ) {}
 
     /**
      * @param string[] $preferences
      */
-    public function __construct(
-        private readonly GuestProfileId $uuid,
-        private string $fullName,
-        private string $email,
-        private string $phone,
-        private string $document,
-        private LoyaltyTier $loyaltyTier,
-        private array $preferences,
-        private readonly DateTimeImmutable $createdAt,
-    ) {}
+    public static function create(
+        GuestProfileId $uuid,
+        string $fullName,
+        string $email,
+        string $phone,
+        string $document,
+        LoyaltyTier $loyaltyTier,
+        array $preferences,
+        DateTimeImmutable $createdAt,
+    ): self {
+        return new self(
+            uuid: $uuid,
+            fullName: $fullName,
+            email: $email,
+            phone: $phone,
+            document: $document,
+            loyaltyTier: $loyaltyTier,
+            preferences: $preferences,
+            createdAt: $createdAt,
+        );
+    }
 
     // --- Identity ---
 
     public function id(): Identity
     {
         return $this->uuid;
-    }
-
-    public function uuid(): GuestProfileId
-    {
-        return $this->uuid;
-    }
-
-    // --- Getters ---
-
-    public function fullName(): string
-    {
-        return $this->fullName;
-    }
-
-    public function email(): string
-    {
-        return $this->email;
-    }
-
-    public function phone(): string
-    {
-        return $this->phone;
-    }
-
-    public function document(): string
-    {
-        return $this->document;
-    }
-
-    public function loyaltyTier(): LoyaltyTier
-    {
-        return $this->loyaltyTier;
-    }
-
-    /** @return string[] */
-    public function preferences(): array
-    {
-        return $this->preferences;
-    }
-
-    public function createdAt(): DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function updatedAt(): ?DateTimeImmutable
-    {
-        return $this->updatedAt;
     }
 
     // --- Behavior ---

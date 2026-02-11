@@ -17,15 +17,15 @@ final class GuestProfileResource extends JsonResource
         $profile = $this->resource;
 
         return [
-            'id' => (string) $profile->uuid(),
-            'full_name' => $profile->fullName(),
-            'email' => $profile->email(),
-            'phone' => $profile->phone(),
-            'document' => $profile->document(),
-            'loyalty_tier' => $profile->loyaltyTier()->value,
-            'preferences' => $profile->preferences(),
-            'created_at' => $profile->createdAt()->format('Y-m-d H:i:s'),
-            'updated_at' => $profile->updatedAt()?->format('Y-m-d H:i:s'),
+            'id' => (string) $profile->uuid,
+            'full_name' => $profile->fullName,
+            'email' => $profile->email,
+            'phone' => $profile->phone,
+            'document' => $profile->document,
+            'loyalty_tier' => $profile->loyaltyTier->value,
+            'preferences' => $profile->preferences,
+            'created_at' => $profile->createdAt->format('Y-m-d H:i:s'),
+            'updated_at' => $profile->updatedAt?->format('Y-m-d H:i:s'),
         ];
     }
 }

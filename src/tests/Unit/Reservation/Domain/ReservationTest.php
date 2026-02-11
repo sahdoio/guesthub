@@ -28,7 +28,7 @@ final class ReservationTest extends TestCase
 {
     private function createReservation(): Reservation
     {
-        return new Reservation(
+        return Reservation::create(
             ReservationId::generate(),
             Uuid::uuid7()->toString(),
             new ReservationPeriod(new DateTimeImmutable('+1 day'), new DateTimeImmutable('+4 days')),
@@ -43,9 +43,9 @@ final class ReservationTest extends TestCase
     {
         $reservation = $this->createReservation();
 
-        $this->assertSame(ReservationStatus::PENDING, $reservation->status());
-        $this->assertSame('DOUBLE', $reservation->roomType());
-        $this->assertNull($reservation->assignedRoomNumber());
+        $this->assertSame(ReservationStatus::PENDING, $reservation->status);
+        $this->assertSame('DOUBLE', $reservation->roomType);
+        $this->assertNull($reservation->assignedRoomNumber);
     }
 
     #[Test]
@@ -67,8 +67,8 @@ final class ReservationTest extends TestCase
 
         $reservation->confirm();
 
-        $this->assertSame(ReservationStatus::CONFIRMED, $reservation->status());
-        $this->assertInstanceOf(DateTimeImmutable::class, $reservation->confirmedAt());
+        $this->assertSame(ReservationStatus::CONFIRMED, $reservation->status);
+        $this->assertInstanceOf(DateTimeImmutable::class, $reservation->confirmedAt);
 
         $events = $reservation->pullDomainEvents();
         $this->assertCount(1, $events);
@@ -84,9 +84,9 @@ final class ReservationTest extends TestCase
 
         $reservation->checkIn('201');
 
-        $this->assertSame(ReservationStatus::CHECKED_IN, $reservation->status());
-        $this->assertSame('201', $reservation->assignedRoomNumber());
-        $this->assertInstanceOf(DateTimeImmutable::class, $reservation->checkedInAt());
+        $this->assertSame(ReservationStatus::CHECKED_IN, $reservation->status);
+        $this->assertSame('201', $reservation->assignedRoomNumber);
+        $this->assertInstanceOf(DateTimeImmutable::class, $reservation->checkedInAt);
 
         $events = $reservation->pullDomainEvents();
         $this->assertCount(1, $events);
@@ -103,8 +103,8 @@ final class ReservationTest extends TestCase
 
         $reservation->checkOut();
 
-        $this->assertSame(ReservationStatus::CHECKED_OUT, $reservation->status());
-        $this->assertInstanceOf(DateTimeImmutable::class, $reservation->checkedOutAt());
+        $this->assertSame(ReservationStatus::CHECKED_OUT, $reservation->status);
+        $this->assertInstanceOf(DateTimeImmutable::class, $reservation->checkedOutAt);
 
         $events = $reservation->pullDomainEvents();
         $this->assertCount(1, $events);
@@ -119,7 +119,7 @@ final class ReservationTest extends TestCase
         $reservation->checkIn('305');
         $reservation->checkOut();
 
-        $this->assertSame(ReservationStatus::CHECKED_OUT, $reservation->status());
+        $this->assertSame(ReservationStatus::CHECKED_OUT, $reservation->status);
 
         $events = $reservation->pullDomainEvents();
         $this->assertCount(4, $events);
@@ -139,9 +139,9 @@ final class ReservationTest extends TestCase
 
         $reservation->cancel('Guest changed plans');
 
-        $this->assertSame(ReservationStatus::CANCELLED, $reservation->status());
-        $this->assertSame('Guest changed plans', $reservation->cancellationReason());
-        $this->assertInstanceOf(DateTimeImmutable::class, $reservation->cancelledAt());
+        $this->assertSame(ReservationStatus::CANCELLED, $reservation->status);
+        $this->assertSame('Guest changed plans', $reservation->cancellationReason);
+        $this->assertInstanceOf(DateTimeImmutable::class, $reservation->cancelledAt);
 
         $events = $reservation->pullDomainEvents();
         $this->assertCount(1, $events);
@@ -156,7 +156,7 @@ final class ReservationTest extends TestCase
 
         $reservation->cancel('Emergency');
 
-        $this->assertSame(ReservationStatus::CANCELLED, $reservation->status());
+        $this->assertSame(ReservationStatus::CANCELLED, $reservation->status);
     }
 
     #[Test]
@@ -211,7 +211,7 @@ final class ReservationTest extends TestCase
 
         $requestId = $reservation->addSpecialRequest(RequestType::EARLY_CHECK_IN, 'Arrive at 10am');
 
-        $this->assertCount(1, $reservation->specialRequests());
+        $this->assertCount(1, $reservation->specialRequests);
         $this->assertNotNull($requestId);
 
         $events = $reservation->pullDomainEvents();
@@ -241,7 +241,7 @@ final class ReservationTest extends TestCase
 
         $reservation->removeSpecialRequest($requestId);
 
-        $this->assertCount(0, $reservation->specialRequests());
+        $this->assertCount(0, $reservation->specialRequests);
     }
 
     #[Test]
@@ -286,13 +286,13 @@ final class ReservationTest extends TestCase
     public function it_stores_guest_profile_id(): void
     {
         $guestProfileId = Uuid::uuid7()->toString();
-        $reservation = new Reservation(
+        $reservation = Reservation::create(
             ReservationId::generate(),
             $guestProfileId,
             new ReservationPeriod(new DateTimeImmutable('+1 day'), new DateTimeImmutable('+4 days')),
             'SUITE',
         );
 
-        $this->assertSame($guestProfileId, $reservation->guestProfileId());
+        $this->assertSame($guestProfileId, $reservation->guestProfileId);
     }
 }

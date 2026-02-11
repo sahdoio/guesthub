@@ -14,7 +14,7 @@ final class GuestProfileTest extends TestCase
 {
     private function createProfile(array $overrides = []): GuestProfile
     {
-        return new GuestProfile(
+        return GuestProfile::create(
             uuid: $overrides['uuid'] ?? GuestProfileId::generate(),
             fullName: $overrides['fullName'] ?? 'Jane Doe',
             email: $overrides['email'] ?? 'jane@hotel.com',
@@ -30,7 +30,7 @@ final class GuestProfileTest extends TestCase
     {
         $id = GuestProfileId::generate();
 
-        $profile = new GuestProfile(
+        $profile = GuestProfile::create(
             uuid: $id,
             fullName: 'Jane Doe',
             email: 'jane@hotel.com',
@@ -42,13 +42,13 @@ final class GuestProfileTest extends TestCase
         );
 
         $this->assertTrue($profile->id()->equals($id));
-        $this->assertSame('Jane Doe', $profile->fullName());
-        $this->assertSame('jane@hotel.com', $profile->email());
-        $this->assertSame('+5511999999999', $profile->phone());
-        $this->assertSame('ABC123456', $profile->document());
-        $this->assertSame(LoyaltyTier::BRONZE, $profile->loyaltyTier());
-        $this->assertSame(['late_checkout', 'high_floor'], $profile->preferences());
-        $this->assertNull($profile->updatedAt());
+        $this->assertSame('Jane Doe', $profile->fullName);
+        $this->assertSame('jane@hotel.com', $profile->email);
+        $this->assertSame('+5511999999999', $profile->phone);
+        $this->assertSame('ABC123456', $profile->document);
+        $this->assertSame(LoyaltyTier::BRONZE, $profile->loyaltyTier);
+        $this->assertSame(['late_checkout', 'high_floor'], $profile->preferences);
+        $this->assertNull($profile->updatedAt);
     }
 
     public function test_it_updates_contact_info(): void
@@ -57,10 +57,10 @@ final class GuestProfileTest extends TestCase
 
         $profile->updateContactInfo('John Smith', 'john@hotel.com', '+5521888888888');
 
-        $this->assertSame('John Smith', $profile->fullName());
-        $this->assertSame('john@hotel.com', $profile->email());
-        $this->assertSame('+5521888888888', $profile->phone());
-        $this->assertNotNull($profile->updatedAt());
+        $this->assertSame('John Smith', $profile->fullName);
+        $this->assertSame('john@hotel.com', $profile->email);
+        $this->assertSame('+5521888888888', $profile->phone);
+        $this->assertNotNull($profile->updatedAt);
     }
 
     public function test_it_changes_loyalty_tier(): void
@@ -69,8 +69,8 @@ final class GuestProfileTest extends TestCase
 
         $profile->changeLoyaltyTier(LoyaltyTier::GOLD);
 
-        $this->assertSame(LoyaltyTier::GOLD, $profile->loyaltyTier());
-        $this->assertNotNull($profile->updatedAt());
+        $this->assertSame(LoyaltyTier::GOLD, $profile->loyaltyTier);
+        $this->assertNotNull($profile->updatedAt);
     }
 
     public function test_it_sets_preferences(): void
@@ -79,8 +79,8 @@ final class GuestProfileTest extends TestCase
 
         $profile->setPreferences(['ocean_view', 'king_bed', 'minibar']);
 
-        $this->assertSame(['ocean_view', 'king_bed', 'minibar'], $profile->preferences());
-        $this->assertNotNull($profile->updatedAt());
+        $this->assertSame(['ocean_view', 'king_bed', 'minibar'], $profile->preferences);
+        $this->assertNotNull($profile->updatedAt);
     }
 
     public function test_entity_equality_by_id(): void

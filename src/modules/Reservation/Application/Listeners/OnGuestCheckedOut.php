@@ -2,32 +2,34 @@
 
 declare(strict_types=1);
 
-namespace Modules\Reservation\Application\EventHandler;
+namespace Modules\Reservation\Application\Listeners;
 
 use Modules\Shared\Application\EventDispatcher;
-use Modules\Reservation\Infrastructure\IntegrationEvent\ReservationCancelledEvent;
-use Modules\Reservation\Domain\Event\ReservationCancelled;
+use Modules\Reservation\Infrastructure\IntegrationEvent\GuestCheckedOutEvent;
+use Modules\Reservation\Domain\Event\GuestCheckedOut;
 use Modules\Reservation\Domain\Exception\ReservationNotFoundException;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
+use Modules\Reservation\Domain\Service\GuestGateway;
 
-final class OnReservationCancelled
+final class OnGuestCheckedOut
 {
     public function __construct(
         private readonly ReservationRepository $repository,
         private readonly EventDispatcher $dispatcher,
+        private readonly GuestGateway $guestGateway,
     ) {}
 
-    public function handle(ReservationCancelled $event): void
+    public function handle(GuestCheckedOut $event): void
     {
         $reservation = $this->repository->findByUuid($event->reservationId)
             ?? throw ReservationNotFoundException::withId($event->reservationId);
 
-        $this->dispatcher->dispatch(new ReservationCancelledEvent(
+        $guestInfo = $this->guestGateway->findByUuid($reservation->guestProfileId);
+
+        $this->dispatcher->dispatch(new GuestCheckedOutEvent(
             reservationId: (string) $event->reservationId,
-            roomType: $reservation->roomType(),
-            checkIn: $reservation->period()->checkIn->format('Y-m-d'),
-            checkOut: $reservation->period()->checkOut->format('Y-m-d'),
-            reason: $event->reason,
+            roomNumber: $reservation->assignedRoomNumber ?? '',
+            guestEmail: $guestInfo?->email ?? '',
             occurredAt: $event->occurredOn(),
         ));
     }

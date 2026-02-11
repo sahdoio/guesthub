@@ -7,11 +7,15 @@ meta {
 get {
   url: {{baseUrl}}/api/guests?page=1&per_page=15
   body: none
-  auth: none
+  auth: bearer
 }
 
 headers {
   Accept: application/json
+}
+
+auth:bearer {
+  token: {{authToken}}
 }
 
 tests {

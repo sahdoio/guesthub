@@ -7,7 +7,7 @@ meta {
 post {
   url: {{baseUrl}}/api/reservations
   body: json
-  auth: none
+  auth: bearer
 }
 
 headers {
@@ -15,13 +15,13 @@ headers {
   Accept: application/json
 }
 
+auth:bearer {
+  token: {{authToken}}
+}
+
 body:json {
   {
-    "guest_full_name": "Bob Williams",
-    "guest_email": "bob.vip@hotel.com",
-    "guest_phone": "+5511888888888",
-    "guest_document": "98765432100",
-    "is_vip": true,
+    "guest_profile_id": "{{guestId}}",
     "check_in": "{{checkIn}}",
     "check_out": "{{checkOut}}",
     "room_type": "SUITE"
@@ -43,6 +43,11 @@ script:pre-request {
 
   bru.setVar("checkIn", fmt(checkIn));
   bru.setVar("checkOut", fmt(checkOut));
+}
+
+docs {
+  Requires a VIP guest profile (platinum or gold loyalty tier).
+  Run IAM > Register, IAM > Login, then Guest > Create Guest (with loyalty_tier "platinum") before this request.
 }
 
 tests {

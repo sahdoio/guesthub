@@ -14,46 +14,34 @@ use Modules\Shared\Domain\Identity;
 
 final class SpecialRequest extends Entity
 {
-    private RequestStatus $status;
-    private ?DateTimeImmutable $fulfilledAt = null;
+    private function __construct(
+        public readonly SpecialRequestId $id,
+        public readonly RequestType $type,
+        public private(set) string $description,
+        public readonly DateTimeImmutable $createdAt,
+        public private(set) RequestStatus $status,
+        public private(set) ?DateTimeImmutable $fulfilledAt,
+    ) {}
 
-    public function __construct(
-        private readonly SpecialRequestId $id,
-        private readonly RequestType $type,
-        private string $description,
-        private readonly DateTimeImmutable $createdAt,
-    ) {
-        $this->status = RequestStatus::PENDING;
+    public static function create(
+        SpecialRequestId $id,
+        RequestType $type,
+        string $description,
+        DateTimeImmutable $createdAt,
+    ): self {
+        return new self(
+            id: $id,
+            type: $type,
+            description: $description,
+            createdAt: $createdAt,
+            status: RequestStatus::PENDING,
+            fulfilledAt: null,
+        );
     }
 
     public function id(): Identity
     {
         return $this->id;
-    }
-
-    public function type(): RequestType
-    {
-        return $this->type;
-    }
-
-    public function description(): string
-    {
-        return $this->description;
-    }
-
-    public function status(): RequestStatus
-    {
-        return $this->status;
-    }
-
-    public function fulfilledAt(): ?DateTimeImmutable
-    {
-        return $this->fulfilledAt;
-    }
-
-    public function createdAt(): DateTimeImmutable
-    {
-        return $this->createdAt;
     }
 
     public function fulfill(): void
