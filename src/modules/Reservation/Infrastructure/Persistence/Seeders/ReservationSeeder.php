@@ -6,12 +6,9 @@ namespace Modules\Reservation\Infrastructure\Persistence\Seeders;
 
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
+use Modules\Guest\Infrastructure\Persistence\Seeders\GuestSeeder;
 use Modules\Reservation\Domain\Reservation;
-use Modules\Reservation\Domain\ReservationId;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
-use Modules\Reservation\Domain\ValueObject\Email;
-use Modules\Reservation\Domain\ValueObject\Guest;
-use Modules\Reservation\Domain\ValueObject\Phone;
 use Modules\Reservation\Domain\ValueObject\RequestType;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 
@@ -23,10 +20,12 @@ class ReservationSeeder extends Seeder
 
     public function run(): void
     {
+        $guestIds = GuestSeeder::$guestIds;
+
         // 1. Pending reservation (future, regular guest)
         $r1 = new Reservation(
             $this->repository->nextIdentity(),
-            Guest::create('Alice Johnson', Email::fromString('alice@example.com'), Phone::fromString('+5511999990001'), '11122233344', false),
+            $guestIds['alice@example.com'],
             new ReservationPeriod(new DateTimeImmutable('+3 days'), new DateTimeImmutable('+6 days')),
             'SINGLE',
         );
@@ -36,7 +35,7 @@ class ReservationSeeder extends Seeder
         // 2. Confirmed reservation (future, VIP guest)
         $r2 = new Reservation(
             $this->repository->nextIdentity(),
-            Guest::create('Bob Williams', Email::fromString('bob.vip@example.com'), Phone::fromString('+5511999990002'), '55566677788', true),
+            $guestIds['bob.vip@example.com'],
             new ReservationPeriod(new DateTimeImmutable('+1 day'), new DateTimeImmutable('+5 days')),
             'SUITE',
         );
@@ -48,7 +47,7 @@ class ReservationSeeder extends Seeder
         // 3. Checked-in reservation (current stay, regular guest)
         $r3 = new Reservation(
             $this->repository->nextIdentity(),
-            Guest::create('Carol Davis', Email::fromString('carol@example.com'), Phone::fromString('+5511999990003'), '99988877766', false),
+            $guestIds['carol@example.com'],
             new ReservationPeriod(new DateTimeImmutable('today'), new DateTimeImmutable('+3 days')),
             'DOUBLE',
         );
@@ -62,7 +61,7 @@ class ReservationSeeder extends Seeder
         // 4. Cancelled reservation (VIP guest)
         $r4 = new Reservation(
             $this->repository->nextIdentity(),
-            Guest::create('David Martinez', Email::fromString('david.m@example.com'), Phone::fromString('+5511999990004'), '33344455566', true),
+            $guestIds['david.m@example.com'],
             new ReservationPeriod(new DateTimeImmutable('+10 days'), new DateTimeImmutable('+14 days')),
             'SUITE',
         );
@@ -72,7 +71,7 @@ class ReservationSeeder extends Seeder
         // 5. Confirmed reservation with multiple special requests (future, regular)
         $r5 = new Reservation(
             $this->repository->nextIdentity(),
-            Guest::create('Eva Thompson', Email::fromString('eva.t@example.com'), Phone::fromString('+5511999990005'), '77788899900', false),
+            $guestIds['eva.t@example.com'],
             new ReservationPeriod(new DateTimeImmutable('+7 days'), new DateTimeImmutable('+10 days')),
             'DOUBLE',
         );

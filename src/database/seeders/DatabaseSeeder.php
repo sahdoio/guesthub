@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Modules\Guest\Infrastructure\Persistence\Seeders\GuestSeeder;
 use Modules\Reservation\Infrastructure\Persistence\Seeders\ReservationSeeder;
 
 class DatabaseSeeder extends Seeder
@@ -21,6 +22,9 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        $this->call(ReservationSeeder::class);
+        $this->call([
+            GuestSeeder::class,
+            ReservationSeeder::class,
+        ]);
     }
 }
