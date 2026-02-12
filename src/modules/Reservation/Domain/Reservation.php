@@ -71,16 +71,10 @@ final class Reservation extends AggregateRoot
 
         return $reservation;
     }
-
-    // --- Identity ---
-
     public function id(): Identity
     {
         return $this->uuid;
     }
-
-    // --- Behavior ---
-
     public function confirm(): void
     {
         if ($this->status !== ReservationStatus::PENDING) {
@@ -131,8 +125,6 @@ final class Reservation extends AggregateRoot
         $this->recordEvent(new ReservationCancelled($this->uuid, $reason));
     }
 
-    // --- Special Requests ---
-
     public function addSpecialRequest(RequestType $type, string $description): SpecialRequestId
     {
         if (in_array($this->status, [ReservationStatus::CANCELLED, ReservationStatus::CHECKED_OUT], true)) {
@@ -172,8 +164,6 @@ final class Reservation extends AggregateRoot
             )
         );
     }
-
-    // --- Private ---
 
     private function findSpecialRequest(SpecialRequestId $requestId): SpecialRequest
     {

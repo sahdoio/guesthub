@@ -11,15 +11,18 @@ use Modules\Reservation\Domain\ReservationId;
 use Modules\Reservation\Domain\Service\GuestGateway;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 use Modules\Shared\Application\EventDispatcher;
+use Modules\Shared\Application\EventDispatchingHandler;
 
-final class CreateReservationHandler
+final readonly class CreateReservationHandler extends EventDispatchingHandler
 {
     public function __construct(
-        private readonly ReservationRepository $repository,
-        private readonly ReservationPolicy $policy,
-        private readonly EventDispatcher $dispatcher,
-        private readonly GuestGateway $guestGateway,
-    ) {}
+        private ReservationRepository $repository,
+        private ReservationPolicy $policy,
+        private GuestGateway $guestGateway,
+        EventDispatcher $dispatcher,
+    ) {
+        parent::__construct($dispatcher);
+    }
 
     public function handle(CreateReservation $command): ReservationId
     {
@@ -36,10 +39,7 @@ final class CreateReservationHandler
         $reservation = Reservation::create($id, $command->guestProfileId, $period, $command->roomType);
 
         $this->repository->save($reservation);
-
-        foreach ($reservation->pullDomainEvents() as $event) {
-            $this->dispatcher->dispatch($event);
-        }
+        $this->dispatchEvents($reservation);
 
         return $id;
     }

@@ -6,10 +6,10 @@ namespace Modules\IAM\Application\Command;
 
 use Modules\IAM\Domain\Service\TokenManager;
 
-final class RevokeTokenHandler
+final readonly class RevokeTokenHandler
 {
     public function __construct(
-        private readonly TokenManager $tokenManager,
+        private TokenManager $tokenManager,
     ) {}
 
     public function handle(RevokeToken $command): void

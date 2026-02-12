@@ -13,12 +13,12 @@ use Modules\IAM\Domain\Service\GuestProfileGateway;
 use Modules\IAM\Domain\Service\PasswordHasher;
 use Modules\IAM\Domain\ValueObject\ActorType;
 
-final class RegisterActorHandler
+final readonly class RegisterActorHandler
 {
     public function __construct(
-        private readonly ActorRepository $repository,
-        private readonly PasswordHasher $hasher,
-        private readonly GuestProfileGateway $guestProfileGateway,
+        private ActorRepository $repository,
+        private PasswordHasher $hasher,
+        private GuestProfileGateway $guestProfileGateway,
     ) {}
 
     public function handle(RegisterActor $command): ActorId

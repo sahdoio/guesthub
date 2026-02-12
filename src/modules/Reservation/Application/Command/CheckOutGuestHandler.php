@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace Modules\Reservation\Application\Command;
 
-use Modules\Shared\Application\EventDispatcher;
 use Modules\Reservation\Domain\Exception\ReservationNotFoundException;
 use Modules\Reservation\Domain\ReservationId;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
+use Modules\Shared\Application\EventDispatcher;
+use Modules\Shared\Application\EventDispatchingHandler;
 
-final class CheckOutGuestHandler
+final readonly class CheckOutGuestHandler extends EventDispatchingHandler
 {
     public function __construct(
-        private readonly ReservationRepository $repository,
-        private readonly EventDispatcher $dispatcher,
-    ) {}
+        private ReservationRepository $repository,
+        EventDispatcher $dispatcher,
+    ) {
+        parent::__construct($dispatcher);
+    }
 
     public function handle(CheckOutGuest $command): void
     {
@@ -25,9 +28,6 @@ final class CheckOutGuestHandler
         $reservation->checkOut();
 
         $this->repository->save($reservation);
-
-        foreach ($reservation->pullDomainEvents() as $event) {
-            $this->dispatcher->dispatch($event);
-        }
+        $this->dispatchEvents($reservation);
     }
 }

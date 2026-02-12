@@ -10,10 +10,10 @@ use Modules\Guest\Domain\GuestProfileId;
 use Modules\Guest\Domain\Repository\GuestProfileRepository;
 use Modules\Guest\Domain\ValueObject\LoyaltyTier;
 
-final class CreateGuestProfileHandler
+final readonly class CreateGuestProfileHandler
 {
     public function __construct(
-        private readonly GuestProfileRepository $repository,
+        private GuestProfileRepository $repository,
     ) {}
 
     public function handle(CreateGuestProfile $command): GuestProfileId

@@ -10,11 +10,11 @@ use Modules\Reservation\Domain\Event\ReservationCancelled;
 use Modules\Reservation\Domain\Exception\ReservationNotFoundException;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 
-final class OnReservationCancelled
+final readonly class OnReservationCancelled
 {
     public function __construct(
-        private readonly ReservationRepository $repository,
-        private readonly EventDispatcher $dispatcher,
+        private ReservationRepository $repository,
+        private EventDispatcher $dispatcher,
     ) {}
 
     public function handle(ReservationCancelled $event): void

@@ -10,12 +10,12 @@ use Modules\IAM\Domain\Repository\ActorRepository;
 use Modules\IAM\Domain\Service\PasswordHasher;
 use Modules\IAM\Domain\Service\TokenManager;
 
-final class AuthenticateActorHandler
+final readonly class AuthenticateActorHandler
 {
     public function __construct(
-        private readonly ActorRepository $repository,
-        private readonly PasswordHasher $hasher,
-        private readonly TokenManager $tokenManager,
+        private ActorRepository $repository,
+        private PasswordHasher $hasher,
+        private TokenManager $tokenManager,
     ) {}
 
     /**

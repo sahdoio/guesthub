@@ -51,14 +51,10 @@ final class GuestProfile extends AggregateRoot
         );
     }
 
-    // --- Identity ---
-
     public function id(): Identity
     {
         return $this->uuid;
     }
-
-    // --- Behavior ---
 
     public function updateContactInfo(string $fullName, string $email, string $phone): void
     {

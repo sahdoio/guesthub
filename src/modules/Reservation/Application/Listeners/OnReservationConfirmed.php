@@ -11,12 +11,12 @@ use Modules\Reservation\Domain\Exception\ReservationNotFoundException;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\Service\GuestGateway;
 
-final class OnReservationConfirmed
+final readonly class OnReservationConfirmed
 {
     public function __construct(
-        private readonly ReservationRepository $repository,
-        private readonly EventDispatcher $dispatcher,
-        private readonly GuestGateway $guestGateway,
+        private ReservationRepository $repository,
+        private EventDispatcher $dispatcher,
+        private GuestGateway $guestGateway,
     ) {}
 
     public function handle(ReservationConfirmed $event): void
