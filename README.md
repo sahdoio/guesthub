@@ -1,5 +1,7 @@
 # GuestHub
 
+[![Watch the video](https://img.youtube.com/vi/dwifp5zka0g/maxresdefault.jpg)](https://youtu.be/dwifp5zka0g)
+
 A hotel management system built to explore Domain-Driven Design with Laravel. The goal is to model real hotel operations — reservations, guest profiles, room inventory — as isolated bounded contexts that communicate through well-defined boundaries.
 
 This is a learning project. The focus is on getting the architecture right: aggregates with real invariants, value objects, domain events, and repositories that don't leak infrastructure into the domain.
