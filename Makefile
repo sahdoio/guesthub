@@ -22,7 +22,7 @@ go: ## Start containers, install deps, and run migrations
 	make setup
 	make db-migrate
 
-go-hard: ## Full reset: remove volume, rebuild, seed database @test -f src/.env || cp src/.env.example src/.env && echo "Created .env from .env.example"
+go-hard: ## Full reset: remove volume, rebuild, seed database
 	@test -f src/.env || cp src/.env.example src/.env && echo "Created .env from .env.example"
 	make down
 	docker volume rm -f guesthub-db-volume

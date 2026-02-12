@@ -4,7 +4,12 @@ A hotel management system built to explore Domain-Driven Design with Laravel. Th
 
 This is a learning project. The focus is on getting the architecture right: aggregates with real invariants, value objects, domain events, and repositories that don't leak infrastructure into the domain.
 
-## Architecture
+## Documentation
+
+- [Architecture](docs/architecture.md) — Context map, bounded contexts, event flows, inter-BC communication, persistence strategy, and IAM deep dive.
+- [Hotel Domain Model](docs/hotel-domain-model.md) — Domain model reference covering aggregates, entities, value objects, and bounded context boundaries.
+
+## Overall Architecture
 
 The project is organized into bounded contexts under `src/modules/`. Each module is self-contained with its own domain, application, infrastructure, and presentation layers.
 
@@ -70,6 +75,24 @@ Loyalty tiers: `bronze`, `silver`, `gold`, `platinum`.
 
 ## Setup
 
+### Docker (recommended)
+
+Requirements: Docker and Docker Compose.
+
+```bash
+make go
+```
+
+This copies `.env.example` to `.env` (if missing), starts the containers, installs Composer dependencies, and runs migrations.
+
+For a full reset (wipes the database volume and seeds):
+
+```bash
+make go-hard
+```
+
+### Local
+
 Requirements: PHP 8.4, Composer, Node.js.
 
 ```bash
@@ -90,15 +113,32 @@ Starts the dev server, queue worker, log tail, and Vite concurrently.
 ### Tests
 
 ```bash
-composer test
+make test          # via Docker (with coverage)
+# or
+cd src && composer test  # locally, SQLite in-memory
 ```
 
-Runs on SQLite in-memory. No external services needed.
+### Make commands
 
-## Documentation
-
-- [Architecture](docs/architecture.md) — Context map, bounded contexts, event flows, inter-BC communication, persistence strategy, and IAM deep dive.
-- [Hotel Domain Model](docs/hotel-domain-model.md) — Domain model reference covering aggregates, entities, value objects, and bounded context boundaries.
+| Command | Description |
+|---|---|
+| `make go` | Start containers, install deps, run migrations (copies `.env` if missing) |
+| `make go-hard` | Full reset: remove volume, rebuild, seed database |
+| `make up` | Start containers in detached mode with build |
+| `make down` | Stop and remove containers |
+| `make setup` | Install Composer dependencies |
+| `make sh` | Open a bash shell in the app container |
+| `make test` | Run tests with coverage |
+| `make paratest` | Run tests in parallel (10 processes) with coverage |
+| `make test-coverage` | Generate HTML coverage report |
+| `make db-migrate` | Run database migrations |
+| `make db-seed` | Seed the database |
+| `make db-rollback` | Rollback last database migration |
+| `make db-reset` | Rollback, migrate, and seed |
+| `make clear` | Clear all Laravel caches |
+| `make logs` | Follow Docker container logs |
+| `make log` | Follow Laravel application log |
+| `make phpstan` | Run PHPStan static analysis |
 
 ## API Collection
 
