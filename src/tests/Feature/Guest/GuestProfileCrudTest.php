@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Guest;
 
+use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use Modules\Guest\Domain\GuestProfile;
+use Modules\Guest\Domain\Repository\GuestProfileRepository;
+use Modules\Guest\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use Tests\TestCase;
 
@@ -28,99 +32,22 @@ final class GuestProfileCrudTest extends TestCase
 
     private function createGuest(array $overrides = []): string
     {
-        $payload = array_merge([
-            'full_name' => 'Jane Doe',
-            'email' => 'jane@hotel.com',
-            'phone' => '+5511999999999',
-            'document' => 'ABC123456',
-            'loyalty_tier' => 'bronze',
-            'preferences' => ['late_checkout', 'high_floor'],
-        ], $overrides);
+        $repository = $this->app->make(GuestProfileRepository::class);
 
-        $response = $this->postJson('/api/guests', $payload);
-        $response->assertStatus(201);
+        $profile = GuestProfile::create(
+            uuid: $repository->nextIdentity(),
+            fullName: $overrides['full_name'] ?? 'Jane Doe',
+            email: $overrides['email'] ?? 'jane@hotel.com',
+            phone: $overrides['phone'] ?? '+5511999999999',
+            document: $overrides['document'] ?? 'ABC123456',
+            loyaltyTier: LoyaltyTier::from($overrides['loyalty_tier'] ?? 'bronze'),
+            preferences: $overrides['preferences'] ?? ['late_checkout', 'high_floor'],
+            createdAt: new DateTimeImmutable(),
+        );
 
-        return $response->json('data.id');
-    }
+        $repository->save($profile);
 
-    // --- Create ---
-
-    public function test_it_creates_a_guest_profile(): void
-    {
-        $response = $this->postJson('/api/guests', [
-            'full_name' => 'Jane Doe',
-            'email' => 'jane@hotel.com',
-            'phone' => '+5511999999999',
-            'document' => 'ABC123456',
-            'loyalty_tier' => 'gold',
-            'preferences' => ['ocean_view'],
-        ]);
-
-        $response->assertStatus(201)
-            ->assertJsonPath('data.full_name', 'Jane Doe')
-            ->assertJsonPath('data.email', 'jane@hotel.com')
-            ->assertJsonPath('data.loyalty_tier', 'gold')
-            ->assertJsonPath('data.preferences', ['ocean_view']);
-
-        $this->assertDatabaseHas('guest_profiles', [
-            'uuid' => $response->json('data.id'),
-            'full_name' => 'Jane Doe',
-            'email' => 'jane@hotel.com',
-        ]);
-    }
-
-    public function test_it_creates_guest_with_default_loyalty_tier(): void
-    {
-        $response = $this->postJson('/api/guests', [
-            'full_name' => 'Bob Smith',
-            'email' => 'bob@hotel.com',
-            'phone' => '+5521888888888',
-            'document' => 'XYZ987654',
-        ]);
-
-        $response->assertStatus(201)
-            ->assertJsonPath('data.loyalty_tier', 'bronze');
-    }
-
-    public function test_create_validates_required_fields(): void
-    {
-        $this->postJson('/api/guests', [])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['full_name', 'email', 'phone', 'document']);
-    }
-
-    public function test_create_validates_email_format(): void
-    {
-        $this->postJson('/api/guests', [
-            'full_name' => 'Jane Doe',
-            'email' => 'not-an-email',
-            'phone' => '+5511999999999',
-            'document' => 'ABC123456',
-        ])->assertStatus(422)
-            ->assertJsonValidationErrors(['email']);
-    }
-
-    public function test_create_validates_phone_format(): void
-    {
-        $this->postJson('/api/guests', [
-            'full_name' => 'Jane Doe',
-            'email' => 'jane@hotel.com',
-            'phone' => '11999999999',
-            'document' => 'ABC123456',
-        ])->assertStatus(422)
-            ->assertJsonValidationErrors(['phone']);
-    }
-
-    public function test_create_validates_loyalty_tier(): void
-    {
-        $this->postJson('/api/guests', [
-            'full_name' => 'Jane Doe',
-            'email' => 'jane@hotel.com',
-            'phone' => '+5511999999999',
-            'document' => 'ABC123456',
-            'loyalty_tier' => 'diamond',
-        ])->assertStatus(422)
-            ->assertJsonValidationErrors(['loyalty_tier']);
+        return (string) $profile->uuid;
     }
 
     // --- Show ---

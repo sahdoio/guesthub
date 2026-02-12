@@ -4,28 +4,34 @@ declare(strict_types=1);
 
 namespace Modules\IAM\Infrastructure\Integration;
 
+use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
-use Modules\Guest\Application\Command\CreateGuestProfile;
-use Modules\Guest\Application\Command\CreateGuestProfileHandler;
+use Modules\Guest\Domain\GuestProfile;
+use Modules\Guest\Domain\Repository\GuestProfileRepository;
+use Modules\Guest\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Domain\Service\GuestProfileGateway;
 
-final class GuestProfileGatewayAdapter implements GuestProfileGateway
+final readonly class GuestProfileGatewayAdapter implements GuestProfileGateway
 {
     public function __construct(
-        private readonly CreateGuestProfileHandler $handler,
+        private GuestProfileRepository $repository,
     ) {}
 
     public function create(string $name, string $email, string $phone, string $document): int
     {
-        $uuid = $this->handler->handle(new CreateGuestProfile(
+        $profile = GuestProfile::create(
+            uuid: $this->repository->nextIdentity(),
             fullName: $name,
             email: $email,
             phone: $phone,
             document: $document,
-            loyaltyTier: 'bronze',
+            loyaltyTier: LoyaltyTier::BRONZE,
             preferences: [],
-        ));
+            createdAt: new DateTimeImmutable(),
+        );
 
-        return (int) DB::table('guest_profiles')->where('uuid', $uuid->value)->value('id');
+        $this->repository->save($profile);
+
+        return (int) DB::table('guest_profiles')->where('uuid', (string) $profile->uuid)->value('id');
     }
 }

@@ -7,11 +7,13 @@ namespace Tests\Feature\Reservation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
+use Tests\Concerns\CreatesGuestProfile;
 use Tests\TestCase;
 
 final class CreateReservationTest extends TestCase
 {
     use RefreshDatabase;
+    use CreatesGuestProfile;
 
     private string $guestProfileId;
 
@@ -27,15 +29,7 @@ final class CreateReservationTest extends TestCase
             'password' => bcrypt('password'),
         ]));
 
-        $response = $this->postJson('/api/guests', [
-            'full_name' => 'John Doe',
-            'email' => 'john@hotel.com',
-            'phone' => '+5511999999999',
-            'document' => '12345678900',
-            'loyalty_tier' => 'bronze',
-        ]);
-
-        $this->guestProfileId = $response->json('data.id');
+        $this->guestProfileId = $this->createGuestProfile();
     }
 
     private function validPayload(array $overrides = []): array
@@ -78,7 +72,6 @@ final class CreateReservationTest extends TestCase
 
     public function test_it_creates_a_vip_reservation(): void
     {
-        // Update guest to gold tier for VIP
         $this->putJson("/api/guests/{$this->guestProfileId}", [
             'loyalty_tier' => 'gold',
         ]);
