@@ -15,13 +15,15 @@ help: ## Show this help
 	@:
 
 go: ## Start containers, install deps, and run migrations
+	@test -f src/.env || cp src/.env.example src/.env && echo "Created .env from .env.example"
 	make down
 	make up
 	sleep 2
 	make setup
 	make db-migrate
 
-go-hard: ## Full reset: remove volume, rebuild, seed database
+go-hard: ## Full reset: remove volume, rebuild, seed database @test -f src/.env || cp src/.env.example src/.env && echo "Created .env from .env.example"
+	@test -f src/.env || cp src/.env.example src/.env && echo "Created .env from .env.example"
 	make down
 	docker volume rm -f guesthub-db-volume
 	make up
