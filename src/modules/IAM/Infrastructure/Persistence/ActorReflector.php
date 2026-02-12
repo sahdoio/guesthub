@@ -19,7 +19,8 @@ final class ActorReflector
         string $name,
         string $email,
         HashedPassword $password,
-        ?int $guestProfileId,
+        ?string $profileType,
+        ?int $profileId,
         DateTimeImmutable $createdAt,
         ?DateTimeImmutable $updatedAt,
     ): Actor {
@@ -31,7 +32,8 @@ final class ActorReflector
         self::set($ref, $actor, 'name', $name);
         self::set($ref, $actor, 'email', $email);
         self::set($ref, $actor, 'password', $password);
-        self::set($ref, $actor, 'guestProfileId', $guestProfileId);
+        self::set($ref, $actor, 'profileType', $profileType);
+        self::set($ref, $actor, 'profileId', $profileId);
         self::set($ref, $actor, 'createdAt', $createdAt);
         self::set($ref, $actor, 'updatedAt', $updatedAt);
 

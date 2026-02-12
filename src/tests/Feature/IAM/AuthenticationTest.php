@@ -34,21 +34,24 @@ final class AuthenticationTest extends TestCase
             'type' => 'guest',
         ]);
 
-        $guestProfileUuid = $response->json('data.guest_profile_id');
-        $this->assertNotNull($guestProfileUuid);
+        $response->assertJsonPath('data.profile_type', 'guest');
+
+        $profileUuid = $response->json('data.profile_id');
+        $this->assertNotNull($profileUuid);
 
         $this->assertDatabaseHas('guest_profiles', [
-            'uuid' => $guestProfileUuid,
+            'uuid' => $profileUuid,
             'full_name' => 'John Doe',
             'email' => 'john@hotel.com',
             'phone' => '+5511999999999',
             'document' => 'ABC123456',
         ]);
 
-        $guestProfileId = DB::table('guest_profiles')->where('uuid', $guestProfileUuid)->value('id');
+        $profileId = DB::table('guest_profiles')->where('uuid', $profileUuid)->value('id');
         $this->assertDatabaseHas('actors', [
             'email' => 'john@hotel.com',
-            'guest_profile_id' => $guestProfileId,
+            'profile_type' => 'guest',
+            'profile_id' => $profileId,
         ]);
     }
 

@@ -44,7 +44,8 @@ final class RegisterActorHandler
             name: $command->name,
             email: $command->email,
             password: $this->hasher->hash($command->password),
-            guestProfileId: $guestProfileId,
+            profileType: ActorType::GUEST->value,
+            profileId: $guestProfileId,
             createdAt: new DateTimeImmutable(),
         );
 

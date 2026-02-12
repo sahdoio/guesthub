@@ -19,7 +19,8 @@ final class ActorModel extends Authenticatable
         'name',
         'email',
         'password',
-        'guest_profile_id',
+        'profile_type',
+        'profile_id',
     ];
 
     protected $hidden = [

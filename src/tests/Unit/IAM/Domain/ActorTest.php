@@ -24,7 +24,8 @@ final class ActorTest extends TestCase
             name: 'John Doe',
             email: 'john@hotel.com',
             password: new HashedPassword('$2y$10$somehash'),
-            guestProfileId: 1,
+            profileType: 'guest',
+            profileId: 1,
             createdAt: new DateTimeImmutable(),
         );
 
@@ -32,7 +33,8 @@ final class ActorTest extends TestCase
         $this->assertSame(ActorType::GUEST, $actor->type);
         $this->assertSame('John Doe', $actor->name);
         $this->assertSame('john@hotel.com', $actor->email);
-        $this->assertSame(1, $actor->guestProfileId);
+        $this->assertSame('guest', $actor->profileType);
+        $this->assertSame(1, $actor->profileId);
         $this->assertNull($actor->updatedAt);
     }
 
@@ -45,12 +47,14 @@ final class ActorTest extends TestCase
             name: 'Booking Engine',
             email: 'system@hotel.com',
             password: new HashedPassword('$2y$10$somehash'),
-            guestProfileId: null,
+            profileType: null,
+            profileId: null,
             createdAt: new DateTimeImmutable(),
         );
 
         $this->assertSame(ActorType::SYSTEM, $actor->type);
-        $this->assertNull($actor->guestProfileId);
+        $this->assertNull($actor->profileType);
+        $this->assertNull($actor->profileId);
     }
 
     #[Test]
@@ -62,7 +66,8 @@ final class ActorTest extends TestCase
             name: 'Jane Doe',
             email: 'jane@hotel.com',
             password: new HashedPassword('$2y$10$oldhash'),
-            guestProfileId: null,
+            profileType: null,
+            profileId: null,
             createdAt: new DateTimeImmutable(),
         );
 

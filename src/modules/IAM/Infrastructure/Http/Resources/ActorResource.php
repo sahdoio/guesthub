@@ -12,23 +12,39 @@ use Modules\IAM\Domain\Actor;
 /** @mixin Actor */
 final class ActorResource extends JsonResource
 {
+    private const array PROFILE_TABLE_MAP = [
+        'guest' => 'guest_profiles',
+    ];
+
     public function toArray(Request $request): array
     {
         /** @var Actor $actor */
         $actor = $this->resource;
-
-        $guestProfileUuid = $actor->guestProfileId
-            ? DB::table('guest_profiles')->where('id', $actor->guestProfileId)->value('uuid')
-            : null;
 
         return [
             'id' => (string) $actor->uuid,
             'type' => $actor->type->value,
             'name' => $actor->name,
             'email' => $actor->email,
-            'guest_profile_id' => $guestProfileUuid,
+            'profile_type' => $actor->profileType,
+            'profile_id' => $this->resolveProfileUuid($actor->profileType, $actor->profileId),
             'created_at' => $actor->createdAt->format('Y-m-d H:i:s'),
             'updated_at' => $actor->updatedAt?->format('Y-m-d H:i:s'),
         ];
+    }
+
+    private function resolveProfileUuid(?string $profileType, ?int $profileId): ?string
+    {
+        if ($profileType === null || $profileId === null) {
+            return null;
+        }
+
+        $table = self::PROFILE_TABLE_MAP[$profileType] ?? null;
+
+        if ($table === null) {
+            return null;
+        }
+
+        return DB::table($table)->where('id', $profileId)->value('uuid');
     }
 }

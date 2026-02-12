@@ -36,6 +36,7 @@ tests {
     expect(data.name).to.equal('Jane Doe');
     expect(data.email).to.equal('jane@hotel.com');
     expect(data.type).to.equal('guest');
-    expect(data.guest_profile_id).to.be.a('string');
+    expect(data.profile_type).to.equal('guest');
+    expect(data.profile_id).to.be.a('string');
   });
 }
