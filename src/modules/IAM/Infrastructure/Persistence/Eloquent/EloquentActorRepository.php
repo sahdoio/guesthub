@@ -2,40 +2,33 @@
 
 declare(strict_types=1);
 
-namespace Modules\IAM\Infrastructure\Persistence;
+namespace Modules\IAM\Infrastructure\Persistence\Eloquent;
 
 use DateTimeImmutable;
-use Illuminate\Support\Facades\DB;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Repository\ActorRepository;
 use Modules\IAM\Domain\ValueObject\ActorType;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
+use Modules\IAM\Infrastructure\Persistence\ActorReflector;
 
-final class QueryBuilderActorRepository implements ActorRepository
+final class EloquentActorRepository implements ActorRepository
 {
-    private const string TABLE = 'actors';
+    public function __construct(
+        private readonly ActorModel $model,
+    ) {}
 
     public function save(Actor $actor): void
     {
         $data = $this->toRecord($actor);
 
-        $existing = DB::table(self::TABLE)
-            ->where('uuid', $actor->uuid->value)
-            ->first();
-
-        if ($existing) {
-            DB::table(self::TABLE)
-                ->where('id', $existing->id)
-                ->update($data);
-        } else {
-            DB::table(self::TABLE)->insert($data);
-        }
+        $this->model->newQuery()
+            ->updateOrInsert(['uuid' => $data['uuid']], $data);
     }
 
     public function findByUuid(ActorId $uuid): ?Actor
     {
-        $record = DB::table(self::TABLE)
+        $record = $this->model->newQuery()
             ->where('uuid', $uuid->value)
             ->first();
 
@@ -44,7 +37,7 @@ final class QueryBuilderActorRepository implements ActorRepository
 
     public function findByEmail(string $email): ?Actor
     {
-        $record = DB::table(self::TABLE)
+        $record = $this->model->newQuery()
             ->where('email', $email)
             ->first();
 

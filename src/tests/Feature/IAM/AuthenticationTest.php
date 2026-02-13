@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\IAM;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use Tests\TestCase;
@@ -47,11 +46,10 @@ final class AuthenticationTest extends TestCase
             'document' => 'ABC123456',
         ]);
 
-        $profileId = DB::table('guest_profiles')->where('uuid', $profileUuid)->value('id');
         $this->assertDatabaseHas('actors', [
             'email' => 'john@hotel.com',
             'profile_type' => 'guest',
-            'profile_id' => $profileId,
+            'profile_id' => $profileUuid,
         ]);
     }
 

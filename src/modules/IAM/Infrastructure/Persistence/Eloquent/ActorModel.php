@@ -13,6 +13,8 @@ final class ActorModel extends Authenticatable
 
     protected $table = 'actors';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'uuid',
         'type',
@@ -21,6 +23,8 @@ final class ActorModel extends Authenticatable
         'password',
         'profile_type',
         'profile_id',
+        'created_at',
+        'updated_at',
     ];
 
     protected $hidden = [

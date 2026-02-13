@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Modules\Reservation\Infrastructure\Persistence;
+namespace Modules\Reservation\Infrastructure\Persistence\Eloquent;
 
 use DateTimeImmutable;
-use Illuminate\Support\Facades\DB;
 use Modules\Reservation\Domain\Entity\SpecialRequest;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ReservationId;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
+use Modules\Reservation\Infrastructure\Persistence\ReservationReflector;
+use Modules\Reservation\Infrastructure\Persistence\SpecialRequestReflector;
 use Modules\Shared\Domain\PaginatedResult;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 use Modules\Reservation\Domain\ValueObject\ReservationStatus;
@@ -17,30 +18,23 @@ use Modules\Reservation\Domain\ValueObject\RequestStatus;
 use Modules\Reservation\Domain\ValueObject\RequestType;
 use Modules\Reservation\Domain\ValueObject\SpecialRequestId;
 
-final class QueryBuilderReservationRepository implements ReservationRepository
+final class EloquentReservationRepository implements ReservationRepository
 {
-    private const string TABLE = 'reservations';
+    public function __construct(
+        private readonly ReservationModel $model,
+    ) {}
 
     public function save(Reservation $reservation): void
     {
         $data = $this->toRecord($reservation);
 
-        $existing = DB::table(self::TABLE)
-            ->where('uuid', $reservation->uuid->value)
-            ->first();
-
-        if ($existing) {
-            DB::table(self::TABLE)
-                ->where('id', $existing->id)
-                ->update($data);
-        } else {
-            DB::table(self::TABLE)->insert($data);
-        }
+        $this->model->newQuery()
+            ->updateOrInsert(['uuid' => $data['uuid']], $data);
     }
 
     public function findByUuid(ReservationId $uuid): ?Reservation
     {
-        $record = DB::table(self::TABLE)
+        $record = $this->model->newQuery()
             ->where('uuid', $uuid->value)
             ->first();
 
@@ -49,7 +43,7 @@ final class QueryBuilderReservationRepository implements ReservationRepository
 
     public function findByGuestProfileId(string $guestProfileId): array
     {
-        return DB::table(self::TABLE)
+        return $this->model->newQuery()
             ->where('guest_profile_id', $guestProfileId)
             ->get()
             ->map(fn(object $record) => $this->toEntity($record))
@@ -58,7 +52,7 @@ final class QueryBuilderReservationRepository implements ReservationRepository
 
     public function paginate(int $page = 1, int $perPage = 15): PaginatedResult
     {
-        $paginator = DB::table(self::TABLE)
+        $paginator = $this->model->newQuery()
             ->orderByDesc('id')
             ->paginate(perPage: $perPage, page: $page);
 
@@ -112,7 +106,9 @@ final class QueryBuilderReservationRepository implements ReservationRepository
             roomType: $record->room_type,
             status: ReservationStatus::from($record->status),
             assignedRoomNumber: $record->assigned_room_number,
-            specialRequests: $this->deserializeSpecialRequests($record->special_requests),
+            specialRequests: $this->deserializeSpecialRequests(
+                is_array($record->special_requests) ? json_encode($record->special_requests) : $record->special_requests,
+            ),
             createdAt: new DateTimeImmutable($record->created_at),
             confirmedAt: $record->confirmed_at ? new DateTimeImmutable($record->confirmed_at) : null,
             checkedInAt: $record->checked_in_at ? new DateTimeImmutable($record->checked_in_at) : null,

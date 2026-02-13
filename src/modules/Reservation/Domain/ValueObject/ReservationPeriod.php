@@ -17,11 +17,6 @@ final class ReservationPeriod extends ValueObject
             throw new \InvalidArgumentException('Check-out must be after check-in.');
         }
 
-        $today = new DateTimeImmutable('today');
-        if ($checkIn < $today) {
-            throw new \InvalidArgumentException('Check-in cannot be in the past.');
-        }
-
         if ($this->nights() > 365) {
             throw new \InvalidArgumentException('Maximum stay is 365 nights.');
         }

@@ -27,6 +27,7 @@ final class CreateReservationTest extends TestCase
             'name' => 'Test System',
             'email' => 'system@test.com',
             'password' => bcrypt('password'),
+            'created_at' => now(),
         ]));
 
         $this->guestProfileId = $this->createGuestProfile();

@@ -57,15 +57,14 @@ final class ReservationPeriodTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_checkin_in_the_past(): void
+    public function it_allows_past_dates_for_reconstruction(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Check-in cannot be in the past');
-
-        new ReservationPeriod(
+        $period = new ReservationPeriod(
+            new DateTimeImmutable('-3 days'),
             new DateTimeImmutable('-1 day'),
-            new DateTimeImmutable('+2 days'),
         );
+
+        $this->assertSame(2, $period->nights());
     }
 
     #[Test]

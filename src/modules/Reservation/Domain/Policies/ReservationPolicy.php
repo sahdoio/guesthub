@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Reservation\Domain\Policies;
 
+use DateTimeImmutable;
 use Modules\Reservation\Domain\Service\InventoryGateway;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 
@@ -19,12 +20,17 @@ final class ReservationPolicy
 
     public function canCreateReservation(bool $isVip, ReservationPeriod $period, string $roomType): bool
     {
+        $today = new DateTimeImmutable('today');
+
+        if ($period->checkIn < $today) {
+            return false;
+        }
+
         if ($period->nights() < self::MIN_STAY_NIGHTS) {
             return false;
         }
 
         $maxAdvanceDays = $isVip ? self::MAX_ADVANCE_DAYS_VIP : self::MAX_ADVANCE_DAYS_REGULAR;
-        $today = new \DateTimeImmutable('today');
         $daysInAdvance = (int) $today->diff($period->checkIn)->days;
 
         if ($daysInAdvance > $maxAdvanceDays) {

@@ -20,7 +20,7 @@ use Modules\Reservation\Domain\Service\GuestGateway;
 use Modules\Reservation\Domain\Service\InventoryGateway;
 use Modules\Reservation\Infrastructure\Integration\GuestGatewayAdapter;
 use Modules\Reservation\Infrastructure\Integration\InventoryGatewayAdapter;
-use Modules\Reservation\Infrastructure\Persistence\QueryBuilderReservationRepository;
+use Modules\Reservation\Infrastructure\Persistence\Eloquent\EloquentReservationRepository;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Infrastructure\Messaging\LaravelEventDispatcher;
 
@@ -30,7 +30,7 @@ final class ReservationServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../Config/reservation.php', 'reservation');
 
-        $this->app->bind(ReservationRepository::class, QueryBuilderReservationRepository::class);
+        $this->app->bind(ReservationRepository::class, EloquentReservationRepository::class);
         $this->app->bind(InventoryGateway::class, InventoryGatewayAdapter::class);
         $this->app->bind(GuestGateway::class, GuestGatewayAdapter::class);
         $this->app->bindIf(EventDispatcher::class, LaravelEventDispatcher::class);

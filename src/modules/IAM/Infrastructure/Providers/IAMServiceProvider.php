@@ -13,13 +13,13 @@ use Modules\IAM\Domain\Service\TokenManager;
 use Modules\IAM\Infrastructure\Integration\GuestProfileGatewayAdapter;
 use Modules\IAM\Infrastructure\Services\BcryptPasswordHasher;
 use Modules\IAM\Infrastructure\Services\SanctumTokenManager;
-use Modules\IAM\Infrastructure\Persistence\QueryBuilderActorRepository;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentActorRepository;
 
 final class IAMServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(ActorRepository::class, QueryBuilderActorRepository::class);
+        $this->app->bind(ActorRepository::class, EloquentActorRepository::class);
         $this->app->bind(TokenManager::class, SanctumTokenManager::class);
         $this->app->bind(PasswordHasher::class, BcryptPasswordHasher::class);
         $this->app->bind(GuestProfileGateway::class, GuestProfileGatewayAdapter::class);
