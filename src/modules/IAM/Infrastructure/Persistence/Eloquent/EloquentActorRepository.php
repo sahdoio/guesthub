@@ -73,7 +73,7 @@ final class EloquentActorRepository implements ActorRepository
             email: $record->email,
             password: new HashedPassword($record->password),
             profileType: $record->profile_type,
-            profileId: $record->profile_id,
+            profileId: $record->profile_id !== null ? (string) $record->profile_id : null,
             createdAt: new DateTimeImmutable($record->created_at),
             updatedAt: $record->updated_at ? new DateTimeImmutable($record->updated_at) : null,
         );
