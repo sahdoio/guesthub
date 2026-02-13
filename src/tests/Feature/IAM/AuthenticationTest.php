@@ -7,13 +7,15 @@ namespace Tests\Feature\IAM;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 final class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_registers_a_guest_actor(): void
+    #[Test]
+    public function itRegistersAGuestActor(): void
     {
         $response = $this->postJson('/api/auth/register', [
             'name' => 'John Doe',
@@ -53,7 +55,8 @@ final class AuthenticationTest extends TestCase
         ]);
     }
 
-    public function test_it_prevents_duplicate_email_registration(): void
+    #[Test]
+    public function itPreventsDuplicateEmailRegistration(): void
     {
         $this->postJson('/api/auth/register', [
             'name' => 'John Doe',
@@ -72,7 +75,8 @@ final class AuthenticationTest extends TestCase
         ])->assertStatus(500);
     }
 
-    public function test_it_validates_registration_fields(): void
+    #[Test]
+    public function itValidatesRegistrationFields(): void
     {
         $response = $this->postJson('/api/auth/register', []);
 
@@ -80,7 +84,8 @@ final class AuthenticationTest extends TestCase
             ->assertJsonValidationErrors(['name', 'email', 'password', 'phone', 'document']);
     }
 
-    public function test_it_validates_password_min_length(): void
+    #[Test]
+    public function itValidatesPasswordMinLength(): void
     {
         $response = $this->postJson('/api/auth/register', [
             'name' => 'John',
@@ -94,7 +99,8 @@ final class AuthenticationTest extends TestCase
             ->assertJsonValidationErrors(['password']);
     }
 
-    public function test_it_logs_in_and_returns_token(): void
+    #[Test]
+    public function itLogsInAndReturnsToken(): void
     {
         $this->postJson('/api/auth/register', [
             'name' => 'John Doe',
@@ -115,7 +121,8 @@ final class AuthenticationTest extends TestCase
         $this->assertNotEmpty($response->json('token'));
     }
 
-    public function test_it_rejects_invalid_credentials(): void
+    #[Test]
+    public function itRejectsInvalidCredentials(): void
     {
         $this->postJson('/api/auth/register', [
             'name' => 'John Doe',
@@ -133,7 +140,8 @@ final class AuthenticationTest extends TestCase
         $response->assertStatus(500);
     }
 
-    public function test_it_logs_out_and_revokes_tokens(): void
+    #[Test]
+    public function itLogsOutAndRevokesTokens(): void
     {
         $this->postJson('/api/auth/register', [
             'name' => 'John Doe',
@@ -156,13 +164,15 @@ final class AuthenticationTest extends TestCase
             ->assertJsonPath('message', 'Logged out.');
     }
 
-    public function test_logout_requires_authentication(): void
+    #[Test]
+    public function logoutRequiresAuthentication(): void
     {
         $this->postJson('/api/auth/logout')
             ->assertStatus(401);
     }
 
-    public function test_protected_routes_require_authentication(): void
+    #[Test]
+    public function protectedRoutesRequireAuthentication(): void
     {
         $this->getJson('/api/reservations')->assertStatus(401);
         $this->getJson('/api/guests')->assertStatus(401);

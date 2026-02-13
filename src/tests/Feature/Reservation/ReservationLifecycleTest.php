@@ -7,6 +7,7 @@ namespace Tests\Feature\Reservation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\CreatesGuestProfile;
 use Tests\TestCase;
 
@@ -50,7 +51,8 @@ final class ReservationLifecycleTest extends TestCase
 
     // --- Show ---
 
-    public function test_it_shows_a_reservation(): void
+    #[Test]
+    public function itShowsAReservation(): void
     {
         $id = $this->createReservation();
 
@@ -61,7 +63,8 @@ final class ReservationLifecycleTest extends TestCase
             ->assertJsonPath('data.status', 'pending');
     }
 
-    public function test_it_returns_404_for_unknown_reservation(): void
+    #[Test]
+    public function itReturns404ForUnknownReservation(): void
     {
         $response = $this->getJson('/api/reservations/00000000-0000-0000-0000-000000000000');
 
@@ -70,7 +73,8 @@ final class ReservationLifecycleTest extends TestCase
 
     // --- Full Lifecycle ---
 
-    public function test_full_lifecycle_create_confirm_checkin_checkout(): void
+    #[Test]
+    public function fullLifecycleCreateConfirmCheckinCheckout(): void
     {
         $id = $this->createReservation();
 
@@ -102,7 +106,8 @@ final class ReservationLifecycleTest extends TestCase
 
     // --- Cancellation ---
 
-    public function test_cancel_pending_reservation(): void
+    #[Test]
+    public function cancelPendingReservation(): void
     {
         $id = $this->createReservation();
 
@@ -117,7 +122,8 @@ final class ReservationLifecycleTest extends TestCase
         ]);
     }
 
-    public function test_cancel_confirmed_reservation(): void
+    #[Test]
+    public function cancelConfirmedReservation(): void
     {
         $id = $this->createReservation();
         $this->postJson("/api/reservations/{$id}/confirm");
@@ -128,7 +134,8 @@ final class ReservationLifecycleTest extends TestCase
         $this->assertDatabaseHas('reservations', ['uuid' => $id, 'status' => 'cancelled']);
     }
 
-    public function test_cancel_requires_reason_with_min_length(): void
+    #[Test]
+    public function cancelRequiresReasonWithMinLength(): void
     {
         $id = $this->createReservation();
 
@@ -139,7 +146,8 @@ final class ReservationLifecycleTest extends TestCase
 
     // --- Special Requests ---
 
-    public function test_add_special_request(): void
+    #[Test]
+    public function addSpecialRequest(): void
     {
         $id = $this->createReservation();
 
@@ -157,7 +165,8 @@ final class ReservationLifecycleTest extends TestCase
             ->assertJsonPath('data.special_requests.0.type', 'early_check_in');
     }
 
-    public function test_add_special_request_validates_type(): void
+    #[Test]
+    public function addSpecialRequestValidatesType(): void
     {
         $id = $this->createReservation();
 
@@ -170,7 +179,8 @@ final class ReservationLifecycleTest extends TestCase
 
     // --- Check-in Validation ---
 
-    public function test_checkin_requires_room_number(): void
+    #[Test]
+    public function checkinRequiresRoomNumber(): void
     {
         $id = $this->createReservation();
         $this->postJson("/api/reservations/{$id}/confirm");
@@ -180,7 +190,8 @@ final class ReservationLifecycleTest extends TestCase
             ->assertJsonValidationErrors(['room_number']);
     }
 
-    public function test_checkin_validates_room_number_format(): void
+    #[Test]
+    public function checkinValidatesRoomNumberFormat(): void
     {
         $id = $this->createReservation();
         $this->postJson("/api/reservations/{$id}/confirm");

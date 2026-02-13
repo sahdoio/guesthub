@@ -8,8 +8,11 @@ use DateTimeImmutable;
 use Modules\Guest\Domain\GuestProfile;
 use Modules\Guest\Domain\GuestProfileId;
 use Modules\Guest\Domain\ValueObject\LoyaltyTier;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(GuestProfile::class)]
 final class GuestProfileTest extends TestCase
 {
     private function createProfile(array $overrides = []): GuestProfile
@@ -26,7 +29,8 @@ final class GuestProfileTest extends TestCase
         );
     }
 
-    public function test_it_creates_a_guest_profile(): void
+    #[Test]
+    public function itCreatesAGuestProfile(): void
     {
         $id = GuestProfileId::generate();
 
@@ -51,7 +55,8 @@ final class GuestProfileTest extends TestCase
         $this->assertNull($profile->updatedAt);
     }
 
-    public function test_it_updates_contact_info(): void
+    #[Test]
+    public function itUpdatesContactInfo(): void
     {
         $profile = $this->createProfile();
 
@@ -63,7 +68,8 @@ final class GuestProfileTest extends TestCase
         $this->assertNotNull($profile->updatedAt);
     }
 
-    public function test_it_changes_loyalty_tier(): void
+    #[Test]
+    public function itChangesLoyaltyTier(): void
     {
         $profile = $this->createProfile();
 
@@ -73,7 +79,8 @@ final class GuestProfileTest extends TestCase
         $this->assertNotNull($profile->updatedAt);
     }
 
-    public function test_it_sets_preferences(): void
+    #[Test]
+    public function itSetsPreferences(): void
     {
         $profile = $this->createProfile();
 
@@ -83,7 +90,8 @@ final class GuestProfileTest extends TestCase
         $this->assertNotNull($profile->updatedAt);
     }
 
-    public function test_entity_equality_by_id(): void
+    #[Test]
+    public function entityEqualityById(): void
     {
         $id = GuestProfileId::generate();
 
@@ -93,7 +101,8 @@ final class GuestProfileTest extends TestCase
         $this->assertTrue($a->equals($b));
     }
 
-    public function test_entity_inequality_by_id(): void
+    #[Test]
+    public function entityInequalityById(): void
     {
         $a = $this->createProfile();
         $b = $this->createProfile();

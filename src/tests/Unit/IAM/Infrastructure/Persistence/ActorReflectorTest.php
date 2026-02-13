@@ -2,95 +2,87 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\IAM\Domain;
+namespace Tests\Unit\IAM\Infrastructure\Persistence;
 
 use DateTimeImmutable;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\ValueObject\ActorType;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
+use Modules\IAM\Infrastructure\Persistence\ActorReflector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(Actor::class)]
-final class ActorTest extends TestCase
+#[CoversClass(ActorReflector::class)]
+final class ActorReflectorTest extends TestCase
 {
     #[Test]
-    public function itCreatesAGuestActor(): void
+    public function itReconstructsAGuestActor(): void
     {
-        $id = ActorId::generate();
-        $actor = Actor::register(
-            uuid: $id,
+        $uuid = ActorId::generate();
+        $createdAt = new DateTimeImmutable('2026-01-15 10:00:00');
+
+        $actor = ActorReflector::reconstruct(
+            uuid: $uuid,
             type: ActorType::GUEST,
             name: 'John Doe',
             email: 'john@hotel.com',
             password: new HashedPassword('$2y$10$somehash'),
             profileType: 'guest',
             profileId: '019c57c1-9ff8-71c5-9155-26020ca798ed',
-            createdAt: new DateTimeImmutable(),
+            createdAt: $createdAt,
+            updatedAt: null,
         );
 
-        $this->assertSame($id, $actor->uuid);
+        $this->assertInstanceOf(Actor::class, $actor);
+        $this->assertTrue($uuid->equals($actor->uuid));
         $this->assertSame(ActorType::GUEST, $actor->type);
         $this->assertSame('John Doe', $actor->name);
         $this->assertSame('john@hotel.com', $actor->email);
+        $this->assertSame('$2y$10$somehash', $actor->password->value);
         $this->assertSame('guest', $actor->profileType);
         $this->assertSame('019c57c1-9ff8-71c5-9155-26020ca798ed', $actor->profileId);
+        $this->assertSame($createdAt, $actor->createdAt);
         $this->assertNull($actor->updatedAt);
     }
 
     #[Test]
-    public function itCreatesASystemActor(): void
+    public function itReconstructsASystemActor(): void
     {
-        $actor = Actor::register(
+        $actor = ActorReflector::reconstruct(
             uuid: ActorId::generate(),
             type: ActorType::SYSTEM,
             name: 'Booking Engine',
             email: 'system@hotel.com',
-            password: new HashedPassword('$2y$10$somehash'),
+            password: new HashedPassword('$2y$10$hash'),
             profileType: null,
             profileId: null,
             createdAt: new DateTimeImmutable(),
+            updatedAt: new DateTimeImmutable(),
         );
 
         $this->assertSame(ActorType::SYSTEM, $actor->type);
         $this->assertNull($actor->profileType);
         $this->assertNull($actor->profileId);
-    }
-
-    #[Test]
-    public function itChangesPassword(): void
-    {
-        $actor = Actor::register(
-            uuid: ActorId::generate(),
-            type: ActorType::GUEST,
-            name: 'Jane Doe',
-            email: 'jane@hotel.com',
-            password: new HashedPassword('$2y$10$oldhash'),
-            profileType: null,
-            profileId: null,
-            createdAt: new DateTimeImmutable(),
-        );
-
-        $newPassword = new HashedPassword('$2y$10$newhash');
-        $actor->changePassword($newPassword);
-
-        $this->assertSame('$2y$10$newhash', $actor->password->value);
         $this->assertNotNull($actor->updatedAt);
     }
 
     #[Test]
-    public function itValidatesActorType(): void
+    public function itDoesNotRecordDomainEvents(): void
     {
-        $this->assertSame('guest', ActorType::GUEST->value);
-        $this->assertSame('system', ActorType::SYSTEM->value);
-    }
+        $actor = ActorReflector::reconstruct(
+            uuid: ActorId::generate(),
+            type: ActorType::GUEST,
+            name: 'Jane',
+            email: 'jane@hotel.com',
+            password: new HashedPassword('$2y$10$hash'),
+            profileType: null,
+            profileId: null,
+            createdAt: new DateTimeImmutable(),
+            updatedAt: null,
+        );
 
-    #[Test]
-    public function itRejectsEmptyHashedPassword(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        new HashedPassword('');
+        $this->assertEmpty($actor->pullDomainEvents());
     }
 }

@@ -7,6 +7,7 @@ namespace Tests\Feature\Reservation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\CreatesGuestProfile;
 use Tests\TestCase;
 
@@ -48,7 +49,8 @@ final class ListReservationsTest extends TestCase
         return $response->json('data.id');
     }
 
-    public function test_it_returns_empty_list(): void
+    #[Test]
+    public function itReturnsEmptyList(): void
     {
         $response = $this->getJson('/api/reservations');
 
@@ -62,7 +64,8 @@ final class ListReservationsTest extends TestCase
             ->assertJsonPath('meta.current_page', 1);
     }
 
-    public function test_it_lists_reservations(): void
+    #[Test]
+    public function itListsReservations(): void
     {
         $this->createReservation();
         $this->createReservation();
@@ -75,7 +78,8 @@ final class ListReservationsTest extends TestCase
             ->assertJsonCount(3, 'data');
     }
 
-    public function test_it_paginates_results(): void
+    #[Test]
+    public function itPaginatesResults(): void
     {
         for ($i = 0; $i < 5; $i++) {
             $this->createReservation();
@@ -91,7 +95,8 @@ final class ListReservationsTest extends TestCase
             ->assertJsonPath('meta.last_page', 3);
     }
 
-    public function test_it_returns_second_page(): void
+    #[Test]
+    public function itReturnsSecondPage(): void
     {
         for ($i = 0; $i < 5; $i++) {
             $this->createReservation();
@@ -109,7 +114,8 @@ final class ListReservationsTest extends TestCase
         $this->assertEmpty(array_intersect($page1Ids, $page2Ids));
     }
 
-    public function test_each_item_has_reservation_structure(): void
+    #[Test]
+    public function eachItemHasReservationStructure(): void
     {
         $this->createReservation();
 
@@ -132,7 +138,8 @@ final class ListReservationsTest extends TestCase
             ]);
     }
 
-    public function test_it_caps_per_page_at_100(): void
+    #[Test]
+    public function itCapsPerPageAt100(): void
     {
         $response = $this->getJson('/api/reservations?per_page=999');
 
@@ -140,7 +147,8 @@ final class ListReservationsTest extends TestCase
             ->assertJsonPath('meta.per_page', 100);
     }
 
-    public function test_it_defaults_to_15_per_page(): void
+    #[Test]
+    public function itDefaultsTo15PerPage(): void
     {
         $response = $this->getJson('/api/reservations');
 

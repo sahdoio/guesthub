@@ -9,9 +9,11 @@ use Modules\Reservation\Domain\Dto\RoomAvailability;
 use Modules\Reservation\Domain\Policies\ReservationPolicy;
 use Modules\Reservation\Domain\Service\InventoryGateway;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(ReservationPolicy::class)]
 final class ReservationPolicyTest extends TestCase
 {
     private InventoryGateway $inventory;
@@ -25,7 +27,7 @@ final class ReservationPolicyTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_checkin_in_the_past(): void
+    public function itRejectsCheckinInThePast(): void
     {
         $policy = new ReservationPolicy($this->inventory);
 
@@ -38,7 +40,7 @@ final class ReservationPolicyTest extends TestCase
     }
 
     #[Test]
-    public function it_allows_checkin_today(): void
+    public function itAllowsCheckinToday(): void
     {
         $policy = new ReservationPolicy($this->inventory);
 
@@ -51,7 +53,7 @@ final class ReservationPolicyTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_booking_too_far_in_advance_for_regular_guest(): void
+    public function itRejectsBookingTooFarInAdvanceForRegularGuest(): void
     {
         $policy = new ReservationPolicy($this->inventory);
 
@@ -64,7 +66,7 @@ final class ReservationPolicyTest extends TestCase
     }
 
     #[Test]
-    public function it_allows_vip_to_book_further_in_advance(): void
+    public function itAllowsVipToBookFurtherInAdvance(): void
     {
         $policy = new ReservationPolicy($this->inventory);
 
@@ -77,7 +79,7 @@ final class ReservationPolicyTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_when_no_rooms_available(): void
+    public function itRejectsWhenNoRoomsAvailable(): void
     {
         $inventory = $this->createStub(InventoryGateway::class);
         $inventory->method('checkAvailability')->willReturn(

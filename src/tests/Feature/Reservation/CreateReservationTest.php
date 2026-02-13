@@ -7,6 +7,7 @@ namespace Tests\Feature\Reservation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\CreatesGuestProfile;
 use Tests\TestCase;
 
@@ -43,7 +44,8 @@ final class CreateReservationTest extends TestCase
         ], $overrides);
     }
 
-    public function test_it_creates_a_reservation(): void
+    #[Test]
+    public function itCreatesAReservation(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload());
 
@@ -71,7 +73,8 @@ final class CreateReservationTest extends TestCase
         ]);
     }
 
-    public function test_it_creates_a_vip_reservation(): void
+    #[Test]
+    public function itCreatesAVipReservation(): void
     {
         $this->putJson("/api/guests/{$this->guestProfileId}", [
             'loyalty_tier' => 'gold',
@@ -83,7 +86,8 @@ final class CreateReservationTest extends TestCase
             ->assertJsonPath('data.guest.is_vip', true);
     }
 
-    public function test_it_validates_required_fields(): void
+    #[Test]
+    public function itValidatesRequiredFields(): void
     {
         $response = $this->postJson('/api/reservations', []);
 
@@ -96,7 +100,8 @@ final class CreateReservationTest extends TestCase
             ]);
     }
 
-    public function test_it_validates_guest_profile_id_format(): void
+    #[Test]
+    public function itValidatesGuestProfileIdFormat(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
             'guest_profile_id' => 'not-a-uuid',
@@ -106,7 +111,8 @@ final class CreateReservationTest extends TestCase
             ->assertJsonValidationErrors(['guest_profile_id']);
     }
 
-    public function test_it_validates_checkin_not_in_past(): void
+    #[Test]
+    public function itValidatesCheckinNotInPast(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
             'check_in' => now()->subDay()->format('Y-m-d'),
@@ -116,7 +122,8 @@ final class CreateReservationTest extends TestCase
             ->assertJsonValidationErrors(['check_in']);
     }
 
-    public function test_it_validates_checkout_after_checkin(): void
+    #[Test]
+    public function itValidatesCheckoutAfterCheckin(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
             'check_in' => now()->addDays(5)->format('Y-m-d'),
@@ -127,7 +134,8 @@ final class CreateReservationTest extends TestCase
             ->assertJsonValidationErrors(['check_out']);
     }
 
-    public function test_it_validates_room_type(): void
+    #[Test]
+    public function itValidatesRoomType(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
             'room_type' => 'PENTHOUSE',

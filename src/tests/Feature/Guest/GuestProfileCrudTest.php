@@ -11,6 +11,7 @@ use Modules\Guest\Domain\GuestProfile;
 use Modules\Guest\Domain\Repository\GuestProfileRepository;
 use Modules\Guest\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 final class GuestProfileCrudTest extends TestCase
@@ -53,7 +54,8 @@ final class GuestProfileCrudTest extends TestCase
 
     // --- Show ---
 
-    public function test_it_shows_a_guest_profile(): void
+    #[Test]
+    public function itShowsAGuestProfile(): void
     {
         $id = $this->createGuest();
 
@@ -64,7 +66,8 @@ final class GuestProfileCrudTest extends TestCase
             ->assertJsonPath('data.full_name', 'Jane Doe');
     }
 
-    public function test_show_returns_error_for_unknown_guest(): void
+    #[Test]
+    public function showReturnsErrorForUnknownGuest(): void
     {
         $this->getJson('/api/guests/00000000-0000-0000-0000-000000000000')
             ->assertStatus(500);
@@ -72,7 +75,8 @@ final class GuestProfileCrudTest extends TestCase
 
     // --- Update ---
 
-    public function test_it_updates_contact_info(): void
+    #[Test]
+    public function itUpdatesContactInfo(): void
     {
         $id = $this->createGuest();
 
@@ -93,7 +97,8 @@ final class GuestProfileCrudTest extends TestCase
         ]);
     }
 
-    public function test_it_updates_loyalty_tier(): void
+    #[Test]
+    public function itUpdatesLoyaltyTier(): void
     {
         $id = $this->createGuest();
 
@@ -105,7 +110,8 @@ final class GuestProfileCrudTest extends TestCase
             ->assertJsonPath('data.loyalty_tier', 'platinum');
     }
 
-    public function test_it_updates_preferences(): void
+    #[Test]
+    public function itUpdatesPreferences(): void
     {
         $id = $this->createGuest();
 
@@ -117,7 +123,8 @@ final class GuestProfileCrudTest extends TestCase
             ->assertJsonPath('data.preferences', ['king_bed', 'minibar', 'ocean_view']);
     }
 
-    public function test_update_validates_email_format(): void
+    #[Test]
+    public function updateValidatesEmailFormat(): void
     {
         $id = $this->createGuest();
 
@@ -128,7 +135,8 @@ final class GuestProfileCrudTest extends TestCase
 
     // --- Delete ---
 
-    public function test_it_deletes_a_guest_profile(): void
+    #[Test]
+    public function itDeletesAGuestProfile(): void
     {
         $id = $this->createGuest();
 
@@ -138,7 +146,8 @@ final class GuestProfileCrudTest extends TestCase
         $this->assertDatabaseMissing('guest_profiles', ['uuid' => $id]);
     }
 
-    public function test_delete_returns_error_for_unknown_guest(): void
+    #[Test]
+    public function deleteReturnsErrorForUnknownGuest(): void
     {
         $this->deleteJson('/api/guests/00000000-0000-0000-0000-000000000000')
             ->assertStatus(500);
@@ -146,7 +155,8 @@ final class GuestProfileCrudTest extends TestCase
 
     // --- List ---
 
-    public function test_it_lists_guest_profiles_with_pagination(): void
+    #[Test]
+    public function itListsGuestProfilesWithPagination(): void
     {
         $this->createGuest(['document' => 'DOC001', 'email' => 'a@hotel.com']);
         $this->createGuest(['document' => 'DOC002', 'email' => 'b@hotel.com']);
@@ -162,7 +172,8 @@ final class GuestProfileCrudTest extends TestCase
             ->assertJsonPath('meta.last_page', 2);
     }
 
-    public function test_it_returns_empty_list_when_no_guests(): void
+    #[Test]
+    public function itReturnsEmptyListWhenNoGuests(): void
     {
         $response = $this->getJson('/api/guests');
 
