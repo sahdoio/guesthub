@@ -4,30 +4,32 @@ declare(strict_types=1);
 
 namespace Modules\Reservation\Infrastructure\Integration;
 
-use Illuminate\Support\Facades\DB;
+use Modules\Guest\Infrastructure\Integration\GuestProfileApi;
 use Modules\Reservation\Domain\Dto\GuestInfo;
 use Modules\Reservation\Domain\Service\GuestGateway;
 
 final class GuestGatewayAdapter implements GuestGateway
 {
+    public function __construct(
+        private readonly GuestProfileApi $guestProfileApi,
+    ) {}
+
     public function findByUuid(string $guestProfileId): ?GuestInfo
     {
-        $record = DB::table('guest_profiles')
-            ->where('uuid', $guestProfileId)
-            ->first();
+        $data = $this->guestProfileApi->findByUuid($guestProfileId);
 
-        if ($record === null) {
+        if ($data === null) {
             return null;
         }
 
-        $isVip = in_array($record->loyalty_tier, ['gold', 'platinum'], true);
+        $isVip = in_array($data->loyaltyTier, ['gold', 'platinum'], true);
 
         return new GuestInfo(
-            guestProfileId: $record->uuid,
-            fullName: $record->full_name,
-            email: $record->email,
-            phone: $record->phone,
-            document: $record->document,
+            guestProfileId: $data->uuid,
+            fullName: $data->fullName,
+            email: $data->email,
+            phone: $data->phone,
+            document: $data->document,
             isVip: $isVip,
         );
     }

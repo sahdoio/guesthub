@@ -65,7 +65,7 @@ final class GuestGatewayAdapterTest extends TestCase
     #[Test]
     public function itReturnsNullForUnknownUuid(): void
     {
-        $this->assertNull($this->gateway->findByUuid('nonexistent-uuid'));
+        $this->assertNull($this->gateway->findByUuid('00000000-0000-0000-0000-000000000000'));
     }
 
     #[Test]
