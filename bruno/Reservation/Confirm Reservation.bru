@@ -18,11 +18,15 @@ auth:bearer {
   token: {{authToken}}
 }
 
+vars:pre-request {
+  reservationId: 019c5818-7252-733c-8945-611724ff8918
+}
+
 tests {
   test("should return 200", function() {
     expect(res.getStatus()).to.equal(200);
   });
-
+  
   test("should confirm reservation", function() {
     expect(res.getBody().message).to.equal('Reservation confirmed.');
   });

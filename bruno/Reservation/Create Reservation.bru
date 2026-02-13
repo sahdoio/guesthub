@@ -32,10 +32,6 @@ vars:pre-request {
   guestId: 019c52a2-20c7-726c-969f-f14b4fda4a7e
 }
 
-vars:post-response {
-  reservationId: res.body.data.id
-}
-
 script:pre-request {
   const today = new Date();
   const checkIn = new Date(today);

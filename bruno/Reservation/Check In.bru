@@ -29,7 +29,7 @@ tests {
   test("should return 200", function() {
     expect(res.getStatus()).to.equal(200);
   });
-
+  
   test("should check in guest", function() {
     expect(res.getBody().message).to.equal('Guest checked in.');
   });
