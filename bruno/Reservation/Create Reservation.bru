@@ -28,6 +28,10 @@ body:json {
   }
 }
 
+vars:pre-request {
+  guestId: 019c52a2-20c7-726c-969f-f14b4fda4a7e
+}
+
 vars:post-response {
   reservationId: res.body.data.id
 }
@@ -38,29 +42,29 @@ script:pre-request {
   checkIn.setDate(today.getDate() + 1);
   const checkOut = new Date(today);
   checkOut.setDate(today.getDate() + 5);
-
+  
   const fmt = (d) => d.toISOString().split('T')[0];
-
+  
   bru.setVar("checkIn", fmt(checkIn));
   bru.setVar("checkOut", fmt(checkOut));
-}
-
-docs {
-  Requires a guest profile to exist first.
-  Run IAM > Register, IAM > Login, then Guest > Create Guest before this request.
-  The guestId variable is set by the Create Guest request.
 }
 
 tests {
   test("should return 201", function() {
     expect(res.getStatus()).to.equal(201);
   });
-
+  
   test("should return reservation id", function() {
     expect(res.getBody().data.id).to.be.a('string');
   });
-
+  
   test("status should be pending", function() {
     expect(res.getBody().data.status).to.equal('pending');
   });
+}
+
+docs {
+  Requires a guest profile to exist first.
+  Run IAM > Register, IAM > Login, then Guest > Create Guest before this request.
+  The guestId variable is set by the Create Guest request.
 }

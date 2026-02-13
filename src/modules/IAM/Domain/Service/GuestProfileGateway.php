@@ -6,5 +6,5 @@ namespace Modules\IAM\Domain\Service;
 
 interface GuestProfileGateway
 {
-    public function create(string $name, string $email, string $phone, string $document): int;
+    public function create(string $name, string $email, string $phone, string $document): string;
 }

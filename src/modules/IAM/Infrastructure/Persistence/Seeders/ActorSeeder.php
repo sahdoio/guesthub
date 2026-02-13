@@ -6,7 +6,6 @@ namespace Modules\IAM\Infrastructure\Persistence\Seeders;
 
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Modules\Guest\Infrastructure\Persistence\Seeders\GuestSeeder;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\Repository\ActorRepository;
@@ -34,7 +33,6 @@ class ActorSeeder extends Seeder
 
         foreach ($actors as [$name, $email]) {
             $guestProfileUuid = $guestIds[$email];
-            $profileId = DB::table('guest_profiles')->where('uuid', $guestProfileUuid)->value('id');
 
             $actor = Actor::register(
                 uuid: $this->repository->nextIdentity(),
@@ -43,7 +41,7 @@ class ActorSeeder extends Seeder
                 email: $email,
                 password: $this->hasher->hash('password123'),
                 profileType: ActorType::GUEST->value,
-                profileId: (int) $profileId,
+                profileId: $guestProfileUuid,
                 createdAt: new DateTimeImmutable(),
             );
 

@@ -20,7 +20,7 @@ final class ActorReflector
         string $email,
         HashedPassword $password,
         ?string $profileType,
-        ?int $profileId,
+        ?string $profileId,
         DateTimeImmutable $createdAt,
         ?DateTimeImmutable $updatedAt,
     ): Actor {

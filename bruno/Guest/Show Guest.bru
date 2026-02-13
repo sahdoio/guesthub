@@ -18,6 +18,10 @@ auth:bearer {
   token: {{authToken}}
 }
 
+vars:pre-request {
+  guestId: 019c52a2-20c7-726c-969f-f14b4fda4a7e
+}
+
 tests {
   test("should return 200", function() {
     expect(res.getStatus()).to.equal(200);

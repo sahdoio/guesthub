@@ -19,7 +19,7 @@ final class Actor extends AggregateRoot
         public readonly string $email,
         public private(set) HashedPassword $password,
         public readonly ?string $profileType,
-        public readonly ?int $profileId,
+        public readonly ?string $profileId,
         public readonly DateTimeImmutable $createdAt,
         public private(set) ?DateTimeImmutable $updatedAt = null,
     ) {}
@@ -31,7 +31,7 @@ final class Actor extends AggregateRoot
         string $email,
         HashedPassword $password,
         ?string $profileType,
-        ?int $profileId,
+        ?string $profileId,
         DateTimeImmutable $createdAt,
     ): self {
         return new self(
