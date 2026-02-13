@@ -17,9 +17,10 @@ The project is organized into bounded contexts under `src/modules/`. Each module
 
 ```
 modules/
-├── Reservation/     # BC1 — Reservation lifecycle (complex aggregate)
-├── Guest/           # BC3 — Guest profiles & preferences (simple CRUD)
-└── Shared/          # Shared kernel (Identity, AggregateRoot, BaseRepository)
+├── IAM/             # BC — Identity & access management (actors, auth, tokens)
+├── Reservation/     # BC — Reservation lifecycle (complex aggregate)
+├── Guest/           # BC — Guest profiles & preferences (simple CRUD)
+└── Shared/          # Shared kernel (Identity, AggregateRoot, ValueObject)
 ```
 
 ### Layers
@@ -28,24 +29,33 @@ Each module follows the same structure:
 
 - **Domain** — Aggregates, entities, value objects, repository interfaces, domain events. No framework dependencies.
 - **Application** — Commands, queries, and their handlers. Orchestrates domain operations.
-- **Infrastructure** — Repository implementations (QueryBuilder), persistence, service providers, routes.
+- **Infrastructure** — Repository implementations (Eloquent-based), persistence, service providers, routes.
 - **Presentation** — Controllers, form requests, API resources. Thin layer that delegates to application handlers.
 
 ### Key decisions
 
 - **Laravel as infrastructure, not architecture.** The domain layer has zero framework imports. Laravel lives in the infrastructure and presentation layers only.
 - **UUID v7 + auto-increment.** Tables use auto-increment `id` as PK for joins and indexing, `uuid` column for external identity. Domain only sees UUIDs.
-- **No ORM.** Repositories use Laravel's query builder directly. Entities are reconstructed via reflection to avoid calling constructors (which record domain events).
-- **BaseRepository for simple aggregates.** The Guest module extends `BaseRepository` to get `findByUuid()`, `save()`, `remove()` for free. The Reservation module implements everything manually because it has complex serialization (embedded JSON, multiple VOs).
+- **Eloquent for persistence, not for domain.** Eloquent models live in infrastructure and handle table mapping. Domain aggregates are reconstructed via reflection to avoid calling constructors (which record domain events).
 - **Command/Query separation.** Write operations go through `Command/` + `Handler/`. Read operations (like listing) go through `Query/`.
 
 ## Bounded Contexts
+
+### IAM (Identity & Access Management)
+
+Handles actor registration, authentication, and token management. Registering an actor automatically creates a guest profile in the Guest BC via a gateway adapter.
+
+```
+POST   /api/auth/register   → create actor + guest profile, returns actor resource
+POST   /api/auth/login      → authenticate, returns Bearer token
+POST   /api/auth/logout     → revoke all tokens (requires auth)
+```
 
 ### Reservation
 
 Manages the full reservation lifecycle: create, confirm, check-in, check-out, cancel. The aggregate enforces state machine transitions — you can't check in without confirming first, can't cancel after check-in, etc.
 
-Has child entities (special requests) serialized as JSON, value objects for guest info, email, phone, and reservation period. Domain events are dispatched to integration event handlers.
+Has child entities (special requests) serialized as JSON, DTOs for cross-BC guest data, and value objects for period and status. Domain events are dispatched to integration event handlers.
 
 **Flow: happy path**
 ```
@@ -63,10 +73,9 @@ POST   /api/reservations/{id}/cancel  → status: cancelled (requires reason)
 
 ### Guest
 
-Guest profiles and preferences. Simple CRUD — no state machine, no child entities. This is the showcase for `BaseRepository`: the repository extends it and only defines `tableName()`, `toEntity()`, `toRecord()`, plus custom queries.
+Guest profiles and preferences. Simple CRUD — no state machine, no child entities. Guest profiles are created automatically during IAM registration; the HTTP API exposes read, update, and delete operations.
 
 ```
-POST   /api/guests          → create profile
 GET    /api/guests           → list (paginated)
 GET    /api/guests/{uuid}    → show
 PUT    /api/guests/{uuid}    → update (contact info, loyalty tier, preferences)

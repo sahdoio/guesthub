@@ -40,7 +40,7 @@ Handles actors, authentication, and token management. See [IAM Deep Dive](#iam-d
 | Aggregate | `Actor` |
 | Identity | `ActorId` |
 | Value Objects | `ActorType` (enum: GUEST, SYSTEM), `HashedPassword` |
-| Domain Services | `PasswordHasher`, `TokenManager` |
+| Domain Services | `PasswordHasher`, `TokenManager`, `GuestProfileGateway` |
 
 No domain events.
 
@@ -71,14 +71,19 @@ PENDING ──> CONFIRMED ──> CHECKED_IN ──> CHECKED_OUT
 ## Context Map
 
 ```
-┌──────────┐       direct DB query        ┌──────────────┐
+┌──────────┐       GuestProfileApi         ┌──────────────┐
 │  Guest   │ <─────────────────────────── │  Reservation  │
 │          │   (GuestGateway adapter)      │              │
-└──────────┘                               │              │
-                                           │              │    stub (future BC)
-┌──────────┐                               │              │ <── InventoryGateway
-│   IAM    │                               └──────────────┘
-│          │  (no direct BC coupling)
+│          │                               │              │
+│          │       GuestProfileApi         │              │    stub (future BC)
+│          │ <────────────────────────    │              │ <── InventoryGateway
+└──────────┘   (GuestProfileGateway)       └──────────────┘
+     ▲
+     │  GuestProfileApi
+     │  (GuestProfileGateway adapter)
+┌──────────┐
+│   IAM    │
+│          │
 └──────────┘
 ```
 
@@ -86,11 +91,12 @@ PENDING ──> CONFIRMED ──> CHECKED_IN ──> CHECKED_OUT
 
 | Upstream | Downstream | Pattern | Purpose |
 |---|---|---|---|
-| Guest | Reservation | **Anti-Corruption Layer** (read-only query) | Reservation reads guest data (name, email, VIP status) via `GuestGateway` |
+| Guest | Reservation | **Anti-Corruption Layer** (read-only via `GuestProfileApi`) | Reservation reads guest data (name, email, VIP status) via `GuestGateway` |
+| Guest | IAM | **Anti-Corruption Layer** (write via `GuestProfileApi`) | IAM creates guest profiles during registration via `GuestProfileGateway` |
 | (future) Inventory | Reservation | **Anti-Corruption Layer** (stubbed) | `InventoryGateway` checks room availability and pricing |
 | IAM | All BCs | **Sanctum middleware** | `auth:sanctum` protects Guest and Reservation API routes |
 
-No BC calls another BC's repository directly. All cross-boundary data flows through Gateway adapters.
+No BC calls another BC's repository directly. All cross-boundary data flows through Gateway adapters and the Guest BC's `GuestProfileApi`.
 
 ---
 
@@ -150,6 +156,7 @@ modules/{BC}/
 | Class | Purpose |
 |---|---|
 | `EventDispatcher` | Interface. Single method: `dispatch(object $event): void`. |
+| `EventDispatchingHandler` | Abstract base for command handlers that dispatch domain events after persistence. Provides `dispatchEvents(AggregateRoot)`. |
 | `IntegrationEvent` | Interface. Methods: `occurredAt(): DateTimeImmutable`, `toArray(): array`. |
 
 ### Infrastructure Layer
@@ -157,28 +164,6 @@ modules/{BC}/
 | Class | Purpose |
 |---|---|
 | `LaravelEventDispatcher` | Implements `EventDispatcher` by delegating to Laravel's `Illuminate\Contracts\Events\Dispatcher`. |
-| `BaseRepository<T>` | Generic abstract repository using Laravel's Query Builder. See [BaseRepository](#baserepository) below. |
-
-### BaseRepository
-
-`BaseRepository<T>` provides reusable persistence logic for aggregates stored in single tables with a `uuid` column.
-
-It defines three abstract methods each subclass must implement:
-
-- `tableName(): string` — the database table
-- `toEntity(object $record): T` — hydrate a domain object from a DB row (typically via a Reflector)
-- `toRecord(object $entity): array` — serialize a domain object to a DB row
-
-And provides concrete implementations for:
-
-- `findByUuid(string): ?T` — lookup by UUID
-- `all(): T[]` — fetch all records
-- `save(T): void` — insert-or-update (upsert by UUID)
-- `remove(T): void` — delete by UUID
-
-**Currently used by:** `QueryBuilderGuestProfileRepository` (Guest BC).
-
-The Reservation and IAM repositories implement their own persistence directly because they have additional needs (Reservation serializes nested `SpecialRequest[]` as JSON, IAM has a simpler table without `BaseRepository`'s generic patterns). `BaseRepository` is there for BCs where a straightforward single-table aggregate benefits from the shared boilerplate.
 
 ---
 
@@ -262,15 +247,33 @@ The Reservation BC needs guest data (name, email, VIP status) but does not depen
 
 1. **Port** — `Reservation/Domain/Service/GuestGateway` interface defines `findByUuid(string): ?GuestInfo`
 2. **DTO** — `GuestInfo` is a read-only DTO owned by the Reservation BC
-3. **Adapter** — `Reservation/Infrastructure/Integration/GuestGatewayAdapter` queries the `guest_profiles` table directly via Query Builder and maps to `GuestInfo`
+3. **Adapter** — `Reservation/Infrastructure/Integration/GuestGatewayAdapter` delegates to the Guest BC's `GuestProfileApi` and maps to `GuestInfo`
 
-This is an **Anti-Corruption Layer**: the Reservation BC translates raw Guest data into its own language (`isVip` is derived from `loyalty_tier`).
+This is an **Anti-Corruption Layer**: the Reservation BC translates Guest data into its own language (`isVip` is derived from `loyalty_tier`).
 
 **Used by:**
 - `CreateReservationHandler` — checks VIP status for booking policy
 - `OnReservationConfirmed` — enriches integration event with guest email
 - `OnGuestCheckedIn` / `OnGuestCheckedOut` — same enrichment
 - `ReservationResource` — includes guest info in API response
+
+### GuestProfileGateway (IAM → Guest)
+
+When an actor registers, the IAM BC creates a corresponding guest profile:
+
+1. **Port** — `IAM/Domain/Service/GuestProfileGateway` interface defines `create(name, email, phone, document): string`
+2. **Adapter** — `IAM/Infrastructure/Integration/GuestProfileGatewayAdapter` delegates to the Guest BC's `GuestProfileApi`
+
+The returned guest profile UUID is stored on the Actor as `profileId`.
+
+### Guest Integration API
+
+The Guest BC exposes a `GuestProfileApi` (in `Infrastructure/Integration/`) for other BCs to consume. It provides:
+
+- `create(name, email, phone, document): string` — creates a guest profile, returns UUID
+- `findByUuid(string): ?GuestProfileData` — returns a `GuestProfileData` DTO with profile fields
+
+This API is the single entry point for cross-BC access to guest data. Both the Reservation and IAM adapters depend on it.
 
 ### InventoryGateway (Reservation → future Inventory BC)
 
@@ -285,6 +288,7 @@ Same pattern, currently stubbed with hardcoded data:
 
 - No BC imports another BC's domain classes
 - No BC calls another BC's repository
+- Cross-BC data flows through `GuestProfileApi` and Gateway adapters
 - IAM protects routes via Sanctum middleware (framework-level, not a domain dependency)
 
 ---
@@ -316,10 +320,10 @@ return $profile;
 
 | Reflector | Reconstitutes | Used By |
 |---|---|---|
-| `GuestProfileReflector` | `GuestProfile` | `QueryBuilderGuestProfileRepository` |
-| `ActorReflector` | `Actor` | `QueryBuilderActorRepository` |
-| `ReservationReflector` | `Reservation` (with nested `SpecialRequest[]`) | `QueryBuilderReservationRepository` |
-| `SpecialRequestReflector` | `SpecialRequest` | `QueryBuilderReservationRepository` (during deserialization) |
+| `GuestProfileReflector` | `GuestProfile` | `EloquentGuestProfileRepository` |
+| `ActorReflector` | `Actor` | `EloquentActorRepository` |
+| `ReservationReflector` | `Reservation` (with nested `SpecialRequest[]`) | `EloquentReservationRepository` |
+| `SpecialRequestReflector` | `SpecialRequest` | `EloquentReservationRepository` (during deserialization) |
 
 Reflectors are **unaffected by private constructors** — they use `ReflectionClass::newInstanceWithoutConstructor()`.
 
@@ -331,12 +335,12 @@ Reflectors are **unaffected by private constructors** — they use `ReflectionCl
 
 An **Actor** is the IAM aggregate — it represents any identity that can authenticate against the system. The system deliberately avoids calling this "User" because the domain has two distinct actor types with different semantics:
 
-| `ActorType` | Purpose | `guestProfileId` |
+| `ActorType` | Purpose | `profileType` / `profileId` |
 |---|---|---|
-| `GUEST` | A hotel guest who can manage their own reservations | Points to a `GuestProfile` in the Guest BC |
-| `SYSTEM` | Staff, admin, or automated services (booking engine, etc.) | `null` |
+| `GUEST` | A hotel guest who can manage their own reservations | `profileType: "guest"`, `profileId` points to a `GuestProfile` in the Guest BC |
+| `SYSTEM` | Staff, admin, or automated services (booking engine, etc.) | Both `null` |
 
-An Actor owns credentials (email + hashed password) and can hold API tokens. The `guestProfileId` is an optional soft link — it's a plain string UUID, not a foreign key or domain reference. The IAM BC has no dependency on the Guest BC; it just stores the ID so the frontend or other services can correlate an authenticated actor with their guest profile.
+An Actor owns credentials (email + hashed password) and can hold API tokens. The `profileType` + `profileId` pair is a polymorphic soft link — plain strings, not a foreign key or domain reference. The IAM BC depends on the Guest BC only through the `GuestProfileGateway` port (used during registration to create the guest profile).
 
 ### The Actor Aggregate
 
@@ -349,7 +353,8 @@ final class Actor extends AggregateRoot
         public readonly string $name,
         public readonly string $email,          // unique, used for login
         public private(set) HashedPassword $password,  // mutable via changePassword()
-        public readonly ?string $guestProfileId,       // soft link to Guest BC
+        public readonly ?string $profileType,          // polymorphic type (e.g. "guest")
+        public readonly ?string $profileId,            // soft link to profile in another BC
         public readonly DateTimeImmutable $createdAt,
         public private(set) ?DateTimeImmutable $updatedAt = null,
     ) {}
@@ -360,14 +365,14 @@ final class Actor extends AggregateRoot
 ```
 
 Key design decisions:
-- **`readonly` properties** (uuid, type, name, email, guestProfileId, createdAt) — set once at registration, never change
+- **`readonly` properties** (uuid, type, name, email, profileType, profileId, createdAt) — set once at registration, never change
 - **`private(set)` properties** (password, updatedAt) — mutable only through behavior methods
 - **`register()` factory** — the only way to create an Actor (constructor is private)
 - **No domain events** — registration and password changes don't need event-driven side effects (yet)
 
 ### Domain Service Ports
 
-The Actor aggregate never touches framework code. Two domain service interfaces define the ports:
+The Actor aggregate never touches framework code. Three domain service interfaces define the ports:
 
 **`PasswordHasher`** — hashing and verification:
 ```php
@@ -389,6 +394,15 @@ interface TokenManager
 ```
 Implemented by `SanctumTokenManager` (in `Infrastructure/Services/`). This is the one place where the Eloquent `ActorModel` is used — Sanctum needs an Authenticatable model to issue tokens. The `ActorModel` exists solely for this infrastructure concern; the domain layer never sees it.
 
+**`GuestProfileGateway`** — cross-BC guest profile creation:
+```php
+interface GuestProfileGateway
+{
+    public function create(string $name, string $email, string $phone, string $document): string;
+}
+```
+Implemented by `GuestProfileGatewayAdapter` (in `Infrastructure/Integration/`) which delegates to the Guest BC's `GuestProfileApi`.
+
 ### The Dual-Model Approach
 
 IAM has two representations of an actor:
@@ -398,19 +412,20 @@ IAM has two representations of an actor:
 | Layer | Domain | Infrastructure (Eloquent) |
 | Purpose | Business logic, invariants | Sanctum token issuance, Laravel auth middleware |
 | Created by | `Actor::register()` | Seeded or created alongside the domain actor |
-| Persistence | `QueryBuilderActorRepository` writes to `actors` table | Reads from the same `actors` table |
+| Persistence | `EloquentActorRepository` writes to `actors` table | Reads from the same `actors` table |
 
-Both read/write the same `actors` table. The domain `Actor` is persisted via Query Builder (through `ActorReflector` for hydration). The `ActorModel` is only used by `SanctumTokenManager` and Laravel's `auth:sanctum` middleware.
+Both read/write the same `actors` table. The domain `Actor` is persisted via `EloquentActorRepository` (through `ActorReflector` for hydration). The `ActorModel` is only used by `SanctumTokenManager` and Laravel's `auth:sanctum` middleware.
 
 ### Use Cases (Command Handlers)
 
 **`RegisterActorHandler`** — Registration:
 ```
 1. Check if email already exists → throw ActorAlreadyExistsException
-2. Generate new ActorId
-3. Hash the plain password via PasswordHasher → HashedPassword
-4. Actor::register(...) → creates the aggregate
-5. Save to repository
+2. Create guest profile via GuestProfileGateway → returns profileId
+3. Generate new ActorId
+4. Hash the plain password via PasswordHasher → HashedPassword
+5. Actor::register(...) → creates the aggregate (type: GUEST, profileType: "guest", profileId)
+6. Save to repository
 ```
 
 **`AuthenticateActorHandler`** — Login:
@@ -441,7 +456,7 @@ POST /auth/login         │  header       │  ...all other endpoints      │
           └──────────────┘
 ```
 
-1. **Register** — `POST /api/auth/register` with `{ type, name, email, password, guest_profile_id? }`. Creates an Actor, returns the actor resource. Validates: type must be `guest` or `system`, email format, password min 8 chars. Rejects duplicate emails.
+1. **Register** — `POST /api/auth/register` with `{ name, email, password, phone, document }`. Creates a guest profile (via `GuestProfileGateway`) and an Actor (always type `GUEST`), returns the actor resource. Validates: email format, password min 8 chars, phone in E.164 format. Rejects duplicate emails.
 
 2. **Login** — `POST /api/auth/login` with `{ email, password }`. Verifies credentials against the domain aggregate, then issues a Sanctum token via `TokenManager`. Returns `{ token, actor_id }`.
 

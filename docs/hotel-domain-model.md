@@ -3,42 +3,38 @@
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                           MODULAR MONOLITH                                              │
-│                                                                                         │
-│  ┌─────────────────────────────────┐         ┌─────────────────────────────────────┐   │
-│  │   BC1: RESERVATION CONTEXT      │         │   BC2: INVENTORY CONTEXT            │   │
-│  │                                 │         │                                     │   │
-│  │   Domain/                       │         │   Domain/                           │   │
-│  │   ├── Reservation (AR)          │         │   ├── Room (AR)                     │   │
-│  │   │   ├── Guest (VO)            │         │   │   ├── RoomDetails (VO)          │   │
-│  │   │   ├── Period (VO)           │         │   │   └── Blocking (Entity)         │   │
-│  │   │   └── SpecialRequest (E)    │         │   │                                 │   │
-│  │   ├── Domain Events             │         │   ├── Domain Events                 │   │
-│  │   └── Repository Interfaces     │         │   └── Repository Interfaces         │   │
-│  │                                 │         │                                     │   │
-│  └────────────┬────────────────────┘         └──────────────────┬──────────────────┘   │
-│               │                                                  │                      │
-│               │                                                  │                      │
-│               ▼                                                  ▼                      │
-│  ┌─────────────────────────────────┐         ┌─────────────────────────────────────┐   │
-│  │   Infrastructure/               │         │   Infrastructure/                   │   │
-│  │   ├── Persistence               │         │   ├── Persistence                   │   │
-│  │   ├── Integration               │         │   ├── Integration                   │   │
-│  │   │   └── InventoryGateway      │────────►│   │   └── InventoryApi (impl)       │   │
-│  │   │       (implements ACL)      │ direct  │   │       (exposed internally)      │   │
-│  │   └── Messaging                 │  call   │   └── Messaging                     │   │
-│  │       └── Publishes Integration │         │       └── Consumes Integration      │   │
-│  │           Events                │         │           Events                    │   │
-│  └─────────────────────────────────┘         └─────────────────────────────────────┘   │
-│                                                                                         │
-│               │                                                  ▲                      │
-│               │         ┌──────────────────────────┐            │                      │
-│               │         │     MESSAGE BROKER       │            │                      │
-│               └────────►│  (Integration Events)    │────────────┘                      │
-│                         │  async, cross-BC         │                                   │
-│                         └──────────────────────────┘                                   │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                            MODULAR MONOLITH                                              │
+│                                                                                          │
+│  ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────────────┐   │
+│  │   IAM CONTEXT        │  │   GUEST CONTEXT       │  │   RESERVATION CONTEXT        │   │
+│  │                      │  │                       │  │                              │   │
+│  │   Domain/            │  │   Domain/             │  │   Domain/                    │   │
+│  │   ├── Actor (AR)     │  │   ├── GuestProfile    │  │   ├── Reservation (AR)       │   │
+│  │   ├── ActorType      │  │   │   (AR)            │  │   │   ├── Period (VO)        │   │
+│  │   └── HashedPassword │  │   └── LoyaltyTier     │  │   │   └── SpecialRequest (E) │   │
+│  │                      │  │                       │  │   ├── Domain Events          │   │
+│  │   No domain events   │  │   No domain events    │  │   └── Repository Interfaces  │   │
+│  │                      │  │                       │  │                              │   │
+│  └──────────┬───────────┘  └───────────▲───────────┘  └──────────────┬───────────────┘   │
+│             │                          │                             │                    │
+│             │  GuestProfileGateway     │  GuestGateway               │                   │
+│             │  (creates profiles)      │  (reads profiles)           │                   │
+│             └──────────────────────────┘◄────────────────────────────┘                   │
+│                                        │                                                 │
+│                                  GuestProfileApi                                         │
+│                                  (single entry point                                     │
+│                                   for cross-BC access)                                   │
+│                                                                                          │
+│  ┌──────────────────────────────────────────────────────────────────────────────────┐    │
+│  │   SHARED KERNEL: AggregateRoot, Entity, ValueObject, Identity, DomainEvent,     │    │
+│  │                  EventDispatcher, EventDispatchingHandler, IntegrationEvent      │    │
+│  └──────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                          │
+│  Integration events are currently dispatched via Laravel's event system and logged.      │
+│  A message broker is planned for future async cross-BC communication.                    │
+│                                                                                          │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -50,7 +46,7 @@
 | **Identity** | Has unique ID | No identity (compared by value) |
 | **Mutability** | Can change state | Immutable |
 | **Lifecycle** | Tracked over time | Replaceable |
-| **Example** | SpecialRequest (can be fulfilled) | Guest (replace entirely to update) |
+| **Example** | SpecialRequest (can be fulfilled) | ReservationPeriod (replace entirely to update) |
 
 ---
 
@@ -69,14 +65,14 @@
 │  │  • id: ReservationId                                                               │ │
 │  │                                                                                    │ │
 │  │  State:                                                                            │ │
+│  │  • guestProfileId: string               (soft link to Guest BC)                    │ │
 │  │  • status: ReservationStatus                                                       │ │
-│  │  • roomType: RoomType                                                              │ │
+│  │  • roomType: string                                                                │ │
 │  │  • assignedRoomNumber: ?string                                                     │ │
 │  │  • createdAt, confirmedAt, checkedInAt, checkedOutAt, cancelledAt                  │ │
 │  │  • cancellationReason: ?string                                                     │ │
 │  │                                                                                    │ │
 │  │  Compositions:                                                                     │ │
-│  │  • guest: Guest (VO)                                                               │ │
 │  │  • period: ReservationPeriod (VO)                                                  │ │
 │  │  • specialRequests: SpecialRequest[] (Entities)  ◄── ENTITIES with own identity   │ │
 │  │                                                                                    │ │
@@ -88,48 +84,45 @@
 │  │  • addSpecialRequest(type, description): SpecialRequestId                          │ │
 │  │  • fulfillSpecialRequest(requestId): void                                          │ │
 │  │  • removeSpecialRequest(requestId): void                                           │ │
-│  │  • changeGuestContact(email, phone): void                                          │ │
 │  │                                                                                    │ │
 │  └───────────────────────────────────────────────────────────────────────────────────┘ │
 │                                                                                         │
-│         │ contains                    │ contains                  │ contains            │
-│         ▼                             ▼                           ▼                     │
+│         │ contains                                    │ contains                        │
+│         ▼                                             ▼                                 │
 │                                                                                         │
-│  ┌─────────────────────┐    ┌─────────────────────┐    ┌──────────────────────────────┐│
-│  │      Guest          │    │  ReservationPeriod  │    │     SpecialRequest           ││
-│  │   (Value Object)    │    │   (Value Object)    │    │       (Entity)               ││
-│  │                     │    │                     │    │                              ││
-│  │ • fullName: string  │    │ • checkIn: Date     │    │ • id: SpecialRequestId  ◄─── ││
-│  │ • email: Email      │    │ • checkOut: Date    │    │ • type: RequestType     own  ││
-│  │ • phone: Phone      │    │                     │    │ • description: string   ID   ││
-│  │ • document: string  │    │ Derived:            │    │ • status: RequestStatus      ││
-│  │ • isVip: bool       │    │ • nights(): int     │    │ • fulfilledAt: ?DateTime     ││
-│  │                     │    │ • overlaps(): bool  │    │ • createdAt: DateTime        ││
-│  │ Immutable:          │    │                     │    │                              ││
-│  │ To update, replace  │    │ Immutable           │    │ Mutable:                     ││
-│  │ the entire VO       │    │                     │    │ • fulfill(): void            ││
-│  │                     │    │                     │    │ • changeDescription(): void  ││
-│  └─────────────────────┘    └─────────────────────┘    │                              ││
-│                                                        │ Lifecycle tied to            ││
-│                                                        │ Reservation (cannot exist    ││
-│                                                        │ independently)               ││
-│                                                        └──────────────────────────────┘│
+│  ┌─────────────────────────┐    ┌──────────────────────────────┐                       │
+│  │   ReservationPeriod     │    │     SpecialRequest           │                       │
+│  │    (Value Object)       │    │       (Entity)               │                       │
+│  │                         │    │                              │                       │
+│  │ • checkIn: Date         │    │ • id: SpecialRequestId  ◄─── │                       │
+│  │ • checkOut: Date        │    │ • type: RequestType     own  │                       │
+│  │                         │    │ • description: string   ID   │                       │
+│  │ Derived:                │    │ • status: RequestStatus      │                       │
+│  │ • nights(): int         │    │ • fulfilledAt: ?DateTime     │                       │
+│  │ • overlaps(): bool      │    │ • createdAt: DateTime        │                       │
+│  │ • contains(): bool      │    │                              │                       │
+│  │                         │    │ Mutable:                     │                       │
+│  │ Immutable               │    │ • fulfill(): void            │                       │
+│  │                         │    │ • cancel(): void             │                       │
+│  └─────────────────────────┘    │ • changeDescription(): void  │                       │
+│                                 │                              │                       │
+│                                 │ Lifecycle tied to            │                       │
+│                                 │ Reservation (cannot exist    │                       │
+│                                 │ independently)               │                       │
+│                                 └──────────────────────────────┘                       │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
+
+Guest data (name, email, VIP status) is NOT stored in the aggregate. Instead, it's fetched
+on-demand via the GuestGateway port, which returns a GuestInfo DTO. This keeps the aggregate
+decoupled from the Guest BC.
 ```
 
 ### Why SpecialRequest is an ENTITY (not VO):
 
 1. **Has Identity** — Each request has a `SpecialRequestId`, allowing you to reference it: "fulfill request X"
-2. **Changes State** — Request can be fulfilled, description can be updated
+2. **Changes State** — Request can be fulfilled, cancelled, or description updated
 3. **Tracked Over Time** — You need to know when it was created, when fulfilled
 4. **Individual Operations** — You can remove or fulfill a specific request by ID
-
-### Why Guest is a VALUE OBJECT (not Entity):
-
-1. **No Need for Identity** — You don't reference "guest #123" separately
-2. **Immutable Conceptually** — To change email, you replace the entire Guest VO
-3. **Compared by Value** — Two Guests with same data are equal
-4. **No Independent Lifecycle** — Guest doesn't exist outside Reservation
 
 ---
 
@@ -145,14 +138,16 @@ Reservation/
     │   └── SpecialRequest.php             # Child Entity (has identity, mutable)
     │
     ├── ValueObject/
-    │   ├── Guest.php                      # VO (immutable, no identity)
     │   ├── ReservationPeriod.php          # VO
-    │   ├── Email.php                      # VO
-    │   ├── Phone.php                      # VO
     │   ├── SpecialRequestId.php           # Identity VO for child entity
     │   ├── ReservationStatus.php          # Enum as VO
     │   ├── RequestType.php                # Enum
     │   └── RequestStatus.php              # Enum (pending, fulfilled, cancelled)
+    │
+    ├── Dto/                               # Read-only DTOs for cross-BC data
+    │   ├── GuestInfo.php                  # Guest data fetched via GuestGateway
+    │   ├── RoomAvailability.php           # Room availability from InventoryGateway
+    │   └── RoomTypeInfo.php               # Room type details from InventoryGateway
     │
     ├── Event/                             # DOMAIN EVENTS (internal to BC)
     │   ├── ReservationCreated.php
@@ -161,19 +156,21 @@ Reservation/
     │   ├── GuestCheckedOut.php
     │   ├── ReservationCancelled.php
     │   ├── SpecialRequestAdded.php
-    │   ├── SpecialRequestFulfilled.php
-    │   └── SpecialRequestRemoved.php
+    │   └── SpecialRequestFulfilled.php
     │
     ├── Repository/
     │   └── ReservationRepository.php      # Interface only
     │
-    ├── Service/                           # Domain Services
+    ├── Service/                           # Domain Service Interfaces (ports)
+    │   ├── GuestGateway.php               # Port for fetching guest data from Guest BC
+    │   └── InventoryGateway.php           # Port for checking room availability
+    │
+    ├── Policies/                          # Domain Policies
     │   └── ReservationPolicy.php          # Business rules that don't fit in entity
     │
     └── Exception/
         ├── ReservationNotFoundException.php
         ├── InvalidReservationStateException.php
-        ├── SpecialRequestNotFoundException.php
         └── MaxSpecialRequestsExceededException.php
 ```
 
@@ -272,7 +269,9 @@ Reservation/
 
 ---
 
-# BC2: INVENTORY CONTEXT
+# BC2: INVENTORY CONTEXT (PLANNED — NOT YET IMPLEMENTED)
+
+> **Note:** This BC is a design target. The code does not exist yet. The Reservation BC's `InventoryGateway` is currently stubbed with hardcoded data.
 
 ## Aggregate: Room
 
@@ -605,7 +604,7 @@ class InventoryApi
 
 ```
 src/
-├── Reservation/                              # BC1
+├── Reservation/                              # BC: Reservation
 │   │
 │   ├── Domain/
 │   │   ├── Reservation.php                   # Aggregate Root
@@ -615,15 +614,16 @@ src/
 │   │   │   └── SpecialRequest.php            # Child Entity
 │   │   │
 │   │   ├── ValueObject/
-│   │   │   ├── Guest.php
 │   │   │   ├── ReservationPeriod.php
-│   │   │   ├── Email.php
-│   │   │   ├── Phone.php
 │   │   │   ├── SpecialRequestId.php
-│   │   │   ├── ReservationStatus.php
-│   │   │   ├── RequestType.php
-│   │   │   ├── RequestStatus.php
-│   │   │   └── RoomType.php                  # Local copy (BC1's view)
+│   │   │   ├── ReservationStatus.php         # Enum
+│   │   │   ├── RequestType.php               # Enum
+│   │   │   └── RequestStatus.php             # Enum (pending, fulfilled, cancelled)
+│   │   │
+│   │   ├── Dto/                              # DTOs for cross-BC data
+│   │   │   ├── GuestInfo.php
+│   │   │   ├── RoomAvailability.php
+│   │   │   └── RoomTypeInfo.php
 │   │   │
 │   │   ├── Event/                            # Domain Events (internal)
 │   │   │   ├── ReservationCreated.php
@@ -637,13 +637,12 @@ src/
 │   │   ├── Repository/
 │   │   │   └── ReservationRepository.php     # Interface
 │   │   │
-│   │   ├── Service/
-│   │   │   ├── InventoryGateway.php          # Interface (port for ACL)
-│   │   │   └── ReservationPolicy.php         # Domain service
+│   │   ├── Service/                          # Domain Service Interfaces (ports)
+│   │   │   ├── GuestGateway.php              # Port for Guest BC data
+│   │   │   └── InventoryGateway.php          # Port for room availability
 │   │   │
-│   │   ├── Dto/                              # DTOs for ACL responses
-│   │   │   ├── RoomAvailability.php
-│   │   │   └── RoomTypeInfo.php
+│   │   ├── Policies/
+│   │   │   └── ReservationPolicy.php         # Business rules
 │   │   │
 │   │   └── Exception/
 │   │       ├── ReservationNotFoundException.php
@@ -651,145 +650,207 @@ src/
 │   │       └── MaxSpecialRequestsExceededException.php
 │   │
 │   ├── Application/
-│   │   ├── Command/
+│   │   ├── Command/                          # Commands + Handlers in same dir
 │   │   │   ├── CreateReservation.php
-│   │   │   ├── ConfirmReservation.php
-│   │   │   ├── CheckInGuest.php
-│   │   │   ├── CheckOutGuest.php
-│   │   │   ├── CancelReservation.php
-│   │   │   └── AddSpecialRequest.php
-│   │   │
-│   │   ├── Handler/
 │   │   │   ├── CreateReservationHandler.php
-│   │   │   └── ...
+│   │   │   ├── ConfirmReservation.php
+│   │   │   ├── ConfirmReservationHandler.php
+│   │   │   ├── CheckInGuest.php
+│   │   │   ├── CheckInGuestHandler.php
+│   │   │   ├── CheckOutGuest.php
+│   │   │   ├── CheckOutGuestHandler.php
+│   │   │   ├── CancelReservation.php
+│   │   │   ├── CancelReservationHandler.php
+│   │   │   ├── AddSpecialRequest.php
+│   │   │   └── AddSpecialRequestHandler.php
 │   │   │
-│   │   ├── Query/
-│   │   │   ├── GetReservation.php
-│   │   │   └── ListGuestReservations.php
-│   │   │
-│   │   ├── EventHandler/                     # Handles DOMAIN events
-│   │   │   ├── OnReservationConfirmed.php    # → publishes integration event
-│   │   │   ├── OnGuestCheckedIn.php
-│   │   │   └── ...
-│   │   │
-│   │   └── IntegrationEvent/                 # Integration Events (cross-BC)
-│   │       ├── ReservationConfirmedEvent.php
-│   │       ├── ReservationCancelledEvent.php
-│   │       ├── GuestCheckedInEvent.php
-│   │       └── GuestCheckedOutEvent.php
+│   │   └── Listeners/                        # Domain event → Integration event
+│   │       ├── OnReservationConfirmed.php
+│   │       ├── OnReservationCancelled.php
+│   │       ├── OnGuestCheckedIn.php
+│   │       └── OnGuestCheckedOut.php
 │   │
 │   └── Infrastructure/
 │       ├── Persistence/
 │       │   ├── EloquentReservationRepository.php
+│       │   ├── ReservationReflector.php
+│       │   ├── SpecialRequestReflector.php
 │       │   └── Eloquent/
-│       │       └── ReservationEloquent.php   # Eloquent model (internal)
+│       │       └── ReservationModel.php      # Eloquent model (internal)
 │       │
 │       ├── Integration/                      # ACL adapters
+│       │   ├── GuestGatewayAdapter.php       # Implements GuestGateway
 │       │   └── InventoryGatewayAdapter.php   # Implements InventoryGateway
 │       │
-│       └── Messaging/
-│           └── IntegrationEventPublisher.php
+│       ├── IntegrationEvent/                 # Integration Events (cross-BC)
+│       │   ├── ReservationConfirmedEvent.php
+│       │   ├── ReservationCancelledEvent.php
+│       │   ├── GuestCheckedInEvent.php
+│       │   └── GuestCheckedOutEvent.php
+│       │
+│       ├── Messaging/
+│       │   └── IntegrationEventPublisher.php
+│       │
+│       ├── Http/
+│       │   ├── Controllers/
+│       │   │   └── ReservationController.php
+│       │   ├── Requests/
+│       │   │   ├── CreateReservationRequest.php
+│       │   │   ├── CheckInRequest.php
+│       │   │   ├── CancelReservationRequest.php
+│       │   │   └── AddSpecialRequestRequest.php
+│       │   └── Resources/
+│       │       └── ReservationResource.php
+│       │
+│       ├── Routes/
+│       │   └── api.php
+│       │
+│       └── Providers/
+│           └── ReservationServiceProvider.php
 │
-├── Inventory/                                # BC2
+├── Guest/                                    # BC: Guest
 │   │
 │   ├── Domain/
-│   │   ├── Room.php                          # Aggregate Root
-│   │   ├── RoomId.php
-│   │   │
-│   │   ├── Entity/
-│   │   │   └── Blocking.php                  # Child Entity
+│   │   ├── GuestProfile.php                  # Aggregate Root
+│   │   ├── GuestProfileId.php                # Identity VO
 │   │   │
 │   │   ├── ValueObject/
-│   │   │   ├── RoomNumber.php
-│   │   │   ├── RoomDetails.php
-│   │   │   ├── MaintenanceWindow.php
-│   │   │   ├── BlockingId.php
-│   │   │   ├── BlockingPeriod.php
-│   │   │   ├── Money.php
-│   │   │   ├── RoomType.php
-│   │   │   ├── RoomStatus.php
-│   │   │   └── BlockingStatus.php
-│   │   │
-│   │   ├── Event/                            # Domain Events (internal)
-│   │   │   ├── RoomCreated.php
-│   │   │   ├── RoomBlocked.php
-│   │   │   ├── RoomReleased.php
-│   │   │   ├── RoomMarkedOccupied.php
-│   │   │   └── MaintenanceStarted.php
+│   │   │   └── LoyaltyTier.php               # Enum (bronze, silver, gold, platinum)
 │   │   │
 │   │   ├── Repository/
-│   │   │   └── RoomRepository.php            # Interface
+│   │   │   └── GuestProfileRepository.php    # Interface
 │   │   │
 │   │   └── Exception/
-│   │       ├── RoomNotFoundException.php
-│   │       └── RoomNotAvailableException.php
+│   │       └── GuestProfileNotFoundException.php
 │   │
 │   ├── Application/
 │   │   ├── Command/
-│   │   │   ├── BlockRoom.php
-│   │   │   ├── ReleaseRoom.php
-│   │   │   └── StartMaintenance.php
+│   │   │   ├── CreateGuestProfile.php
+│   │   │   ├── CreateGuestProfileHandler.php
+│   │   │   ├── UpdateGuestProfile.php
+│   │   │   └── UpdateGuestProfileHandler.php
 │   │   │
-│   │   ├── Handler/
-│   │   │   └── ...
-│   │   │
-│   │   ├── Query/
-│   │   │   └── GetAvailableRooms.php
-│   │   │
-│   │   └── IntegrationHandler/               # Handles INTEGRATION events from BC1
-│   │       ├── OnReservationConfirmedEvent.php
-│   │       ├── OnReservationCancelledEvent.php
-│   │       ├── OnGuestCheckedInEvent.php
-│   │       └── OnGuestCheckedOutEvent.php
+│   │   └── Query/
+│   │       ├── ListGuestProfiles.php
+│   │       └── ListGuestProfilesHandler.php
 │   │
 │   └── Infrastructure/
 │       ├── Persistence/
-│       │   ├── EloquentRoomRepository.php
+│       │   ├── GuestProfileReflector.php
 │       │   └── Eloquent/
-│       │       ├── RoomEloquent.php
-│       │       └── BlockingEloquent.php
+│       │       ├── GuestProfileModel.php
+│       │       └── EloquentGuestProfileRepository.php
 │       │
-│       ├── Api/                              # Internal API (for other BCs)
-│       │   └── InventoryApi.php              # Called by BC1's adapter
+│       ├── Integration/                      # API exposed for other BCs
+│       │   ├── GuestProfileApi.php           # Entry point for cross-BC access
+│       │   └── Dto/
+│       │       └── GuestProfileData.php      # DTO returned by the API
 │       │
-│       └── Messaging/
-│           └── IntegrationEventConsumer.php
+│       ├── Http/
+│       │   ├── Controllers/
+│       │   │   └── GuestProfileController.php
+│       │   ├── Requests/
+│       │   │   └── UpdateGuestProfileRequest.php
+│       │   └── Resources/
+│       │       └── GuestProfileResource.php
+│       │
+│       ├── Routes/
+│       │   └── api.php
+│       │
+│       └── Providers/
+│           └── GuestServiceProvider.php
 │
-└── Shared/
+├── IAM/                                      # BC: Identity & Access Management
+│   │
+│   ├── Domain/
+│   │   ├── Actor.php                         # Aggregate Root
+│   │   ├── ActorId.php                       # Identity VO
+│   │   │
+│   │   ├── ValueObject/
+│   │   │   ├── ActorType.php                 # Enum (guest, system)
+│   │   │   └── HashedPassword.php            # VO
+│   │   │
+│   │   ├── Repository/
+│   │   │   └── ActorRepository.php           # Interface
+│   │   │
+│   │   ├── Service/
+│   │   │   ├── PasswordHasher.php            # Interface
+│   │   │   ├── TokenManager.php              # Interface
+│   │   │   └── GuestProfileGateway.php       # Interface (port for Guest BC)
+│   │   │
+│   │   └── Exception/
+│   │       ├── ActorAlreadyExistsException.php
+│   │       ├── ActorNotFoundException.php
+│   │       └── InvalidCredentialsException.php
+│   │
+│   ├── Application/
+│   │   └── Command/
+│   │       ├── RegisterActor.php
+│   │       ├── RegisterActorHandler.php
+│   │       ├── AuthenticateActor.php
+│   │       ├── AuthenticateActorHandler.php
+│   │       ├── RevokeToken.php
+│   │       └── RevokeTokenHandler.php
+│   │
+│   └── Infrastructure/
+│       ├── Persistence/
+│       │   ├── ActorReflector.php
+│       │   └── Eloquent/
+│       │       ├── ActorModel.php            # Eloquent model (for Sanctum)
+│       │       └── EloquentActorRepository.php
+│       │
+│       ├── Integration/
+│       │   └── GuestProfileGatewayAdapter.php
+│       │
+│       ├── Services/
+│       │   ├── BcryptPasswordHasher.php
+│       │   └── SanctumTokenManager.php
+│       │
+│       ├── Http/
+│       │   ├── Controllers/
+│       │   │   └── AuthController.php
+│       │   ├── Requests/
+│       │   │   ├── RegisterRequest.php
+│       │   │   └── LoginRequest.php
+│       │   └── Resources/
+│       │       └── ActorResource.php
+│       │
+│       ├── Routes/
+│       │   └── api.php
+│       │
+│       └── Providers/
+│           └── IAMServiceProvider.php
+│
+└── Shared/                                   # Shared Kernel
     ├── Domain/
     │   ├── AggregateRoot.php
     │   ├── Entity.php
     │   ├── ValueObject.php
     │   ├── DomainEvent.php
-    │   └── Identity.php
+    │   ├── Identity.php
+    │   └── PaginatedResult.php
+    │
+    ├── Application/
+    │   ├── EventDispatcher.php
+    │   ├── EventDispatchingHandler.php
+    │   └── Messaging/
+    │       └── IntegrationEvent.php
     │
     └── Infrastructure/
         └── Messaging/
-            ├── IntegrationEvent.php
-            └── MessageBroker.php
+            └── LaravelEventDispatcher.php
 ```
 
 ---
 
 # SUMMARY
 
-| Aspect | BC1: Reservation | BC2: Inventory |
-|--------|-----------------|----------------|
-| **Aggregate Root** | Reservation | Room |
-| **Child Entities** | SpecialRequest | Blocking |
-| **Value Objects** | Guest, ReservationPeriod, Email, Phone | RoomDetails, MaintenanceWindow, BlockingPeriod |
-| **Domain Events** | 7 (internal) | 5 (internal) |
-| **Integration Events** | 4 (published) | 0 (published), 4 (consumed) |
-| **Sync Integration** | Uses InventoryGateway (interface) | Exposes InventoryApi (infra) |
-
----
-
-## Key Corrections from Previous Version
-
-| Before | After |
-|--------|-------|
-| Only VOs in aggregates | Added child **Entities** (SpecialRequest, Blocking) |
-| "Model" nomenclature | Domain uses **Entity**, Eloquent models are internal in infra |
-| Single "event" concept | Clear split: **Domain Events** (internal) vs **Integration Events** (cross-BC) |
-| HTTP-based ACL | **Interface-based** integration (modular monolith) |
-| API in domain | **API lives in Infrastructure** of providing BC |
+| Aspect | Reservation | Guest | IAM |
+|--------|------------|-------|-----|
+| **Aggregate Root** | Reservation | GuestProfile | Actor |
+| **Child Entities** | SpecialRequest | — | — |
+| **Value Objects** | ReservationPeriod, ReservationStatus, RequestType, RequestStatus, SpecialRequestId | LoyaltyTier | ActorType, HashedPassword |
+| **DTOs** | GuestInfo, RoomAvailability, RoomTypeInfo | GuestProfileData (integration) | — |
+| **Domain Events** | 7 (internal) | — | — |
+| **Integration Events** | 4 (published) | — | — |
+| **Cross-BC Ports** | GuestGateway, InventoryGateway | — | GuestProfileGateway |
