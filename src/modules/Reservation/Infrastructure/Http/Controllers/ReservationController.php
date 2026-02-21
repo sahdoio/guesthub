@@ -19,26 +19,34 @@ use Modules\Reservation\Application\Command\CheckInGuestHandler;
 use Modules\Reservation\Application\Command\CheckOutGuestHandler;
 use Modules\Reservation\Application\Command\ConfirmReservationHandler;
 use Modules\Reservation\Application\Command\CreateReservationHandler;
-use Modules\Reservation\Domain\Exception\ReservationNotFoundException;
-use Modules\Reservation\Domain\ReservationId;
-use Modules\Reservation\Domain\Repository\ReservationRepository;
+use Modules\Reservation\Application\Query\GetReservation;
+use Modules\Reservation\Application\Query\GetReservationHandler;
+use Modules\Reservation\Application\Query\ListReservations;
+use Modules\Reservation\Application\Query\ListReservationsHandler;
+use Modules\Shared\Application\Query\Pagination;
 use Modules\Reservation\Infrastructure\Http\Requests\AddSpecialRequestRequest;
 use Modules\Reservation\Infrastructure\Http\Requests\CancelReservationRequest;
 use Modules\Reservation\Infrastructure\Http\Requests\CheckInRequest;
 use Modules\Reservation\Infrastructure\Http\Requests\CreateReservationRequest;
-use Modules\Reservation\Infrastructure\Http\Resources\ReservationResource;
+use DateMalformedStringException;
 
 final class ReservationController
 {
-    public function index(Request $request, ReservationRepository $repository): JsonResponse
+    public function index(Request $request, ListReservationsHandler $handler): JsonResponse
     {
         $page = max(1, (int) $request->query('page', 1));
         $perPage = min(100, max(1, (int) $request->query('per_page', 15)));
 
-        $result = $repository->paginate($page, $perPage);
+        $result = $handler->handle(
+            new ListReservations(
+                status: $request->query('status'),
+                roomType: $request->query('room_type'),
+            ),
+            new Pagination($page, $perPage),
+        );
 
         return response()->json([
-            'data' => ReservationResource::collection($result->items)->resolve(),
+            'data' => array_map(fn($item) => $item->jsonSerialize(), $result->items),
             'meta' => [
                 'current_page' => $result->currentPage,
                 'last_page' => $result->lastPage,
@@ -48,10 +56,13 @@ final class ReservationController
         ]);
     }
 
+    /**
+     * @throws DateMalformedStringException
+     */
     public function store(
         CreateReservationRequest $request,
         CreateReservationHandler $handler,
-        ReservationRepository $repository,
+        GetReservationHandler $queryHandler,
     ): JsonResponse {
         $id = $handler->handle(new CreateReservation(
             guestProfileId: $request->validated('guest_profile_id'),
@@ -60,19 +71,16 @@ final class ReservationController
             roomType: $request->validated('room_type'),
         ));
 
-        $reservation = $repository->findByUuid($id);
+        $readModel = $queryHandler->handle(new GetReservation((string) $id));
 
-        return (new ReservationResource($reservation))
-            ->response()
-            ->setStatusCode(201);
+        return response()->json(['data' => $readModel], 201);
     }
 
-    public function show(string $id, ReservationRepository $repository): ReservationResource
+    public function show(string $id, GetReservationHandler $handler): JsonResponse
     {
-        $reservation = $repository->findByUuid(ReservationId::fromString($id))
-            ?? throw ReservationNotFoundException::withId(ReservationId::fromString($id));
+        $readModel = $handler->handle(new GetReservation($id));
 
-        return new ReservationResource($reservation);
+        return response()->json(['data' => $readModel]);
     }
 
     public function confirm(string $id, ConfirmReservationHandler $handler): JsonResponse

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Modules\Reservation\Domain\Policies;
+namespace Modules\Reservation\Domain\Specification;
 
 use DateTimeImmutable;
 use Modules\Reservation\Domain\Service\InventoryGateway;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 
-final class ReservationPolicy
+final class ReservationCreationSpecification
 {
     private const int MAX_ADVANCE_DAYS_REGULAR = 60;
     private const int MAX_ADVANCE_DAYS_VIP = 90;
@@ -18,7 +18,7 @@ final class ReservationPolicy
         private readonly InventoryGateway $inventoryGateway,
     ) {}
 
-    public function canCreateReservation(bool $isVip, ReservationPeriod $period, string $roomType): bool
+    public function isSatisfiedBy(bool $isVip, ReservationPeriod $period, string $roomType): bool
     {
         $today = new DateTimeImmutable('today');
 

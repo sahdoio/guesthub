@@ -53,7 +53,7 @@ final class EloquentGuestProfileRepository implements GuestProfileRepository
         return $record ? $this->toEntity($record) : null;
     }
 
-    public function paginate(int $page = 1, int $perPage = 15): PaginatedResult
+    public function list(int $page = 1, int $perPage = 15): PaginatedResult
     {
         $paginator = $this->model->newQuery()
             ->orderByDesc('id')

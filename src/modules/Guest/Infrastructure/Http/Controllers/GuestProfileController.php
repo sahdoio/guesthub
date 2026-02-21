@@ -11,6 +11,7 @@ use Modules\Guest\Application\Command\UpdateGuestProfileHandler;
 use Modules\Guest\Application\Query\ListGuestProfiles;
 use Modules\Guest\Application\Query\ListGuestProfilesHandler;
 use Modules\Guest\Domain\Exception\GuestProfileNotFoundException;
+use Modules\Shared\Application\Query\Pagination;
 use Modules\Guest\Domain\GuestProfileId;
 use Modules\Guest\Domain\Repository\GuestProfileRepository;
 use Modules\Guest\Infrastructure\Http\Requests\UpdateGuestProfileRequest;
@@ -23,7 +24,7 @@ final readonly class GuestProfileController
         $page = max(1, (int) $request->query('page', 1));
         $perPage = min(100, max(1, (int) $request->query('per_page', 15)));
 
-        $result = $handler->handle(new ListGuestProfiles($page, $perPage));
+        $result = $handler->handle(new ListGuestProfiles(), new Pagination($page, $perPage));
 
         return response()->json([
             'data' => GuestProfileResource::collection($result->items)->resolve(),

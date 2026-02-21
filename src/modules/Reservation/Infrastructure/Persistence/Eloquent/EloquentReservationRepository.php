@@ -41,20 +41,23 @@ final class EloquentReservationRepository implements ReservationRepository
         return $record ? $this->toEntity($record) : null;
     }
 
-    public function findByGuestProfileId(string $guestProfileId): array
-    {
-        return $this->model->newQuery()
-            ->where('guest_profile_id', $guestProfileId)
-            ->get()
-            ->map(fn(object $record) => $this->toEntity($record))
-            ->all();
-    }
+    public function list(
+        int $page = 1,
+        int $perPage = 15,
+        ?string $status = null,
+        ?string $roomType = null,
+    ): PaginatedResult {
+        $query = $this->model->newQuery()->orderByDesc('id');
 
-    public function paginate(int $page = 1, int $perPage = 15): PaginatedResult
-    {
-        $paginator = $this->model->newQuery()
-            ->orderByDesc('id')
-            ->paginate(perPage: $perPage, page: $page);
+        if ($status !== null) {
+            $query->where('status', $status);
+        }
+
+        if ($roomType !== null) {
+            $query->where('room_type', $roomType);
+        }
+
+        $paginator = $query->paginate(perPage: $perPage, page: $page);
 
         $items = collect($paginator->items())
             ->map(fn(object $record) => $this->toEntity($record))

@@ -19,7 +19,7 @@ interface GuestProfileRepository
     public function findByDocument(string $document): ?GuestProfile;
 
     /** @return PaginatedResult<GuestProfile> */
-    public function paginate(int $page = 1, int $perPage = 15): PaginatedResult;
+    public function list(int $page = 1, int $perPage = 15): PaginatedResult;
 
     public function remove(GuestProfile $profile): void;
 

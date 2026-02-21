@@ -65,18 +65,6 @@ final class EloquentReservationRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itFindsByGuestProfileId(): void
-    {
-        $this->repository->save($this->createReservation(['guestProfileId' => 'guest-A']));
-        $this->repository->save($this->createReservation(['guestProfileId' => 'guest-A']));
-        $this->repository->save($this->createReservation(['guestProfileId' => 'guest-B']));
-
-        $results = $this->repository->findByGuestProfileId('guest-A');
-
-        $this->assertCount(2, $results);
-    }
-
-    #[Test]
     public function itPersistsStatusChanges(): void
     {
         $reservation = $this->createReservation();
@@ -123,17 +111,46 @@ final class EloquentReservationRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itPaginatesReservations(): void
+    public function itListsReservations(): void
     {
         for ($i = 0; $i < 3; $i++) {
             $this->repository->save($this->createReservation(['guestProfileId' => "guest-{$i}"]));
         }
 
-        $result = $this->repository->paginate(1, 2);
+        $result = $this->repository->list(1, 2);
 
         $this->assertSame(3, $result->total);
         $this->assertCount(2, $result->items);
         $this->assertSame(2, $result->lastPage);
+    }
+
+    #[Test]
+    public function itListsFilteredByStatus(): void
+    {
+        $pending = $this->createReservation();
+        $this->repository->save($pending);
+
+        $confirmed = $this->createReservation(['guestProfileId' => 'guest-confirmed']);
+        $confirmed->confirm();
+        $this->repository->save($confirmed);
+
+        $result = $this->repository->list(1, 15, status: 'confirmed');
+
+        $this->assertSame(1, $result->total);
+        $this->assertSame(ReservationStatus::CONFIRMED, $result->items[0]->status);
+    }
+
+    #[Test]
+    public function itListsFilteredByRoomType(): void
+    {
+        $this->repository->save($this->createReservation(['roomType' => 'DOUBLE']));
+        $this->repository->save($this->createReservation(['roomType' => 'SUITE']));
+        $this->repository->save($this->createReservation(['roomType' => 'DOUBLE']));
+
+        $result = $this->repository->list(1, 15, roomType: 'SUITE');
+
+        $this->assertSame(1, $result->total);
+        $this->assertSame('SUITE', $result->items[0]->roomType);
     }
 
     #[Test]

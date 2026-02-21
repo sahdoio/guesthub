@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Reservation\Domain\Policies;
+namespace Tests\Unit\Reservation\Domain\Specification;
 
 use DateTimeImmutable;
 use Modules\Reservation\Domain\Dto\RoomAvailability;
-use Modules\Reservation\Domain\Policies\ReservationPolicy;
+use Modules\Reservation\Domain\Specification\ReservationCreationSpecification;
 use Modules\Reservation\Domain\Service\InventoryGateway;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(ReservationPolicy::class)]
-final class ReservationPolicyTest extends TestCase
+#[CoversClass(ReservationCreationSpecification::class)]
+final class ReservationCreationSpecificationTest extends TestCase
 {
     private InventoryGateway $inventory;
 
@@ -29,53 +29,53 @@ final class ReservationPolicyTest extends TestCase
     #[Test]
     public function itRejectsCheckinInThePast(): void
     {
-        $policy = new ReservationPolicy($this->inventory);
+        $spec = new ReservationCreationSpecification($this->inventory);
 
         $period = new ReservationPeriod(
             new DateTimeImmutable('-1 day'),
             new DateTimeImmutable('+2 days'),
         );
 
-        $this->assertFalse($policy->canCreateReservation(false, $period, 'SINGLE'));
+        $this->assertFalse($spec->isSatisfiedBy(false, $period, 'SINGLE'));
     }
 
     #[Test]
     public function itAllowsCheckinToday(): void
     {
-        $policy = new ReservationPolicy($this->inventory);
+        $spec = new ReservationCreationSpecification($this->inventory);
 
         $period = new ReservationPeriod(
             new DateTimeImmutable('today'),
             new DateTimeImmutable('+2 days'),
         );
 
-        $this->assertTrue($policy->canCreateReservation(false, $period, 'SINGLE'));
+        $this->assertTrue($spec->isSatisfiedBy(false, $period, 'SINGLE'));
     }
 
     #[Test]
     public function itRejectsBookingTooFarInAdvanceForRegularGuest(): void
     {
-        $policy = new ReservationPolicy($this->inventory);
+        $spec = new ReservationCreationSpecification($this->inventory);
 
         $period = new ReservationPeriod(
             new DateTimeImmutable('+61 days'),
             new DateTimeImmutable('+65 days'),
         );
 
-        $this->assertFalse($policy->canCreateReservation(false, $period, 'SINGLE'));
+        $this->assertFalse($spec->isSatisfiedBy(false, $period, 'SINGLE'));
     }
 
     #[Test]
     public function itAllowsVipToBookFurtherInAdvance(): void
     {
-        $policy = new ReservationPolicy($this->inventory);
+        $spec = new ReservationCreationSpecification($this->inventory);
 
         $period = new ReservationPeriod(
             new DateTimeImmutable('+61 days'),
             new DateTimeImmutable('+65 days'),
         );
 
-        $this->assertTrue($policy->canCreateReservation(true, $period, 'SINGLE'));
+        $this->assertTrue($spec->isSatisfiedBy(true, $period, 'SINGLE'));
     }
 
     #[Test]
@@ -86,13 +86,13 @@ final class ReservationPolicyTest extends TestCase
             new RoomAvailability('SINGLE', 0, 150.00),
         );
 
-        $policy = new ReservationPolicy($inventory);
+        $spec = new ReservationCreationSpecification($inventory);
 
         $period = new ReservationPeriod(
             new DateTimeImmutable('+1 day'),
             new DateTimeImmutable('+3 days'),
         );
 
-        $this->assertFalse($policy->canCreateReservation(false, $period, 'SINGLE'));
+        $this->assertFalse($spec->isSatisfiedBy(false, $period, 'SINGLE'));
     }
 }
