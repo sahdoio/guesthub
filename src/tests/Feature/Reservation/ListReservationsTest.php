@@ -139,6 +139,52 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
+    public function itFiltersbyStatus(): void
+    {
+        $id = $this->createReservation();
+        $this->createReservation();
+
+        $this->postJson("/api/reservations/{$id}/confirm");
+
+        $response = $this->getJson('/api/reservations?status=confirmed');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.status', 'confirmed');
+    }
+
+    #[Test]
+    public function itFiltersByRoomType(): void
+    {
+        $this->createReservation(['room_type' => 'DOUBLE']);
+        $this->createReservation(['room_type' => 'SUITE']);
+        $this->createReservation(['room_type' => 'DOUBLE']);
+
+        $response = $this->getJson('/api/reservations?room_type=SUITE');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.room_type', 'SUITE');
+    }
+
+    #[Test]
+    public function itCombinesFilters(): void
+    {
+        $id = $this->createReservation(['room_type' => 'DOUBLE']);
+        $this->createReservation(['room_type' => 'SUITE']);
+        $this->createReservation(['room_type' => 'DOUBLE']);
+
+        $this->postJson("/api/reservations/{$id}/confirm");
+
+        $response = $this->getJson('/api/reservations?status=confirmed&room_type=DOUBLE');
+
+        $response->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.status', 'confirmed')
+            ->assertJsonPath('data.0.room_type', 'DOUBLE');
+    }
+
+    #[Test]
     public function itCapsPerPageAt100(): void
     {
         $response = $this->getJson('/api/reservations?per_page=999');

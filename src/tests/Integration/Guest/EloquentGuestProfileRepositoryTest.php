@@ -114,7 +114,7 @@ final class EloquentGuestProfileRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itPaginatesProfiles(): void
+    public function itListsProfiles(): void
     {
         for ($i = 0; $i < 3; $i++) {
             $this->repository->save($this->createProfile([
@@ -123,7 +123,7 @@ final class EloquentGuestProfileRepositoryTest extends TestCase
             ]));
         }
 
-        $result = $this->repository->paginate(1, 2);
+        $result = $this->repository->list(1, 2);
 
         $this->assertSame(3, $result->total);
         $this->assertSame(2, $result->perPage);
