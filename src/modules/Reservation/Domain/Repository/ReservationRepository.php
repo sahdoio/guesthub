@@ -14,11 +14,13 @@ interface ReservationRepository
 
     public function findByUuid(ReservationId $uuid): ?Reservation;
 
-    /** @return Reservation[] */
-    public function findByGuestProfileId(string $guestProfileId): array;
-
     /** @return PaginatedResult<Reservation> */
-    public function paginate(int $page = 1, int $perPage = 15): PaginatedResult;
+    public function list(
+        int $page = 1,
+        int $perPage = 15,
+        ?string $status = null,
+        ?string $roomType = null,
+    ): PaginatedResult;
 
     public function nextIdentity(): ReservationId;
 }

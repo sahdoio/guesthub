@@ -5,9 +5,14 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/guests?page=1&per_page=15
+  url: {{baseUrl}}/api/guests?page=1&per_page=2
   body: none
   auth: bearer
+}
+
+params:query {
+  page: 1
+  per_page: 2
 }
 
 headers {
@@ -22,7 +27,7 @@ tests {
   test("should return 200", function() {
     expect(res.getStatus()).to.equal(200);
   });
-
+  
   test("should return paginated structure", function() {
     const body = res.getBody();
     expect(body.data).to.be.an('array');

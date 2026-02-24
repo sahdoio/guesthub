@@ -1,11 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Guest\Infrastructure\Http\Controllers\GuestProfileController;
+use Modules\Guest\Presentation\Http\Action\DeleteGuestProfileAction;
+use Modules\Guest\Presentation\Http\Action\ListGuestProfilesAction;
+use Modules\Guest\Presentation\Http\Action\ShowGuestProfileAction;
+use Modules\Guest\Presentation\Http\Action\UpdateGuestProfileAction;
 
 Route::prefix('guests')->middleware('auth:sanctum')->group(function () {
-    Route::get('/', [GuestProfileController::class, 'index']);
-    Route::get('/{uuid}', [GuestProfileController::class, 'show']);
-    Route::put('/{uuid}', [GuestProfileController::class, 'update']);
-    Route::delete('/{uuid}', [GuestProfileController::class, 'destroy']);
+    Route::get('/', ListGuestProfilesAction::class);
+    Route::get('/{uuid}', ShowGuestProfileAction::class);
+    Route::put('/{uuid}', UpdateGuestProfileAction::class);
+    Route::delete('/{uuid}', DeleteGuestProfileAction::class);
 });
