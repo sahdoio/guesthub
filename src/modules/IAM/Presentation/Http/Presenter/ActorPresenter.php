@@ -2,20 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Modules\IAM\Infrastructure\Http\Resources;
+namespace Modules\IAM\Presentation\Http\Presenter;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\IAM\Domain\Actor;
 
-/** @mixin Actor */
-final class ActorResource extends JsonResource
+final class ActorPresenter
 {
-    public function toArray(Request $request): array
+    public static function fromDomain(Actor $actor): array
     {
-        /** @var Actor $actor */
-        $actor = $this->resource;
-
         return [
             'id' => (string) $actor->uuid,
             'type' => $actor->type->value,

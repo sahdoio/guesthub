@@ -2,20 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Modules\Guest\Infrastructure\Http\Resources;
+namespace Modules\Guest\Presentation\Http\Presenter;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\Guest\Domain\GuestProfile;
 
-/** @mixin GuestProfile */
-final class GuestProfileResource extends JsonResource
+final class GuestProfilePresenter
 {
-    public function toArray(Request $request): array
+    public static function fromDomain(GuestProfile $profile): array
     {
-        /** @var GuestProfile $profile */
-        $profile = $this->resource;
-
         return [
             'id' => (string) $profile->uuid,
             'full_name' => $profile->fullName,
