@@ -6,7 +6,7 @@ namespace Tests\Integration\IAM;
 
 use Modules\IAM\Domain\Service\PasswordHasher;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
-use Modules\IAM\Infrastructure\Security\BcryptPasswordHasher;
+use Modules\IAM\Infrastructure\Services\BcryptPasswordHasher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;

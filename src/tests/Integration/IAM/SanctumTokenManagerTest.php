@@ -7,7 +7,7 @@ namespace Tests\Integration\IAM;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\IAM\Domain\Service\TokenManager;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
-use Modules\IAM\Infrastructure\Security\SanctumTokenManager;
+use Modules\IAM\Infrastructure\Services\SanctumTokenManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
