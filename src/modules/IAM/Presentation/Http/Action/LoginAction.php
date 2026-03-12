@@ -16,6 +16,7 @@ final readonly class LoginAction
     public function __construct(
         private AuthenticateActorHandler $handler,
         private InputValidator $validator,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -30,7 +31,7 @@ final readonly class LoginAction
             password: $data['password'],
         ));
 
-        return JsonResponder::ok([
+        return $this->responder->ok([
             'token' => $result['token'],
             'actor_id' => $result['actor_id'],
         ]);

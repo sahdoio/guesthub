@@ -15,6 +15,7 @@ final readonly class ListReservationsAction
 {
     public function __construct(
         private ListReservationsHandler $handler,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -32,7 +33,7 @@ final readonly class ListReservationsAction
             new Pagination($page, $perPage),
         );
 
-        return JsonResponder::ok([
+        return $this->responder->ok([
             'data' => array_map(fn($item) => $item->jsonSerialize(), $result->items),
             'meta' => [
                 'current_page' => $result->currentPage,

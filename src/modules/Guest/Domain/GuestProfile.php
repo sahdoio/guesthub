@@ -16,14 +16,14 @@ final class GuestProfile extends AggregateRoot
      */
     private function __construct(
         public readonly GuestProfileId $uuid,
-        public private(set) string $fullName,
-        public private(set) string $email,
-        public private(set) string $phone,
-        public private(set) string $document,
-        public private(set) LoyaltyTier $loyaltyTier,
-        public private(set) array $preferences,
+        private(set) string $fullName,
+        private(set) string $email,
+        private(set) string $phone,
+        private(set) string $document,
+        private(set) LoyaltyTier $loyaltyTier,
+        private(set) array $preferences,
         public readonly DateTimeImmutable $createdAt,
-        public private(set) ?DateTimeImmutable $updatedAt = null,
+        private(set) ?DateTimeImmutable $updatedAt = null,
     ) {}
 
     /**

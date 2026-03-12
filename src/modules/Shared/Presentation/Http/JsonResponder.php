@@ -7,29 +7,29 @@ namespace Modules\Shared\Presentation\Http;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 
-final class JsonResponder
+final readonly class JsonResponder
 {
-    public static function ok(mixed $data): ResponseInterface
+    public function ok(mixed $data): ResponseInterface
     {
-        return self::respond($data, 200);
+        return $this->respond($data, 200);
     }
 
-    public static function created(mixed $data): ResponseInterface
+    public function created(mixed $data): ResponseInterface
     {
-        return self::respond($data, 201);
+        return $this->respond($data, 201);
     }
 
-    public static function noContent(): ResponseInterface
+    public function noContent(): ResponseInterface
     {
         return new Response(204);
     }
 
-    public static function error(array $errors, int $status): ResponseInterface
+    public function error(array $errors, int $status): ResponseInterface
     {
-        return self::respond(['errors' => $errors], $status);
+        return $this->respond(['errors' => $errors], $status);
     }
 
-    private static function respond(mixed $data, int $status): ResponseInterface
+    private function respond(mixed $data, int $status): ResponseInterface
     {
         return new Response(
             status: $status,

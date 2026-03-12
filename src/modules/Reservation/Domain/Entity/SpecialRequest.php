@@ -17,10 +17,10 @@ final class SpecialRequest extends Entity
     private function __construct(
         public readonly SpecialRequestId $id,
         public readonly RequestType $type,
-        public private(set) string $description,
+        private(set) string $description,
         public readonly DateTimeImmutable $createdAt,
-        public private(set) RequestStatus $status,
-        public private(set) ?DateTimeImmutable $fulfilledAt,
+        private(set) RequestStatus $status,
+        private(set) ?DateTimeImmutable $fulfilledAt,
     ) {}
 
     public static function create(

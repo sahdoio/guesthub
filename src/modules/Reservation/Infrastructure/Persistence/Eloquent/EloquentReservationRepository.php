@@ -17,11 +17,12 @@ use Modules\Reservation\Domain\ValueObject\ReservationStatus;
 use Modules\Reservation\Domain\ValueObject\RequestStatus;
 use Modules\Reservation\Domain\ValueObject\RequestType;
 use Modules\Reservation\Domain\ValueObject\SpecialRequestId;
+use DateMalformedStringException;
 
-final class EloquentReservationRepository implements ReservationRepository
+final readonly class EloquentReservationRepository implements ReservationRepository
 {
     public function __construct(
-        private readonly ReservationModel $model,
+        private ReservationModel $model,
     ) {}
 
     public function save(Reservation $reservation): void
@@ -32,6 +33,9 @@ final class EloquentReservationRepository implements ReservationRepository
             ->updateOrInsert(['uuid' => $data['uuid']], $data);
     }
 
+    /**
+     * @throws DateMalformedStringException
+     */
     public function findByUuid(ReservationId $uuid): ?Reservation
     {
         $record = $this->model->newQuery()
@@ -97,6 +101,9 @@ final class EloquentReservationRepository implements ReservationRepository
         ];
     }
 
+    /**
+     * @throws DateMalformedStringException
+     */
     private function toEntity(object $record): Reservation
     {
         return ReservationReflector::reconstruct(

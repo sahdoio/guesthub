@@ -20,6 +20,7 @@ final readonly class UpdateGuestProfileAction
         private UpdateGuestProfileHandler $handler,
         private GuestProfileRepository $repository,
         private InputValidator $validator,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -47,6 +48,6 @@ final readonly class UpdateGuestProfileAction
 
         $profile = $this->repository->findByUuid(GuestProfileId::fromString($uuid));
 
-        return JsonResponder::ok(['data' => GuestProfilePresenter::fromDomain($profile)]);
+        return $this->responder->ok(['data' => GuestProfilePresenter::fromDomain($profile)]);
     }
 }

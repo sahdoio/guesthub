@@ -16,6 +16,7 @@ final readonly class CancelReservationAction
     public function __construct(
         private CancelReservationHandler $handler,
         private InputValidator $validator,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -29,6 +30,6 @@ final readonly class CancelReservationAction
             reason: $data['reason'],
         ));
 
-        return JsonResponder::ok(['message' => 'Reservation cancelled.']);
+        return $this->responder->ok(['message' => 'Reservation cancelled.']);
     }
 }

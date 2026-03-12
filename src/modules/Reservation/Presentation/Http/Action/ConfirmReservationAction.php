@@ -14,6 +14,7 @@ final readonly class ConfirmReservationAction
 {
     public function __construct(
         private ConfirmReservationHandler $handler,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -22,6 +23,6 @@ final readonly class ConfirmReservationAction
             reservationId: $request->getAttribute('id'),
         ));
 
-        return JsonResponder::ok(['message' => 'Reservation confirmed.']);
+        return $this->responder->ok(['message' => 'Reservation confirmed.']);
     }
 }

@@ -14,6 +14,7 @@ final readonly class ShowReservationAction
 {
     public function __construct(
         private GetReservationHandler $handler,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -22,6 +23,6 @@ final readonly class ShowReservationAction
             new GetReservation($request->getAttribute('id')),
         );
 
-        return JsonResponder::ok(['data' => $readModel]);
+        return $this->responder->ok(['data' => $readModel]);
     }
 }

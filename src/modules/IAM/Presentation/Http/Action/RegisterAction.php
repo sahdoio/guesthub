@@ -19,6 +19,7 @@ final readonly class RegisterAction
         private RegisterActorHandler $handler,
         private ActorRepository $repository,
         private InputValidator $validator,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -41,6 +42,6 @@ final readonly class RegisterAction
 
         $actor = $this->repository->findByUuid($id);
 
-        return JsonResponder::created(['data' => ActorPresenter::fromDomain($actor)]);
+        return $this->responder->created(['data' => ActorPresenter::fromDomain($actor)]);
     }
 }

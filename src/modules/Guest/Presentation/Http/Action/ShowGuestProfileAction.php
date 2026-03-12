@@ -16,6 +16,7 @@ final readonly class ShowGuestProfileAction
 {
     public function __construct(
         private GuestProfileRepository $repository,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -25,6 +26,6 @@ final readonly class ShowGuestProfileAction
         $profile = $this->repository->findByUuid(GuestProfileId::fromString($uuid))
             ?? throw GuestProfileNotFoundException::withId(GuestProfileId::fromString($uuid));
 
-        return JsonResponder::ok(['data' => GuestProfilePresenter::fromDomain($profile)]);
+        return $this->responder->ok(['data' => GuestProfilePresenter::fromDomain($profile)]);
     }
 }

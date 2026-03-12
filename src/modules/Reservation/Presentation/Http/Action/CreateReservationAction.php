@@ -21,6 +21,7 @@ final readonly class CreateReservationAction
         private CreateReservationHandler $handler,
         private GetReservationHandler $queryHandler,
         private InputValidator $validator,
+        private JsonResponder $responder,
     ) {}
 
     /**
@@ -44,6 +45,6 @@ final readonly class CreateReservationAction
 
         $readModel = $this->queryHandler->handle(new GetReservation((string) $id));
 
-        return JsonResponder::created(['data' => $readModel]);
+        return $this->responder->created(['data' => $readModel]);
     }
 }

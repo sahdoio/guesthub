@@ -16,6 +16,7 @@ final readonly class CheckInAction
     public function __construct(
         private CheckInGuestHandler $handler,
         private InputValidator $validator,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -31,6 +32,6 @@ final readonly class CheckInAction
             roomNumber: $data['room_number'],
         ));
 
-        return JsonResponder::ok(['message' => 'Guest checked in.']);
+        return $this->responder->ok(['message' => 'Guest checked in.']);
     }
 }

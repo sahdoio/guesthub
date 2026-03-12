@@ -16,6 +16,7 @@ final readonly class ListGuestProfilesAction
 {
     public function __construct(
         private ListGuestProfilesHandler $handler,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -27,7 +28,7 @@ final readonly class ListGuestProfilesAction
 
         $result = $this->handler->handle(new ListGuestProfiles(), new Pagination($page, $perPage));
 
-        return JsonResponder::ok([
+        return $this->responder->ok([
             'data' => array_map(
                 fn($profile) => GuestProfilePresenter::fromDomain($profile),
                 $result->items,

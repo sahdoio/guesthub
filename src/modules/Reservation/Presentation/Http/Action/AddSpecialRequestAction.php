@@ -17,6 +17,7 @@ final readonly class AddSpecialRequestAction
     public function __construct(
         private AddSpecialRequestHandler $handler,
         private InputValidator $validator,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -34,7 +35,7 @@ final readonly class AddSpecialRequestAction
             description: $data['description'],
         ));
 
-        return JsonResponder::created([
+        return $this->responder->created([
             'message' => 'Special request added.',
             'request_id' => (string) $requestId,
         ]);

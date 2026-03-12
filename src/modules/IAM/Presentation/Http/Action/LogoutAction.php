@@ -14,6 +14,7 @@ final readonly class LogoutAction
 {
     public function __construct(
         private RevokeTokenHandler $handler,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -24,6 +25,6 @@ final readonly class LogoutAction
             actorEmail: $user->email,
         ));
 
-        return JsonResponder::ok(['message' => 'Logged out.']);
+        return $this->responder->ok(['message' => 'Logged out.']);
     }
 }

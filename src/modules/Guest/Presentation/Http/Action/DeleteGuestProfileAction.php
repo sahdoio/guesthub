@@ -15,6 +15,7 @@ final readonly class DeleteGuestProfileAction
 {
     public function __construct(
         private GuestProfileRepository $repository,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -26,6 +27,6 @@ final readonly class DeleteGuestProfileAction
 
         $this->repository->remove($profile);
 
-        return JsonResponder::noContent();
+        return $this->responder->noContent();
     }
 }

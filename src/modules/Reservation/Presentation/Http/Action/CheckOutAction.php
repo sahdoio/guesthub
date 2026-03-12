@@ -14,6 +14,7 @@ final readonly class CheckOutAction
 {
     public function __construct(
         private CheckOutGuestHandler $handler,
+        private JsonResponder $responder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -22,6 +23,6 @@ final readonly class CheckOutAction
             reservationId: $request->getAttribute('id'),
         ));
 
-        return JsonResponder::ok(['message' => 'Guest checked out.']);
+        return $this->responder->ok(['message' => 'Guest checked out.']);
     }
 }

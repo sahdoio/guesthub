@@ -34,15 +34,15 @@ final class Reservation extends AggregateRoot
         public readonly string $guestProfileId,
         public readonly ReservationPeriod $period,
         public readonly string $roomType,
-        public private(set) ReservationStatus $status,
-        public private(set) ?string $assignedRoomNumber,
-        public private(set) array $specialRequests,
+        private(set) ReservationStatus $status,
+        private(set) ?string $assignedRoomNumber,
+        private(set) array $specialRequests,
         public readonly DateTimeImmutable $createdAt,
-        public private(set) ?DateTimeImmutable $confirmedAt,
-        public private(set) ?DateTimeImmutable $checkedInAt,
-        public private(set) ?DateTimeImmutable $checkedOutAt,
-        public private(set) ?DateTimeImmutable $cancelledAt,
-        public private(set) ?string $cancellationReason,
+        private(set) ?DateTimeImmutable $confirmedAt,
+        private(set) ?DateTimeImmutable $checkedInAt,
+        private(set) ?DateTimeImmutable $checkedOutAt,
+        private(set) ?DateTimeImmutable $cancelledAt,
+        private(set) ?string $cancellationReason,
     ) {}
 
     public static function create(
