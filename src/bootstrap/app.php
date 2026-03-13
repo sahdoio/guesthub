@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Session\TokenMismatchException;
 use Modules\Shared\Presentation\Exception\InputValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -16,6 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \Modules\Shared\Infrastructure\Http\Middleware\HandleInertiaRequests::class,
         ]);
+
+        $middleware->alias([
+            'admin' => \Modules\Shared\Infrastructure\Http\Middleware\EnsureActorIsAdmin::class,
+            'tenant' => \Modules\Shared\Infrastructure\Http\Middleware\SetTenantContext::class,
+            'role' => \Modules\Shared\Infrastructure\Http\Middleware\EnsureActorRole::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->renderable(function (InputValidationException $e) {
@@ -23,5 +30,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => $e->getMessage(),
                 'errors' => $e->errors,
             ], 422);
+        });
+
+        $exceptions->renderable(function (TokenMismatchException $e, $request) {
+            if ($request->inertia()) {
+                return redirect('/login');
+            }
         });
     })->create();

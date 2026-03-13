@@ -7,7 +7,7 @@ namespace Modules\Reservation\Domain\Dto;
 final readonly class GuestInfo
 {
     public function __construct(
-        public string $guestProfileId,
+        public string $guestId,
         public string $fullName,
         public string $email,
         public string $phone,

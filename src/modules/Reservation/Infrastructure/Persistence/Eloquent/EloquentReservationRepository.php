@@ -4,25 +4,27 @@ declare(strict_types=1);
 
 namespace Modules\Reservation\Infrastructure\Persistence\Eloquent;
 
+use DateMalformedStringException;
 use DateTimeImmutable;
-use Modules\Reservation\Domain\Entity\SpecialRequest;
+use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ReservationId;
-use Modules\Reservation\Domain\Repository\ReservationRepository;
+use Modules\Reservation\Domain\SpecialRequest;
+use Modules\Reservation\Domain\ValueObject\RequestStatus;
+use Modules\Reservation\Domain\ValueObject\RequestType;
+use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
+use Modules\Reservation\Domain\ValueObject\ReservationStatus;
+use Modules\Reservation\Domain\ValueObject\SpecialRequestId;
 use Modules\Reservation\Infrastructure\Persistence\ReservationReflector;
 use Modules\Reservation\Infrastructure\Persistence\SpecialRequestReflector;
 use Modules\Shared\Domain\PaginatedResult;
-use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
-use Modules\Reservation\Domain\ValueObject\ReservationStatus;
-use Modules\Reservation\Domain\ValueObject\RequestStatus;
-use Modules\Reservation\Domain\ValueObject\RequestType;
-use Modules\Reservation\Domain\ValueObject\SpecialRequestId;
-use DateMalformedStringException;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 final readonly class EloquentReservationRepository implements ReservationRepository
 {
     public function __construct(
         private ReservationModel $model,
+        private TenantContext $tenantContext,
     ) {}
 
     public function save(Reservation $reservation): void
@@ -50,6 +52,7 @@ final readonly class EloquentReservationRepository implements ReservationReposit
         int $perPage = 15,
         ?string $status = null,
         ?string $roomType = null,
+        ?string $guestId = null,
     ): PaginatedResult {
         $query = $this->model->newQuery()->orderByDesc('id');
 
@@ -59,6 +62,10 @@ final readonly class EloquentReservationRepository implements ReservationReposit
 
         if ($roomType !== null) {
             $query->where('room_type', $roomType);
+        }
+
+        if ($guestId !== null) {
+            $query->where('guest_id', $guestId);
         }
 
         $paginator = $query->paginate(perPage: $perPage, page: $page);
@@ -122,8 +129,9 @@ final readonly class EloquentReservationRepository implements ReservationReposit
     {
         return [
             'uuid' => $reservation->uuid->value,
+            'account_id' => $this->tenantContext->id(),
             'status' => $reservation->status->value,
-            'guest_profile_id' => $reservation->guestProfileId,
+            'guest_id' => $reservation->guestId,
             'check_in' => $reservation->period->checkIn->format('Y-m-d'),
             'check_out' => $reservation->period->checkOut->format('Y-m-d'),
             'room_type' => $reservation->roomType,
@@ -145,7 +153,7 @@ final readonly class EloquentReservationRepository implements ReservationReposit
     {
         return ReservationReflector::reconstruct(
             uuid: ReservationId::fromString($record->uuid),
-            guestProfileId: $record->guest_profile_id,
+            guestId: $record->guest_id,
             period: new ReservationPeriod(
                 new DateTimeImmutable($record->check_in),
                 new DateTimeImmutable($record->check_out),

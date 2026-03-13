@@ -9,7 +9,7 @@ use Modules\Guest\Infrastructure\Http\View\GuestShowView;
 use Modules\Guest\Infrastructure\Http\View\GuestStoreView;
 use Modules\Guest\Infrastructure\Http\View\GuestUpdateView;
 
-Route::middleware('auth')->prefix('guests')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('guests')->group(function () {
     Route::get('/', GuestListView::class)->name('guests.index');
     Route::get('/create', GuestCreateView::class)->name('guests.create');
     Route::post('/', GuestStoreView::class)->name('guests.store');

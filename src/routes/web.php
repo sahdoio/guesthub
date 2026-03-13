@@ -8,6 +8,6 @@ Route::get('/', function () {
     return redirect(Auth::check() ? '/dashboard' : '/login');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', DashboardView::class)->name('dashboard');
 });

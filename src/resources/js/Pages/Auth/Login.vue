@@ -66,6 +66,13 @@ const submit = () => {
                 <span v-if="form.processing">Signing in...</span>
                 <span v-else>Sign in</span>
             </button>
+
+            <p class="text-center text-sm text-gray-600">
+                Don't have an account?
+                <a href="/register" class="text-blue-600 hover:text-blue-700 font-medium">
+                    Create one
+                </a>
+            </p>
         </form>
     </div>
 </template>

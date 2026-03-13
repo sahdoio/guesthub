@@ -6,13 +6,16 @@ namespace Tests\Integration\Reservation;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Guest\Domain\GuestProfile;
-use Modules\Guest\Domain\Repository\GuestProfileRepository;
+use Modules\Guest\Domain\Guest;
+use Modules\Guest\Domain\Repository\GuestRepository;
 use Modules\Guest\Domain\ValueObject\LoyaltyTier;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Reservation\Domain\Service\GuestGateway;
 use Modules\Reservation\Infrastructure\Integration\GuestGatewayAdapter;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
 #[CoversClass(GuestGatewayAdapter::class)]
@@ -21,18 +24,26 @@ final class GuestGatewayAdapterTest extends TestCase
     use RefreshDatabase;
 
     private GuestGateway $gateway;
-    private GuestProfileRepository $guestRepo;
+    private GuestRepository $guestRepo;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $account = AccountModel::create([
+            'uuid' => Uuid::uuid7()->toString(),
+            'name' => 'Test Hotel',
+            'created_at' => now(),
+        ]);
+        $this->app->make(TenantContext::class)->set($account->id);
+
         $this->gateway = $this->app->make(GuestGateway::class);
-        $this->guestRepo = $this->app->make(GuestProfileRepository::class);
+        $this->guestRepo = $this->app->make(GuestRepository::class);
     }
 
     private function seedGuest(string $email, LoyaltyTier $tier = LoyaltyTier::BRONZE): string
     {
-        $profile = GuestProfile::create(
+        $guest = Guest::create(
             uuid: $this->guestRepo->nextIdentity(),
             fullName: 'Test Guest',
             email: $email,
@@ -43,9 +54,9 @@ final class GuestGatewayAdapterTest extends TestCase
             createdAt: new DateTimeImmutable(),
         );
 
-        $this->guestRepo->save($profile);
+        $this->guestRepo->save($guest);
 
-        return (string) $profile->uuid;
+        return (string) $guest->uuid;
     }
 
     #[Test]
@@ -56,7 +67,7 @@ final class GuestGatewayAdapterTest extends TestCase
         $info = $this->gateway->findByUuid($uuid);
 
         $this->assertNotNull($info);
-        $this->assertSame($uuid, $info->guestProfileId);
+        $this->assertSame($uuid, $info->guestId);
         $this->assertSame('Test Guest', $info->fullName);
         $this->assertSame('alice@hotel.com', $info->email);
         $this->assertFalse($info->isVip);

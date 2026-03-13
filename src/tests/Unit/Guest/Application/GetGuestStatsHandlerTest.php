@@ -7,7 +7,7 @@ namespace Tests\Unit\Guest\Application;
 use Modules\Guest\Application\Query\GetGuestStats;
 use Modules\Guest\Application\Query\GetGuestStatsHandler;
 use Modules\Guest\Application\Query\GuestStatsResult;
-use Modules\Guest\Domain\Repository\GuestProfileRepository;
+use Modules\Guest\Domain\Repository\GuestRepository;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -18,7 +18,7 @@ final class GetGuestStatsHandlerTest extends TestCase
     #[Test]
     public function itReturnsGuestStatsDto(): void
     {
-        $repository = $this->createMock(GuestProfileRepository::class);
+        $repository = $this->createMock(GuestRepository::class);
 
         $repository->method('count')->willReturn(42);
         $repository->method('countByLoyaltyTier')->willReturn([
@@ -42,7 +42,7 @@ final class GetGuestStatsHandlerTest extends TestCase
     #[Test]
     public function itReturnsEmptyStatsWhenNoGuests(): void
     {
-        $repository = $this->createMock(GuestProfileRepository::class);
+        $repository = $this->createMock(GuestRepository::class);
 
         $repository->method('count')->willReturn(0);
         $repository->method('countByLoyaltyTier')->willReturn([]);
@@ -57,7 +57,7 @@ final class GetGuestStatsHandlerTest extends TestCase
     #[Test]
     public function toArrayReturnsCorrectStructure(): void
     {
-        $repository = $this->createMock(GuestProfileRepository::class);
+        $repository = $this->createMock(GuestRepository::class);
 
         $repository->method('count')->willReturn(5);
         $repository->method('countByLoyaltyTier')->willReturn(['gold' => 5]);

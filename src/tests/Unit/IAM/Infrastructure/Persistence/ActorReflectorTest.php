@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit\IAM\Infrastructure\Persistence;
 
 use DateTimeImmutable;
+use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
-use Modules\IAM\Domain\ValueObject\ActorType;
+use Modules\IAM\Domain\Role;
+use Modules\IAM\Domain\RoleId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
+use Modules\IAM\Domain\ValueObject\RoleName;
 use Modules\IAM\Infrastructure\Persistence\ActorReflector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -17,6 +20,16 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ActorReflector::class)]
 final class ActorReflectorTest extends TestCase
 {
+    private AccountId $accountId;
+    private RoleId $roleId;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->accountId = AccountId::generate();
+        $this->roleId = RoleId::generate();
+    }
+
     #[Test]
     public function itReconstructsAGuestActor(): void
     {
@@ -25,46 +38,70 @@ final class ActorReflectorTest extends TestCase
 
         $actor = ActorReflector::reconstruct(
             uuid: $uuid,
-            type: ActorType::GUEST,
+            accountId: $this->accountId,
+            roles: [Role::create(uuid: $this->roleId, name: RoleName::GUEST)],
             name: 'John Doe',
             email: 'john@hotel.com',
             password: new HashedPassword('$2y$10$somehash'),
-            profileType: 'guest',
-            profileId: '019c57c1-9ff8-71c5-9155-26020ca798ed',
+            subjectType: 'guest',
+            subjectId: 1,
             createdAt: $createdAt,
             updatedAt: null,
         );
 
         $this->assertInstanceOf(Actor::class, $actor);
         $this->assertTrue($uuid->equals($actor->uuid));
-        $this->assertSame(ActorType::GUEST, $actor->type);
+        $this->assertTrue($this->accountId->equals($actor->accountId));
+        $this->assertCount(1, $actor->roles());
+        $this->assertSame(RoleName::GUEST, $actor->roles()[0]->name);
         $this->assertSame('John Doe', $actor->name);
         $this->assertSame('john@hotel.com', $actor->email);
         $this->assertSame('$2y$10$somehash', $actor->password->value);
-        $this->assertSame('guest', $actor->profileType);
-        $this->assertSame('019c57c1-9ff8-71c5-9155-26020ca798ed', $actor->profileId);
+        $this->assertSame('guest', $actor->subjectType);
+        $this->assertSame(1, $actor->subjectId);
         $this->assertSame($createdAt, $actor->createdAt);
         $this->assertNull($actor->updatedAt);
     }
 
     #[Test]
-    public function itReconstructsASystemActor(): void
+    public function itReconstructsAnAdminActor(): void
     {
         $actor = ActorReflector::reconstruct(
             uuid: ActorId::generate(),
-            type: ActorType::SYSTEM,
+            accountId: $this->accountId,
+            roles: [Role::create(uuid: $this->roleId, name: RoleName::ADMIN)],
+            name: 'Hotel Manager',
+            email: 'manager@hotel.com',
+            password: new HashedPassword('$2y$10$hash'),
+            subjectType: null,
+            subjectId: null,
+            createdAt: new DateTimeImmutable(),
+            updatedAt: null,
+        );
+
+        $this->assertCount(1, $actor->roles());
+        $this->assertSame(RoleName::ADMIN, $actor->roles()[0]->name);
+        $this->assertTrue($actor->isAdmin());
+    }
+
+    #[Test]
+    public function itReconstructsWithUpdatedAt(): void
+    {
+        $actor = ActorReflector::reconstruct(
+            uuid: ActorId::generate(),
+            accountId: $this->accountId,
+            roles: [Role::create(uuid: $this->roleId, name: RoleName::GUEST)],
             name: 'Booking Engine',
             email: 'system@hotel.com',
             password: new HashedPassword('$2y$10$hash'),
-            profileType: null,
-            profileId: null,
+            subjectType: null,
+            subjectId: null,
             createdAt: new DateTimeImmutable(),
             updatedAt: new DateTimeImmutable(),
         );
 
-        $this->assertSame(ActorType::SYSTEM, $actor->type);
-        $this->assertNull($actor->profileType);
-        $this->assertNull($actor->profileId);
+        $this->assertNull($actor->subjectType);
+        $this->assertNull($actor->subjectId);
         $this->assertNotNull($actor->updatedAt);
     }
 
@@ -73,12 +110,13 @@ final class ActorReflectorTest extends TestCase
     {
         $actor = ActorReflector::reconstruct(
             uuid: ActorId::generate(),
-            type: ActorType::GUEST,
+            accountId: $this->accountId,
+            roles: [Role::create(uuid: $this->roleId, name: RoleName::GUEST)],
             name: 'Jane',
             email: 'jane@hotel.com',
             password: new HashedPassword('$2y$10$hash'),
-            profileType: null,
-            profileId: null,
+            subjectType: null,
+            subjectId: null,
             createdAt: new DateTimeImmutable(),
             updatedAt: null,
         );

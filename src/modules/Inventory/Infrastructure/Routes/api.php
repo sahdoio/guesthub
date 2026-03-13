@@ -7,7 +7,7 @@ use Modules\Inventory\Presentation\Http\Action\ListRoomsAction;
 use Modules\Inventory\Presentation\Http\Action\ShowRoomAction;
 use Modules\Inventory\Presentation\Http\Action\UpdateRoomAction;
 
-Route::prefix('rooms')->middleware('auth:sanctum')->group(function () {
+Route::prefix('rooms')->middleware(['auth:sanctum', 'tenant', 'role:admin,superadmin'])->group(function () {
     Route::get('/', ListRoomsAction::class);
     Route::get('/{uuid}', ShowRoomAction::class);
     Route::put('/{uuid}', UpdateRoomAction::class);

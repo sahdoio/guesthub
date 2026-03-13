@@ -7,30 +7,24 @@ namespace Tests\Feature\Inventory;
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use Modules\Inventory\Domain\Repository\RoomRepository;
 use Modules\Inventory\Domain\Room;
 use Modules\Inventory\Domain\ValueObject\RoomType;
 use PHPUnit\Framework\Attributes\Test;
-use Ramsey\Uuid\Uuid;
+use Tests\Concerns\SeedsRolesAndAccount;
 use Tests\TestCase;
 
 final class RoomCrudTest extends TestCase
 {
     use RefreshDatabase;
+    use SeedsRolesAndAccount;
 
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seedRolesAndAccount();
 
-        Sanctum::actingAs(ActorModel::create([
-            'uuid' => Uuid::uuid7()->toString(),
-            'type' => 'system',
-            'name' => 'Test System',
-            'email' => 'system@test.com',
-            'password' => bcrypt('password'),
-            'created_at' => now(),
-        ]));
+        Sanctum::actingAs($this->createAdminActor());
     }
 
     private function createRoom(array $overrides = []): string

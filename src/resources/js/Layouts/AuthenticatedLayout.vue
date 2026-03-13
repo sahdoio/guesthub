@@ -1,6 +1,7 @@
 <script setup>
 import { router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import AccountSwitcher from '../Components/AccountSwitcher.vue';
 
 const page = usePage();
 
@@ -14,6 +15,11 @@ const navClass = (path) => {
         ? `${base} text-gray-900 border-blue-500`
         : `${base} text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300`;
 };
+
+const isSuperAdmin = computed(() => {
+    const roles = page.props.auth?.user?.roles || [];
+    return roles.includes('superadmin');
+});
 
 const logout = () => {
     router.post('/logout');
@@ -48,9 +54,10 @@ const logout = () => {
                         </div>
                     </div>
 
-                    <div class="flex items-center">
-                        <span class="text-sm text-gray-600 mr-4">
-                            {{ $page.props.auth?.user?.email }}
+                    <div class="flex items-center gap-4">
+                        <AccountSwitcher v-if="isSuperAdmin" />
+                        <span class="text-sm text-gray-600">
+                            {{ $page.props.auth?.user?.name }}
                         </span>
                         <button
                             @click="logout"

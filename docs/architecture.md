@@ -33,16 +33,17 @@ No domain events — state changes are purely CRUD.
 
 ### IAM (Identity & Access Management)
 
-Handles actors, authentication, and token management. See [IAM Deep Dive](#iam-deep-dive--actors--authentication) for the full explanation.
+Handles actors, accounts, roles, authentication, and token management. See [IAM Deep Dive](#iam-deep-dive--actors--authentication) for the full explanation.
 
 | Concept | Class |
 |---|---|
-| Aggregate | `Actor` |
-| Identity | `ActorId` |
-| Value Objects | `ActorType` (enum: GUEST, SYSTEM), `HashedPassword` |
+| Aggregates | `Actor`, `Account` |
+| Entities | `Role` |
+| Identities | `ActorId`, `AccountId`, `RoleId` |
+| Value Objects | `RoleName` (enum: ADMIN, GUEST), `HashedPassword` |
 | Domain Services | `PasswordHasher`, `TokenManager`, `GuestProfileGateway` |
 
-No domain events.
+Multi-tenant: `Account` serves as the tenant boundary. All actors belong to an account, and other BCs' tables (guest_profiles, reservations, rooms) carry an `account_id` foreign key. No domain events.
 
 ### Inventory
 
@@ -285,7 +286,7 @@ When an actor registers, the IAM BC creates a corresponding guest profile:
 1. **Port** — `IAM/Domain/Service/GuestProfileGateway` interface defines `create(name, email, phone, document): string`
 2. **Adapter** — `IAM/Infrastructure/Integration/GuestProfileGatewayAdapter` delegates to the Guest BC's `GuestProfileApi`
 
-The returned guest profile UUID is stored on the Actor as `profileId`.
+The returned guest profile UUID is stored on the Actor as `guestProfileId`.
 
 ### Guest Integration API
 
@@ -358,6 +359,8 @@ return $profile;
 | `RoomReflector` | `Room` | `EloquentRoomRepository` |
 | `GuestProfileReflector` | `GuestProfile` | `EloquentGuestProfileRepository` |
 | `ActorReflector` | `Actor` | `EloquentActorRepository` |
+| `AccountReflector` | `Account` | `EloquentAccountRepository` |
+| `RoleReflector` | `Role` | `EloquentRoleRepository` |
 | `ReservationReflector` | `Reservation` (with nested `SpecialRequest[]`) | `EloquentReservationRepository` |
 | `SpecialRequestReflector` | `SpecialRequest` | `EloquentReservationRepository` (during deserialization) |
 
@@ -365,18 +368,26 @@ Reflectors are **unaffected by private constructors** — they use `ReflectionCl
 
 ---
 
-## IAM Deep Dive — Actors & Authentication
+## IAM Deep Dive — Actors, Accounts, Roles & Authentication
+
+### Multi-Tenancy: Accounts
+
+An **Account** is the IAM aggregate that represents a tenant. Each account is a hotel or organization. All actors belong to an account, and all main tables across BCs (guest_profiles, reservations, rooms) carry an `account_id` foreign key for data isolation.
+
+### Roles
+
+**Role** is a domain entity stored in the `roles` table. Roles are seeded (`admin`, `guest`) and referenced by actors via `role_id` foreign key. The `RoleName` enum provides type-safe domain logic:
+
+| `RoleName` | Purpose |
+|---|---|
+| `ADMIN` | Staff who manage the hotel dashboard (web) |
+| `GUEST` | Hotel guests who will access the mobile app (future) |
 
 ### What is an Actor?
 
-An **Actor** is the IAM aggregate — it represents any identity that can authenticate against the system. The system deliberately avoids calling this "User" because the domain has two distinct actor types with different semantics:
+An **Actor** is the IAM aggregate — it represents any identity that can authenticate against the system. The system deliberately avoids calling this "User" because actors have different roles with different access levels.
 
-| `ActorType` | Purpose | `profileType` / `profileId` |
-|---|---|---|
-| `GUEST` | A hotel guest who can manage their own reservations | `profileType: "guest"`, `profileId` points to a `GuestProfile` in the Guest BC |
-| `SYSTEM` | Staff, admin, or automated services (booking engine, etc.) | Both `null` |
-
-An Actor owns credentials (email + hashed password) and can hold API tokens. The `profileType` + `profileId` pair is a polymorphic soft link — plain strings, not a foreign key or domain reference. The IAM BC depends on the Guest BC only through the `GuestProfileGateway` port (used during registration to create the guest profile).
+An Actor belongs to an Account (tenant) and has a Role. Guest actors have a `guest_profile_id` linking to a `GuestProfile` in the Guest BC. Admin actors have `guest_profile_id` set to null.
 
 ### The Actor Aggregate
 
@@ -384,26 +395,29 @@ An Actor owns credentials (email + hashed password) and can hold API tokens. The
 final class Actor extends AggregateRoot
 {
     private function __construct(
-        public readonly ActorId $uuid,          // identity
-        public readonly ActorType $type,        // guest | system
+        public readonly ActorId $uuid,           // identity
+        public readonly AccountId $accountId,    // tenant reference
+        public readonly RoleId $roleId,          // role FK
+        public readonly RoleName $roleName,      // denormalized for isAdmin() without lookups
         public readonly string $name,
-        public readonly string $email,          // unique, used for login
-        public private(set) HashedPassword $password,  // mutable via changePassword()
-        public readonly ?string $profileType,          // polymorphic type (e.g. "guest")
-        public readonly ?string $profileId,            // soft link to profile in another BC
+        public readonly string $email,           // unique, used for login
+        public private(set) HashedPassword $password,
+        public readonly ?string $guestProfileId, // soft link to GuestProfile in Guest BC
         public readonly DateTimeImmutable $createdAt,
         public private(set) ?DateTimeImmutable $updatedAt = null,
     ) {}
 
     public static function register(...): self { ... }
+    public function isAdmin(): bool { return $this->roleName === RoleName::ADMIN; }
     public function changePassword(HashedPassword $password): void { ... }
 }
 ```
 
 Key design decisions:
-- **`readonly` properties** (uuid, type, name, email, profileType, profileId, createdAt) — set once at registration, never change
+- **`readonly` properties** (uuid, accountId, roleId, roleName, name, email, guestProfileId, createdAt) — set once at registration, never change
 - **`private(set)` properties** (password, updatedAt) — mutable only through behavior methods
 - **`register()` factory** — the only way to create an Actor (constructor is private)
+- **Denormalized `roleName`** — avoids a database lookup on every `isAdmin()` call
 - **No domain events** — registration and password changes don't need event-driven side effects (yet)
 
 ### Domain Service Ports
@@ -450,18 +464,24 @@ IAM has two representations of an actor:
 | Created by | `Actor::register()` | Seeded or created alongside the domain actor |
 | Persistence | `EloquentActorRepository` writes to `actors` table | Reads from the same `actors` table |
 
-Both read/write the same `actors` table. The domain `Actor` is persisted via `EloquentActorRepository` (through `ActorReflector` for hydration). The `ActorModel` is only used by `SanctumTokenManager` and Laravel's `auth:sanctum` middleware.
+Both read/write the same `actors` table. The domain `Actor` is persisted via `EloquentActorRepository` (through `ActorReflector` for hydration). The `ActorModel` is only used by `SanctumTokenManager`, Laravel's `auth:sanctum` middleware, and the web login/register views. It has `BelongsTo` relationships to `AccountModel` and `RoleModel`.
+
+### Token Expiration
+
+Sanctum tokens are configured to expire after 24 hours (configurable via `SANCTUM_TOKEN_EXPIRATION` env var). Web sessions use standard Laravel session expiration. Expired Inertia sessions (419 CSRF errors) are handled by redirecting to `/login` both server-side (via exception handler) and client-side (via Vue global error handler).
 
 ### Use Cases (Command Handlers)
 
 **`RegisterActorHandler`** — Registration:
 ```
 1. Check if email already exists → throw ActorAlreadyExistsException
-2. Create guest profile via GuestProfileGateway → returns profileId
-3. Generate new ActorId
-4. Hash the plain password via PasswordHasher → HashedPassword
-5. Actor::register(...) → creates the aggregate (type: GUEST, profileType: "guest", profileId)
-6. Save to repository
+2. Create Account for the new guest
+3. Create guest profile via GuestProfileGateway → returns guestProfileId
+4. Look up the 'guest' Role
+5. Generate new ActorId
+6. Hash the plain password via PasswordHasher → HashedPassword
+7. Actor::register(...) → creates the aggregate with account, role, guestProfileId
+8. Save to repository
 ```
 
 **`AuthenticateActorHandler`** — Login:
@@ -492,7 +512,7 @@ POST /auth/login         │  header       │  ...all other endpoints      │
           └──────────────┘
 ```
 
-1. **Register** — `POST /api/auth/register` with `{ name, email, password, phone, document }`. Creates a guest profile (via `GuestProfileGateway`) and an Actor (always type `GUEST`), returns the actor resource. Validates: email format, password min 8 chars, phone in E.164 format. Rejects duplicate emails.
+1. **Register** — `POST /api/auth/register` with `{ name, email, password, phone, document }`. Creates an Account, a guest profile (via `GuestProfileGateway`), and an Actor with `guest` role, returns the actor resource. Also available as web form at `/register`. Validates: email format, password min 8 chars, phone in E.164 format. Rejects duplicate emails.
 
 2. **Login** — `POST /api/auth/login` with `{ email, password }`. Verifies credentials against the domain aggregate, then issues a Sanctum token via `TokenManager`. Returns `{ token, actor_id }`.
 

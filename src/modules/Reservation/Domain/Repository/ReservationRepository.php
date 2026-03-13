@@ -20,6 +20,7 @@ interface ReservationRepository
         int $perPage = 15,
         ?string $status = null,
         ?string $roomType = null,
+        ?string $guestId = null,
     ): PaginatedResult;
 
     public function nextIdentity(): ReservationId;

@@ -11,7 +11,8 @@ return new class extends Migration
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->string('number')->unique();
+            $table->foreignId('account_id')->constrained('accounts')->cascadeOnDelete();
+            $table->string('number');
             $table->string('type');
             $table->integer('floor');
             $table->integer('capacity');
@@ -21,6 +22,8 @@ return new class extends Migration
             $table->timestamp('created_at');
             $table->timestamp('updated_at')->nullable();
 
+            $table->index('account_id');
+            $table->unique(['account_id', 'number']);
             $table->index('status');
             $table->index('type');
             $table->index('floor');

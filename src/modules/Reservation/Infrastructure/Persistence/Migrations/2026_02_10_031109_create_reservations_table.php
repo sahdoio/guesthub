@@ -11,8 +11,9 @@ return new class extends Migration
         Schema::create('reservations', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
+            $table->foreignId('account_id')->constrained('accounts')->cascadeOnDelete();
             $table->string('status');
-            $table->uuid('guest_profile_id')->index();
+            $table->uuid('guest_id')->index();
             $table->date('check_in');
             $table->date('check_out');
             $table->string('room_type');
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->timestamp('checked_out_at')->nullable();
             $table->timestamp('cancelled_at')->nullable();
 
+            $table->index('account_id');
             $table->index('status');
             $table->index('check_in');
             $table->index('check_out');

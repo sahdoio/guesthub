@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\IAM\Infrastructure\Persistence\Eloquent;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -17,12 +19,12 @@ final class ActorModel extends Authenticatable
 
     protected $fillable = [
         'uuid',
-        'type',
+        'account_id',
         'name',
         'email',
         'password',
-        'profile_type',
-        'profile_id',
+        'subject_type',
+        'subject_id',
         'created_at',
         'updated_at',
     ];
@@ -30,4 +32,14 @@ final class ActorModel extends Authenticatable
     protected $hidden = [
         'password',
     ];
+
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(AccountModel::class, 'account_id');
+    }
+
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(RoleModel::class, 'actor_roles', 'actor_id', 'role_id');
+    }
 }

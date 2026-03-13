@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Modules\Reservation\Infrastructure\Persistence;
 
 use DateTimeImmutable;
-use Modules\Reservation\Domain\Entity\SpecialRequest;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ReservationId;
+use Modules\Reservation\Domain\SpecialRequest;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 use Modules\Reservation\Domain\ValueObject\ReservationStatus;
 use ReflectionClass;
@@ -21,7 +21,7 @@ final class ReservationReflector
     /** @param SpecialRequest[] $specialRequests */
     public static function reconstruct(
         ReservationId $uuid,
-        string $guestProfileId,
+        string $guestId,
         ReservationPeriod $period,
         string $roomType,
         ReservationStatus $status,
@@ -38,7 +38,7 @@ final class ReservationReflector
         $reservation = $ref->newInstanceWithoutConstructor();
 
         self::set($ref, $reservation, 'uuid', $uuid);
-        self::set($ref, $reservation, 'guestProfileId', $guestProfileId);
+        self::set($ref, $reservation, 'guestId', $guestId);
         self::set($ref, $reservation, 'period', $period);
         self::set($ref, $reservation, 'roomType', $roomType);
         self::set($ref, $reservation, 'status', $status);

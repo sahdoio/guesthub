@@ -6,41 +6,36 @@ namespace Tests\Feature\Reservation;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Concerns\CreatesGuestProfile;
+use Tests\Concerns\CreatesGuest;
+use Tests\Concerns\SeedsRolesAndAccount;
 use Tests\Concerns\SeedsRooms;
 use Tests\TestCase;
 
 final class CreateReservationTest extends TestCase
 {
     use RefreshDatabase;
-    use CreatesGuestProfile;
+    use CreatesGuest;
     use SeedsRooms;
+    use SeedsRolesAndAccount;
 
-    private string $guestProfileId;
+    private string $guestId;
 
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seedRolesAndAccount();
 
-        Sanctum::actingAs(ActorModel::create([
-            'uuid' => \Ramsey\Uuid\Uuid::uuid7()->toString(),
-            'type' => 'system',
-            'name' => 'Test System',
-            'email' => 'system@test.com',
-            'password' => bcrypt('password'),
-            'created_at' => now(),
-        ]));
+        Sanctum::actingAs($this->createAdminActor());
 
-        $this->guestProfileId = $this->createGuestProfile();
+        $this->guestId = $this->createGuest();
         $this->seedRooms();
     }
 
     private function validPayload(array $overrides = []): array
     {
         return array_merge([
-            'guest_profile_id' => $this->guestProfileId,
+            'guest_id' => $this->guestId,
             'check_in' => now()->addDay()->format('Y-m-d'),
             'check_out' => now()->addDays(4)->format('Y-m-d'),
             'room_type' => 'DOUBLE',
@@ -57,7 +52,7 @@ final class CreateReservationTest extends TestCase
                 'data' => [
                     'id',
                     'status',
-                    'guest' => ['guest_profile_id', 'full_name', 'email', 'phone', 'document', 'is_vip'],
+                    'guest' => ['guest_id', 'full_name', 'email', 'phone', 'document', 'is_vip'],
                     'period' => ['check_in', 'check_out', 'nights'],
                     'room_type',
                     'assigned_room_number',
@@ -70,7 +65,7 @@ final class CreateReservationTest extends TestCase
             ->assertJsonPath('data.room_type', 'DOUBLE');
 
         $this->assertDatabaseHas('reservations', [
-            'guest_profile_id' => $this->guestProfileId,
+            'guest_id' => $this->guestId,
             'status' => 'pending',
             'room_type' => 'DOUBLE',
         ]);
@@ -79,7 +74,7 @@ final class CreateReservationTest extends TestCase
     #[Test]
     public function itCreatesAVipReservation(): void
     {
-        $this->putJson("/api/guests/{$this->guestProfileId}", [
+        $this->putJson("/api/guests/{$this->guestId}", [
             'loyalty_tier' => 'gold',
         ]);
 
@@ -96,7 +91,7 @@ final class CreateReservationTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors([
-                'guest_profile_id',
+                'guest_id',
                 'check_in',
                 'check_out',
                 'room_type',
@@ -104,14 +99,14 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function itValidatesGuestProfileIdFormat(): void
+    public function itValidatesGuestIdFormat(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
-            'guest_profile_id' => 'not-a-uuid',
+            'guest_id' => 'not-a-uuid',
         ]));
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['guest_profile_id']);
+            ->assertJsonValidationErrors(['guest_id']);
     }
 
     #[Test]

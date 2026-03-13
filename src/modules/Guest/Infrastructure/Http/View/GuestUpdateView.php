@@ -6,13 +6,13 @@ namespace Modules\Guest\Infrastructure\Http\View;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Modules\Guest\Application\Command\UpdateGuestProfile;
-use Modules\Guest\Application\Command\UpdateGuestProfileHandler;
+use Modules\Guest\Application\Command\UpdateGuest;
+use Modules\Guest\Application\Command\UpdateGuestHandler;
 
 final class GuestUpdateView
 {
     public function __construct(
-        private UpdateGuestProfileHandler $handler,
+        private UpdateGuestHandler $handler,
     ) {}
 
     public function __invoke(Request $request, string $id): RedirectResponse
@@ -28,8 +28,8 @@ final class GuestUpdateView
             'phone.regex' => 'Phone must be in E.164 format (e.g., +5511999999999).',
         ]);
 
-        $this->handler->handle(new UpdateGuestProfile(
-            guestProfileId: $id,
+        $this->handler->handle(new UpdateGuest(
+            guestId: $id,
             fullName: $data['full_name'] ?? null,
             email: $data['email'] ?? null,
             phone: $data['phone'] ?? null,
@@ -37,6 +37,6 @@ final class GuestUpdateView
             preferences: $data['preferences'] ?? null,
         ));
 
-        return redirect("/guests/{$id}")->with('success', 'Guest profile updated.');
+        return redirect("/guests/{$id}")->with('success', 'Guest updated.');
     }
 }

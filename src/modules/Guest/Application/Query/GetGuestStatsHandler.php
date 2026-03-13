@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Modules\Guest\Application\Query;
 
-use Modules\Guest\Domain\Repository\GuestProfileRepository;
+use Modules\Guest\Domain\Repository\GuestRepository;
 
 final readonly class GetGuestStatsHandler
 {
     public function __construct(
-        private GuestProfileRepository $repository,
+        private GuestRepository $repository,
     ) {}
 
     public function handle(GetGuestStats $query): GuestStatsResult

@@ -29,7 +29,7 @@ final class ReservationReflectorTest extends TestCase
 
         $reservation = ReservationReflector::reconstruct(
             uuid: $uuid,
-            guestProfileId: 'guest-uuid-123',
+            guestId: 'guest-uuid-123',
             period: $period,
             roomType: 'DOUBLE',
             status: ReservationStatus::PENDING,
@@ -45,7 +45,7 @@ final class ReservationReflectorTest extends TestCase
 
         $this->assertInstanceOf(Reservation::class, $reservation);
         $this->assertTrue($uuid->equals($reservation->uuid));
-        $this->assertSame('guest-uuid-123', $reservation->guestProfileId);
+        $this->assertSame('guest-uuid-123', $reservation->guestId);
         $this->assertTrue($period->equals($reservation->period));
         $this->assertSame('DOUBLE', $reservation->roomType);
         $this->assertSame(ReservationStatus::PENDING, $reservation->status);
@@ -62,7 +62,7 @@ final class ReservationReflectorTest extends TestCase
 
         $reservation = ReservationReflector::reconstruct(
             uuid: ReservationId::generate(),
-            guestProfileId: 'guest-uuid-456',
+            guestId: 'guest-uuid-456',
             period: new ReservationPeriod(
                 new DateTimeImmutable('+1 day'),
                 new DateTimeImmutable('+5 days'),
@@ -92,7 +92,7 @@ final class ReservationReflectorTest extends TestCase
 
         $reservation = ReservationReflector::reconstruct(
             uuid: ReservationId::generate(),
-            guestProfileId: 'guest-uuid-789',
+            guestId: 'guest-uuid-789',
             period: new ReservationPeriod(
                 new DateTimeImmutable('+5 days'),
                 new DateTimeImmutable('+8 days'),
@@ -119,7 +119,7 @@ final class ReservationReflectorTest extends TestCase
     {
         $reservation = ReservationReflector::reconstruct(
             uuid: ReservationId::generate(),
-            guestProfileId: 'guest-uuid',
+            guestId: 'guest-uuid',
             period: new ReservationPeriod(
                 new DateTimeImmutable('+1 day'),
                 new DateTimeImmutable('+3 days'),

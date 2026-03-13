@@ -9,7 +9,7 @@ use DateTimeImmutable;
 final readonly class CreateReservation
 {
     public function __construct(
-        public string $guestProfileId,
+        public string $guestId,
         public DateTimeImmutable $checkIn,
         public DateTimeImmutable $checkOut,
         public string $roomType,

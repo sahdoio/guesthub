@@ -6,14 +6,14 @@ namespace Modules\Guest\Infrastructure\Providers;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Modules\Guest\Domain\Repository\GuestProfileRepository;
-use Modules\Guest\Infrastructure\Persistence\Eloquent\EloquentGuestProfileRepository;
+use Modules\Guest\Domain\Repository\GuestRepository;
+use Modules\Guest\Infrastructure\Persistence\Eloquent\EloquentGuestRepository;
 
 final class GuestServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(GuestProfileRepository::class, EloquentGuestProfileRepository::class);
+        $this->app->bind(GuestRepository::class, EloquentGuestRepository::class);
     }
 
     public function boot(): void

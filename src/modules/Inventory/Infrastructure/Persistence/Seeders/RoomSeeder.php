@@ -6,18 +6,25 @@ namespace Modules\Inventory\Infrastructure\Persistence\Seeders;
 
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
+use Modules\IAM\Infrastructure\Persistence\Seeders\AccountSeeder;
 use Modules\Inventory\Domain\Repository\RoomRepository;
 use Modules\Inventory\Domain\Room;
 use Modules\Inventory\Domain\ValueObject\RoomType;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 class RoomSeeder extends Seeder
 {
     public function __construct(
         private readonly RoomRepository $repository,
+        private readonly TenantContext $tenantContext,
     ) {}
 
     public function run(): void
     {
+        $accountId = (int) AccountModel::where('uuid', AccountSeeder::$defaultAccountUuid)->value('id');
+        $this->tenantContext->set($accountId);
+
         $rooms = [
             ['101', RoomType::SINGLE,  1, 1, 150.00, ['wifi', 'tv']],
             ['102', RoomType::SINGLE,  1, 1, 150.00, ['wifi', 'tv']],

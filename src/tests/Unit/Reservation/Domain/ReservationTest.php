@@ -285,16 +285,16 @@ final class ReservationTest extends TestCase
     // --- Guest Profile ---
 
     #[Test]
-    public function itStoresGuestProfileId(): void
+    public function itStoresGuestId(): void
     {
-        $guestProfileId = Uuid::uuid7()->toString();
+        $guestId = Uuid::uuid7()->toString();
         $reservation = Reservation::create(
             ReservationId::generate(),
-            $guestProfileId,
+            $guestId,
             new ReservationPeriod(new DateTimeImmutable('+1 day'), new DateTimeImmutable('+4 days')),
             'SUITE',
         );
 
-        $this->assertSame($guestProfileId, $reservation->guestProfileId);
+        $this->assertSame($guestId, $reservation->guestId);
     }
 }

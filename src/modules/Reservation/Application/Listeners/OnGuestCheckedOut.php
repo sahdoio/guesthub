@@ -24,7 +24,7 @@ final readonly class OnGuestCheckedOut
         $reservation = $this->repository->findByUuid($event->reservationId)
             ?? throw ReservationNotFoundException::withId($event->reservationId);
 
-        $guestInfo = $this->guestGateway->findByUuid($reservation->guestProfileId);
+        $guestInfo = $this->guestGateway->findByUuid($reservation->guestId);
 
         $this->dispatcher->dispatch(new GuestCheckedOutEvent(
             reservationId: (string) $event->reservationId,

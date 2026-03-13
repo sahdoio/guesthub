@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Modules\Reservation\Infrastructure\Integration;
 
-use Modules\Guest\Infrastructure\Integration\GuestProfileApi;
+use Modules\Guest\Infrastructure\Integration\GuestApi;
 use Modules\Reservation\Domain\Dto\GuestInfo;
 use Modules\Reservation\Domain\Service\GuestGateway;
 
 final class GuestGatewayAdapter implements GuestGateway
 {
     public function __construct(
-        private readonly GuestProfileApi $guestProfileApi,
+        private readonly GuestApi $guestApi,
     ) {}
 
-    public function findByUuid(string $guestProfileId): ?GuestInfo
+    public function findByUuid(string $guestId): ?GuestInfo
     {
-        $data = $this->guestProfileApi->findByUuid($guestProfileId);
+        $data = $this->guestApi->findByUuid($guestId);
 
         if ($data === null) {
             return null;
@@ -25,7 +25,7 @@ final class GuestGatewayAdapter implements GuestGateway
         $isVip = in_array($data->loyaltyTier, ['gold', 'platinum'], true);
 
         return new GuestInfo(
-            guestProfileId: $data->uuid,
+            guestId: $data->uuid,
             fullName: $data->fullName,
             email: $data->email,
             phone: $data->phone,

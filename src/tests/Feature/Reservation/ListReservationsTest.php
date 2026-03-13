@@ -6,41 +6,36 @@ namespace Tests\Feature\Reservation;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use PHPUnit\Framework\Attributes\Test;
-use Tests\Concerns\CreatesGuestProfile;
+use Tests\Concerns\CreatesGuest;
+use Tests\Concerns\SeedsRolesAndAccount;
 use Tests\Concerns\SeedsRooms;
 use Tests\TestCase;
 
 final class ListReservationsTest extends TestCase
 {
     use RefreshDatabase;
-    use CreatesGuestProfile;
+    use CreatesGuest;
     use SeedsRooms;
+    use SeedsRolesAndAccount;
 
-    private string $guestProfileId;
+    private string $guestId;
 
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seedRolesAndAccount();
 
-        Sanctum::actingAs(ActorModel::create([
-            'uuid' => \Ramsey\Uuid\Uuid::uuid7()->toString(),
-            'type' => 'system',
-            'name' => 'Test System',
-            'email' => 'system@test.com',
-            'password' => bcrypt('password'),
-            'created_at' => now(),
-        ]));
+        Sanctum::actingAs($this->createAdminActor());
 
-        $this->guestProfileId = $this->createGuestProfile();
+        $this->guestId = $this->createGuest();
         $this->seedRooms();
     }
 
     private function createReservation(array $overrides = []): string
     {
         $payload = array_merge([
-            'guest_profile_id' => $this->guestProfileId,
+            'guest_id' => $this->guestId,
             'check_in' => now()->addDay()->format('Y-m-d'),
             'check_out' => now()->addDays(4)->format('Y-m-d'),
             'room_type' => 'DOUBLE',
@@ -130,7 +125,7 @@ final class ListReservationsTest extends TestCase
                     [
                         'id',
                         'status',
-                        'guest' => ['guest_profile_id', 'full_name', 'email', 'phone', 'document', 'is_vip'],
+                        'guest' => ['guest_id', 'full_name', 'email', 'phone', 'document', 'is_vip'],
                         'period' => ['check_in', 'check_out', 'nights'],
                         'room_type',
                         'assigned_room_number',

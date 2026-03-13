@@ -6,10 +6,13 @@ namespace Tests\Integration\Inventory;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Inventory\Domain\Repository\RoomRepository;
 use Modules\Inventory\Domain\Room;
 use Modules\Inventory\Domain\ValueObject\RoomType;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use PHPUnit\Framework\Attributes\Test;
+use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
 final class EloquentRoomRepositoryTest extends TestCase
@@ -21,6 +24,14 @@ final class EloquentRoomRepositoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $account = AccountModel::create([
+            'uuid' => Uuid::uuid7()->toString(),
+            'name' => 'Test Hotel',
+            'created_at' => now(),
+        ]);
+        $this->app->make(TenantContext::class)->set($account->id);
+
         $this->repository = $this->app->make(RoomRepository::class);
     }
 

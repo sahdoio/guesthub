@@ -6,6 +6,7 @@ namespace Tests\Integration\Reservation;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ReservationId;
@@ -13,8 +14,10 @@ use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 use Modules\Reservation\Domain\ValueObject\ReservationStatus;
 use Modules\Reservation\Domain\ValueObject\RequestType;
 use Modules\Reservation\Infrastructure\Persistence\Eloquent\EloquentReservationRepository;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
 #[CoversClass(EloquentReservationRepository::class)]
@@ -27,6 +30,14 @@ final class EloquentReservationRepositoryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $account = AccountModel::create([
+            'uuid' => Uuid::uuid7()->toString(),
+            'name' => 'Test Hotel',
+            'created_at' => now(),
+        ]);
+        $this->app->make(TenantContext::class)->set($account->id);
+
         $this->repository = $this->app->make(ReservationRepository::class);
     }
 
@@ -34,7 +45,7 @@ final class EloquentReservationRepositoryTest extends TestCase
     {
         return Reservation::create(
             $overrides['uuid'] ?? $this->repository->nextIdentity(),
-            $overrides['guestProfileId'] ?? 'guest-uuid-123',
+            $overrides['guestId'] ?? 'guest-uuid-123',
             $overrides['period'] ?? new ReservationPeriod(
                 new DateTimeImmutable('+1 day'),
                 new DateTimeImmutable('+4 days'),
@@ -53,7 +64,7 @@ final class EloquentReservationRepositoryTest extends TestCase
 
         $this->assertNotNull($found);
         $this->assertTrue($reservation->uuid->equals($found->uuid));
-        $this->assertSame('guest-uuid-123', $found->guestProfileId);
+        $this->assertSame('guest-uuid-123', $found->guestId);
         $this->assertSame('DOUBLE', $found->roomType);
         $this->assertSame(ReservationStatus::PENDING, $found->status);
     }
@@ -114,7 +125,7 @@ final class EloquentReservationRepositoryTest extends TestCase
     public function itListsReservations(): void
     {
         for ($i = 0; $i < 3; $i++) {
-            $this->repository->save($this->createReservation(['guestProfileId' => "guest-{$i}"]));
+            $this->repository->save($this->createReservation(['guestId' => "guest-{$i}"]));
         }
 
         $result = $this->repository->list(1, 2);
@@ -130,7 +141,7 @@ final class EloquentReservationRepositoryTest extends TestCase
         $pending = $this->createReservation();
         $this->repository->save($pending);
 
-        $confirmed = $this->createReservation(['guestProfileId' => 'guest-confirmed']);
+        $confirmed = $this->createReservation(['guestId' => 'guest-confirmed']);
         $confirmed->confirm();
         $this->repository->save($confirmed);
 

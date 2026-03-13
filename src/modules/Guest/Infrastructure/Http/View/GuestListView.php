@@ -7,21 +7,21 @@ namespace Modules\Guest\Infrastructure\Http\View;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Guest\Application\Query\ListGuestProfiles;
-use Modules\Guest\Application\Query\ListGuestProfilesHandler;
-use Modules\Guest\Presentation\Http\Presenter\GuestProfilePresenter;
+use Modules\Guest\Application\Query\ListGuests;
+use Modules\Guest\Application\Query\ListGuestsHandler;
+use Modules\Guest\Presentation\Http\Presenter\GuestPresenter;
 use Modules\Shared\Application\Query\Pagination;
 
 final class GuestListView
 {
     public function __construct(
-        private ListGuestProfilesHandler $handler,
+        private ListGuestsHandler $handler,
     ) {}
 
     public function __invoke(Request $request): Response
     {
         $result = $this->handler->handle(
-            new ListGuestProfiles(),
+            new ListGuests(),
             new Pagination(
                 page: (int) $request->query('page', 1),
                 perPage: (int) $request->query('per_page', 15),
@@ -30,7 +30,7 @@ final class GuestListView
 
         return Inertia::render('Guests/Index', [
             'guests' => array_map(
-                fn($profile) => GuestProfilePresenter::fromDomain($profile),
+                fn($profile) => GuestPresenter::fromDomain($profile),
                 $result->items,
             ),
             'meta' => [

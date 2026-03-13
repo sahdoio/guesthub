@@ -6,8 +6,8 @@ namespace Tests\Feature\Dashboard;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Guest\Domain\GuestProfile;
-use Modules\Guest\Domain\Repository\GuestProfileRepository;
+use Modules\Guest\Domain\Guest;
+use Modules\Guest\Domain\Repository\GuestRepository;
 use Modules\Guest\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use Modules\Inventory\Domain\Repository\RoomRepository;
@@ -17,34 +17,28 @@ use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 use PHPUnit\Framework\Attributes\Test;
-use Ramsey\Uuid\Uuid;
+use Tests\Concerns\SeedsRolesAndAccount;
 use Tests\TestCase;
 
 final class DashboardTest extends TestCase
 {
     use RefreshDatabase;
+    use SeedsRolesAndAccount;
 
     private ActorModel $actor;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->actor = ActorModel::create([
-            'uuid' => Uuid::uuid7()->toString(),
-            'type' => 'system',
-            'name' => 'Test System',
-            'email' => 'system@test.com',
-            'password' => bcrypt('password'),
-            'created_at' => now(),
-        ]);
+        $this->seedRolesAndAccount();
+        $this->actor = $this->createAdminActor();
     }
 
     private function createGuest(array $overrides = []): string
     {
-        $repository = $this->app->make(GuestProfileRepository::class);
+        $repository = $this->app->make(GuestRepository::class);
 
-        $profile = GuestProfile::create(
+        $guest = Guest::create(
             uuid: $repository->nextIdentity(),
             fullName: $overrides['full_name'] ?? 'Jane Doe',
             email: $overrides['email'] ?? 'jane' . uniqid() . '@hotel.com',
@@ -55,9 +49,9 @@ final class DashboardTest extends TestCase
             createdAt: new DateTimeImmutable(),
         );
 
-        $repository->save($profile);
+        $repository->save($guest);
 
-        return (string) $profile->uuid;
+        return (string) $guest->uuid;
     }
 
     private function createReservation(string $guestId, array $overrides = []): Reservation
@@ -66,7 +60,7 @@ final class DashboardTest extends TestCase
 
         $reservation = Reservation::create(
             uuid: $repository->nextIdentity(),
-            guestProfileId: $guestId,
+            guestId: $guestId,
             period: new ReservationPeriod(
                 new DateTimeImmutable($overrides['check_in'] ?? '+1 day'),
                 new DateTimeImmutable($overrides['check_out'] ?? '+3 days'),
@@ -77,11 +71,11 @@ final class DashboardTest extends TestCase
         if (isset($overrides['status'])) {
             match ($overrides['status']) {
                 'confirmed' => $reservation->confirm(),
-                'checked_in' => (function () use ($reservation) {
+                'checked_in' => (function () use ($reservation, $overrides) {
                     $reservation->confirm();
                     $reservation->checkIn($overrides['room_number'] ?? '101');
                 })(),
-                'checked_out' => (function () use ($reservation) {
+                'checked_out' => (function () use ($reservation, $overrides) {
                     $reservation->confirm();
                     $reservation->checkIn($overrides['room_number'] ?? '101');
                     $reservation->checkOut();
@@ -118,6 +112,16 @@ final class DashboardTest extends TestCase
     public function itRequiresAuthentication(): void
     {
         $this->get('/dashboard')
+            ->assertRedirect('/login');
+    }
+
+    #[Test]
+    public function itBlocksGuestActors(): void
+    {
+        $guest = $this->createGuestActor();
+
+        $this->actingAs($guest)
+            ->get('/dashboard')
             ->assertRedirect('/login');
     }
 

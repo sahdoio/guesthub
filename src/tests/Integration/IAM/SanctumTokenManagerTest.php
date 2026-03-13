@@ -5,36 +5,47 @@ declare(strict_types=1);
 namespace Tests\Integration\IAM;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Modules\IAM\Domain\Service\TokenManager;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use Modules\IAM\Infrastructure\Services\SanctumTokenManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Concerns\SeedsRolesAndAccount;
 use Tests\TestCase;
 
 #[CoversClass(SanctumTokenManager::class)]
 final class SanctumTokenManagerTest extends TestCase
 {
     use RefreshDatabase;
+    use SeedsRolesAndAccount;
 
     private TokenManager $tokenManager;
 
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seedRolesAndAccount();
         $this->tokenManager = $this->app->make(TokenManager::class);
     }
 
     private function createActorModel(string $email = 'john@hotel.com'): ActorModel
     {
-        return ActorModel::create([
+        $actor = ActorModel::create([
             'uuid' => \Ramsey\Uuid\Uuid::uuid7()->toString(),
-            'type' => 'guest',
+            'account_id' => $this->account->id,
             'name' => 'John Doe',
             'email' => $email,
             'password' => bcrypt('password123'),
             'created_at' => now(),
         ]);
+
+        DB::table('actor_roles')->insert([
+            'actor_id' => $actor->id,
+            'role_id' => $this->guestRole->id,
+        ]);
+
+        return $actor;
     }
 
     #[Test]

@@ -6,7 +6,7 @@ namespace Tests\Unit\Reservation\Domain;
 
 use DateTimeImmutable;
 use DomainException;
-use Modules\Reservation\Domain\Entity\SpecialRequest;
+use Modules\Reservation\Domain\SpecialRequest;
 use Modules\Reservation\Domain\ValueObject\RequestStatus;
 use Modules\Reservation\Domain\ValueObject\RequestType;
 use Modules\Reservation\Domain\ValueObject\SpecialRequestId;

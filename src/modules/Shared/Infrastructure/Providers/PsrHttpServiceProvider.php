@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Shared\Infrastructure\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Shared\Infrastructure\Validation\LaravelInputValidator;
 use Modules\Shared\Presentation\Validation\InputValidator;
 use Psr\Http\Message\ServerRequestInterface;
@@ -14,6 +15,8 @@ final class PsrHttpServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->singleton(TenantContext::class);
+
         $this->app->bind(InputValidator::class, LaravelInputValidator::class);
 
         $this->app->bind(ServerRequestInterface::class, function ($app) {

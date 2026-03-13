@@ -7,19 +7,26 @@ namespace Modules\Reservation\Infrastructure\Persistence\Seeders;
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
 use Modules\Guest\Infrastructure\Persistence\Seeders\GuestSeeder;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
+use Modules\IAM\Infrastructure\Persistence\Seeders\AccountSeeder;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\ValueObject\RequestType;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 class ReservationSeeder extends Seeder
 {
     public function __construct(
         private readonly ReservationRepository $repository,
+        private readonly TenantContext $tenantContext,
     ) {}
 
     public function run(): void
     {
+        $accountId = (int) AccountModel::where('uuid', AccountSeeder::$defaultAccountUuid)->value('id');
+        $this->tenantContext->set($accountId);
+
         $guestIds = GuestSeeder::$guestIds;
 
         // 1. Pending reservation (future, regular guest)

@@ -12,11 +12,13 @@ use Modules\Inventory\Domain\ValueObject\RoomStatus;
 use Modules\Inventory\Domain\ValueObject\RoomType;
 use Modules\Inventory\Infrastructure\Persistence\RoomReflector;
 use Modules\Shared\Domain\PaginatedResult;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 final readonly class EloquentRoomRepository implements RoomRepository
 {
     public function __construct(
         private RoomModel $model,
+        private TenantContext $tenantContext,
     ) {}
 
     public function save(Room $room): void
@@ -144,6 +146,7 @@ final readonly class EloquentRoomRepository implements RoomRepository
     {
         return [
             'uuid' => $room->uuid->value,
+            'account_id' => $this->tenantContext->id(),
             'number' => $room->number,
             'type' => $room->type->value,
             'floor' => $room->floor,

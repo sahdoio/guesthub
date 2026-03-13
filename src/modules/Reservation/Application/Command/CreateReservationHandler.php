@@ -27,8 +27,8 @@ final readonly class CreateReservationHandler extends EventDispatchingHandler
 
     public function handle(CreateReservation $command): ReservationId
     {
-        $guestInfo = $this->guestGateway->findByUuid($command->guestProfileId)
-            ?? throw new DomainException("Guest profile '{$command->guestProfileId}' not found.");
+        $guestInfo = $this->guestGateway->findByUuid($command->guestId)
+            ?? throw new DomainException("Guest '{$command->guestId}' not found.");
 
         $period = new ReservationPeriod($command->checkIn, $command->checkOut);
 
@@ -37,7 +37,7 @@ final readonly class CreateReservationHandler extends EventDispatchingHandler
         }
 
         $id = $this->repository->nextIdentity();
-        $reservation = Reservation::create($id, $command->guestProfileId, $period, $command->roomType);
+        $reservation = Reservation::create($id, $command->guestId, $period, $command->roomType);
 
         $this->repository->save($reservation);
         $this->dispatchEvents($reservation);

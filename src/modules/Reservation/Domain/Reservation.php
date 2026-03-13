@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\Reservation\Domain;
 
 use DateTimeImmutable;
-use Modules\Reservation\Domain\Entity\SpecialRequest;
 use Modules\Reservation\Domain\Event\GuestCheckedIn;
 use Modules\Reservation\Domain\Event\GuestCheckedOut;
 use Modules\Reservation\Domain\Event\ReservationCancelled;
@@ -31,7 +30,7 @@ final class Reservation extends AggregateRoot
      */
     private function __construct(
         public readonly ReservationId $uuid,
-        public readonly string $guestProfileId,
+        public readonly string $guestId,
         public readonly ReservationPeriod $period,
         public readonly string $roomType,
         private(set) ReservationStatus $status,
@@ -47,13 +46,13 @@ final class Reservation extends AggregateRoot
 
     public static function create(
         ReservationId $uuid,
-        string $guestProfileId,
+        string $guestId,
         ReservationPeriod $period,
         string $roomType,
     ): self {
         $reservation = new self(
             uuid: $uuid,
-            guestProfileId: $guestProfileId,
+            guestId: $guestId,
             period: $period,
             roomType: $roomType,
             status: ReservationStatus::PENDING,

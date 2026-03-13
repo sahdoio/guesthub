@@ -30,20 +30,20 @@ final readonly class GetReservationHandler
 
     private function enrichWithGuest(ReservationReadModel $readModel): ReservationReadModel
     {
-        $guestProfileId = $readModel->guest['guest_profile_id'] ?? null;
+        $guestId = $readModel->guest['guest_id'] ?? null;
 
-        if ($guestProfileId === null) {
+        if ($guestId === null) {
             return $readModel;
         }
 
-        $guestInfo = $this->guestGateway->findByUuid($guestProfileId);
+        $guestInfo = $this->guestGateway->findByUuid($guestId);
 
         if ($guestInfo === null) {
             return $readModel;
         }
 
         return $readModel->withGuest([
-            'guest_profile_id' => $guestInfo->guestProfileId,
+            'guest_id' => $guestInfo->guestId,
             'full_name' => $guestInfo->fullName,
             'email' => $guestInfo->email,
             'phone' => $guestInfo->phone,

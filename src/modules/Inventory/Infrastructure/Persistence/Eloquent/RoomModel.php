@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace Modules\Inventory\Infrastructure\Persistence\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Shared\Infrastructure\Persistence\Eloquent\BelongsToTenant;
 
 final class RoomModel extends Model
 {
+    use BelongsToTenant;
     protected $table = 'rooms';
 
     public $timestamps = false;
 
     protected $fillable = [
         'uuid',
+        'account_id',
         'number',
         'type',
         'floor',

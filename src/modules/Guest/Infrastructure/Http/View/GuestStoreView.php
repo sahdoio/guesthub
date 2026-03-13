@@ -6,13 +6,13 @@ namespace Modules\Guest\Infrastructure\Http\View;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Modules\Guest\Application\Command\CreateGuestProfile;
-use Modules\Guest\Application\Command\CreateGuestProfileHandler;
+use Modules\Guest\Application\Command\CreateGuest;
+use Modules\Guest\Application\Command\CreateGuestHandler;
 
 final class GuestStoreView
 {
     public function __construct(
-        private CreateGuestProfileHandler $handler,
+        private CreateGuestHandler $handler,
     ) {}
 
     public function __invoke(Request $request): RedirectResponse
@@ -26,13 +26,13 @@ final class GuestStoreView
             'phone.regex' => 'Phone must be in E.164 format (e.g., +5511999999999).',
         ]);
 
-        $id = $this->handler->handle(new CreateGuestProfile(
+        $id = $this->handler->handle(new CreateGuest(
             fullName: $data['full_name'],
             email: $data['email'],
             phone: $data['phone'],
             document: $data['document'],
         ));
 
-        return redirect("/guests/{$id}")->with('success', 'Guest profile created.');
+        return redirect("/guests/{$id}")->with('success', 'Guest created.');
     }
 }

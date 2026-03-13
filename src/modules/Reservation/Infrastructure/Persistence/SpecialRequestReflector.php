@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Modules\Reservation\Infrastructure\Persistence;
 
 use DateTimeImmutable;
-use Modules\Reservation\Domain\Entity\SpecialRequest;
+use Modules\Reservation\Domain\SpecialRequest;
 use Modules\Reservation\Domain\ValueObject\RequestStatus;
 use Modules\Reservation\Domain\ValueObject\RequestType;
 use Modules\Reservation\Domain\ValueObject\SpecialRequestId;

@@ -6,13 +6,16 @@ namespace Tests\Integration\Reservation;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Guest\Domain\GuestProfile;
-use Modules\Guest\Domain\Repository\GuestProfileRepository;
+use Modules\Guest\Domain\Guest;
+use Modules\Guest\Domain\Repository\GuestRepository;
 use Modules\Guest\Domain\ValueObject\LoyaltyTier;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use PHPUnit\Framework\Attributes\Test;
+use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
 final class ReservationStatsTest extends TestCase
@@ -25,10 +28,18 @@ final class ReservationStatsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $account = AccountModel::create([
+            'uuid' => Uuid::uuid7()->toString(),
+            'name' => 'Test Hotel',
+            'created_at' => now(),
+        ]);
+        $this->app->make(TenantContext::class)->set($account->id);
+
         $this->repository = $this->app->make(ReservationRepository::class);
 
-        $guestRepo = $this->app->make(GuestProfileRepository::class);
-        $profile = GuestProfile::create(
+        $guestRepo = $this->app->make(GuestRepository::class);
+        $guest = Guest::create(
             uuid: $guestRepo->nextIdentity(),
             fullName: 'Test Guest',
             email: 'test@hotel.com',
@@ -38,15 +49,15 @@ final class ReservationStatsTest extends TestCase
             preferences: [],
             createdAt: new DateTimeImmutable(),
         );
-        $guestRepo->save($profile);
-        $this->guestId = (string) $profile->uuid;
+        $guestRepo->save($guest);
+        $this->guestId = (string) $guest->uuid;
     }
 
     private function createReservation(string $roomType = 'DOUBLE'): Reservation
     {
         $reservation = Reservation::create(
             uuid: $this->repository->nextIdentity(),
-            guestProfileId: $this->guestId,
+            guestId: $this->guestId,
             period: new ReservationPeriod(
                 new DateTimeImmutable('+1 day'),
                 new DateTimeImmutable('+3 days'),

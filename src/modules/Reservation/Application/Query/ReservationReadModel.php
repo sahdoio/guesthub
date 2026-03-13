@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Modules\Reservation\Application\Query;
 
 use JsonSerializable;
-use Modules\Reservation\Domain\Entity\SpecialRequest;
 use Modules\Reservation\Domain\Reservation;
+use Modules\Reservation\Domain\SpecialRequest;
 
 final readonly class ReservationReadModel implements JsonSerializable
 {
@@ -32,7 +32,7 @@ final readonly class ReservationReadModel implements JsonSerializable
         return new self(
             id: (string) $reservation->uuid,
             status: $reservation->status->value,
-            guest: ['guest_profile_id' => $reservation->guestProfileId],
+            guest: ['guest_id' => $reservation->guestId],
             checkIn: $reservation->period->checkIn->format('Y-m-d'),
             checkOut: $reservation->period->checkOut->format('Y-m-d'),
             nights: $reservation->period->nights(),

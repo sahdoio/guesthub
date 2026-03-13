@@ -8,5 +8,5 @@ use Modules\Reservation\Domain\Dto\GuestInfo;
 
 interface GuestGateway
 {
-    public function findByUuid(string $guestProfileId): ?GuestInfo;
+    public function findByUuid(string $guestId): ?GuestInfo;
 }

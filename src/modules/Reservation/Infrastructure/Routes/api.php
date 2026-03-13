@@ -10,13 +10,20 @@ use Modules\Reservation\Presentation\Http\Action\CreateReservationAction;
 use Modules\Reservation\Presentation\Http\Action\ListReservationsAction;
 use Modules\Reservation\Presentation\Http\Action\ShowReservationAction;
 
-Route::prefix('reservations')->middleware('auth:sanctum')->group(function () {
-    Route::get('/', ListReservationsAction::class);
-    Route::post('/', CreateReservationAction::class);
-    Route::get('/{id}', ShowReservationAction::class);
-    Route::post('/{id}/confirm', ConfirmReservationAction::class);
-    Route::post('/{id}/check-in', CheckInAction::class);
-    Route::post('/{id}/check-out', CheckOutAction::class);
-    Route::post('/{id}/cancel', CancelReservationAction::class);
-    Route::post('/{id}/special-requests', AddSpecialRequestAction::class);
+Route::prefix('reservations')->middleware(['auth:sanctum', 'tenant'])->group(function () {
+    // Guest, Admin, Superadmin can access
+    Route::middleware(['role:guest,admin,superadmin'])->group(function () {
+        Route::get('/', ListReservationsAction::class);
+        Route::post('/', CreateReservationAction::class);
+        Route::get('/{id}', ShowReservationAction::class);
+        Route::post('/{id}/cancel', CancelReservationAction::class);
+        Route::post('/{id}/check-in', CheckInAction::class);
+        Route::post('/{id}/special-requests', AddSpecialRequestAction::class);
+    });
+
+    // Admin and Superadmin only
+    Route::middleware(['role:admin,superadmin'])->group(function () {
+        Route::post('/{id}/confirm', ConfirmReservationAction::class);
+        Route::post('/{id}/check-out', CheckOutAction::class);
+    });
 });

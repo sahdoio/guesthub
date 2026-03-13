@@ -9,5 +9,6 @@ final readonly class ListReservations
     public function __construct(
         public ?string $status = null,
         public ?string $roomType = null,
+        public ?string $guestId = null,
     ) {}
 }

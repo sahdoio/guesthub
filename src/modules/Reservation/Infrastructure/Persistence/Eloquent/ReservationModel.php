@@ -5,17 +5,20 @@ declare(strict_types=1);
 namespace Modules\Reservation\Infrastructure\Persistence\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Shared\Infrastructure\Persistence\Eloquent\BelongsToTenant;
 
 final class ReservationModel extends Model
 {
+    use BelongsToTenant;
     protected $table = 'reservations';
 
     public $timestamps = false;
 
     protected $fillable = [
         'uuid',
+        'account_id',
         'status',
-        'guest_profile_id',
+        'guest_id',
         'check_in',
         'check_out',
         'room_type',
