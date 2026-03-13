@@ -58,7 +58,7 @@ final readonly class UpdateGuestAction
     private function enforceOwnership(string $uuid): void
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return;
         }
         $user->load('roles');

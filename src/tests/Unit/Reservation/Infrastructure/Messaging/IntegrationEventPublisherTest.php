@@ -17,7 +17,7 @@ use Tests\TestCase;
 final class IntegrationEventPublisherTest extends TestCase
 {
     #[Test]
-    public function itDispatchesTheIntegrationEvent(): void
+    public function it_dispatches_the_integration_event(): void
     {
         Log::shouldReceive('info')->once();
 
@@ -28,7 +28,7 @@ final class IntegrationEventPublisherTest extends TestCase
             checkIn: '2026-02-01',
             checkOut: '2026-02-05',
             isVip: true,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new DateTimeImmutable,
         );
 
         $dispatcher = $this->createMock(Dispatcher::class);

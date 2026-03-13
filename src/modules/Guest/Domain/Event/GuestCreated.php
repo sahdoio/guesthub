@@ -16,7 +16,7 @@ final readonly class GuestCreated implements DomainEvent
         public GuestId $guestId,
         public string $email,
     ) {
-        $this->occurredOn = new DateTimeImmutable();
+        $this->occurredOn = new DateTimeImmutable;
     }
 
     public function occurredOn(): DateTimeImmutable

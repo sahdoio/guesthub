@@ -7,7 +7,7 @@ namespace Modules\Guest\Application\Query;
 final readonly class GuestStatsResult
 {
     /**
-     * @param array<string, int> $byLoyaltyTier
+     * @param  array<string, int>  $byLoyaltyTier
      */
     public function __construct(
         public int $total,

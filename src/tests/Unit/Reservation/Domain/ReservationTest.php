@@ -41,7 +41,7 @@ final class ReservationTest extends TestCase
     // --- State Machine ---
 
     #[Test]
-    public function itCreatesWithPendingStatus(): void
+    public function it_creates_with_pending_status(): void
     {
         $reservation = $this->createReservation();
 
@@ -51,7 +51,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itRecordsCreatedEvent(): void
+    public function it_records_created_event(): void
     {
         $reservation = $this->createReservation();
 
@@ -62,7 +62,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itConfirmsAPendingReservation(): void
+    public function it_confirms_a_pending_reservation(): void
     {
         $reservation = $this->createReservation();
         $reservation->pullDomainEvents();
@@ -78,7 +78,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itChecksInAConfirmedReservation(): void
+    public function it_checks_in_a_confirmed_reservation(): void
     {
         $reservation = $this->createReservation();
         $reservation->confirm();
@@ -96,7 +96,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itChecksOutACheckedInReservation(): void
+    public function it_checks_out_a_checked_in_reservation(): void
     {
         $reservation = $this->createReservation();
         $reservation->confirm();
@@ -114,7 +114,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itCompletesFullLifecycle(): void
+    public function it_completes_full_lifecycle(): void
     {
         $reservation = $this->createReservation();
         $reservation->confirm();
@@ -134,7 +134,7 @@ final class ReservationTest extends TestCase
     // --- Cancellation ---
 
     #[Test]
-    public function itCancelsAPendingReservation(): void
+    public function it_cancels_a_pending_reservation(): void
     {
         $reservation = $this->createReservation();
         $reservation->pullDomainEvents();
@@ -151,7 +151,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itCancelsAConfirmedReservation(): void
+    public function it_cancels_a_confirmed_reservation(): void
     {
         $reservation = $this->createReservation();
         $reservation->confirm();
@@ -162,7 +162,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itCannotCancelAfterCheckin(): void
+    public function it_cannot_cancel_after_checkin(): void
     {
         $reservation = $this->createReservation();
         $reservation->confirm();
@@ -175,7 +175,7 @@ final class ReservationTest extends TestCase
     // --- Invalid Transitions ---
 
     #[Test]
-    public function itCannotConfirmACancelledReservation(): void
+    public function it_cannot_confirm_a_cancelled_reservation(): void
     {
         $reservation = $this->createReservation();
         $reservation->cancel('Reason');
@@ -185,7 +185,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itCannotCheckinAPendingReservation(): void
+    public function it_cannot_checkin_a_pending_reservation(): void
     {
         $reservation = $this->createReservation();
 
@@ -194,7 +194,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itCannotCheckoutAConfirmedReservation(): void
+    public function it_cannot_checkout_a_confirmed_reservation(): void
     {
         $reservation = $this->createReservation();
         $reservation->confirm();
@@ -206,7 +206,7 @@ final class ReservationTest extends TestCase
     // --- Special Requests ---
 
     #[Test]
-    public function itAddsSpecialRequests(): void
+    public function it_adds_special_requests(): void
     {
         $reservation = $this->createReservation();
         $reservation->pullDomainEvents();
@@ -222,7 +222,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itFulfillsASpecialRequest(): void
+    public function it_fulfills_a_special_request(): void
     {
         $reservation = $this->createReservation();
         $requestId = $reservation->addSpecialRequest(RequestType::EXTRA_BED, 'One extra bed');
@@ -236,7 +236,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itRemovesASpecialRequestWhenPending(): void
+    public function it_removes_a_special_request_when_pending(): void
     {
         $reservation = $this->createReservation();
         $requestId = $reservation->addSpecialRequest(RequestType::EXTRA_BED, 'One extra bed');
@@ -247,7 +247,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itCannotRemoveSpecialRequestAfterConfirmation(): void
+    public function it_cannot_remove_special_request_after_confirmation(): void
     {
         $reservation = $this->createReservation();
         $requestId = $reservation->addSpecialRequest(RequestType::EXTRA_BED, 'Bed');
@@ -258,7 +258,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itEnforcesMaxSpecialRequests(): void
+    public function it_enforces_max_special_requests(): void
     {
         $reservation = $this->createReservation();
 
@@ -271,7 +271,7 @@ final class ReservationTest extends TestCase
     }
 
     #[Test]
-    public function itCannotAddSpecialRequestsAfterCheckout(): void
+    public function it_cannot_add_special_requests_after_checkout(): void
     {
         $reservation = $this->createReservation();
         $reservation->confirm();
@@ -285,7 +285,7 @@ final class ReservationTest extends TestCase
     // --- Guest Profile ---
 
     #[Test]
-    public function itStoresGuestId(): void
+    public function it_stores_guest_id(): void
     {
         $guestId = Uuid::uuid7()->toString();
         $reservation = Reservation::create(

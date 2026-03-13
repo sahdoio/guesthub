@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 final class GetReservationStatsHandlerTest extends TestCase
 {
     #[Test]
-    public function itReturnsReservationStatsDto(): void
+    public function it_returns_reservation_stats_dto(): void
     {
         $repository = $this->createMock(ReservationRepository::class);
 
@@ -37,7 +37,7 @@ final class GetReservationStatsHandlerTest extends TestCase
         $repository->method('countTodayCheckOuts')->willReturn(1);
 
         $handler = new GetReservationStatsHandler($repository);
-        $result = $handler->handle(new GetReservationStats());
+        $result = $handler->handle(new GetReservationStats);
 
         $this->assertInstanceOf(ReservationStatsResult::class, $result);
         $this->assertSame(15, $result->total);
@@ -48,7 +48,7 @@ final class GetReservationStatsHandlerTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsEmptyStatsWhenNoReservations(): void
+    public function it_returns_empty_stats_when_no_reservations(): void
     {
         $repository = $this->createMock(ReservationRepository::class);
 
@@ -59,7 +59,7 @@ final class GetReservationStatsHandlerTest extends TestCase
         $repository->method('countTodayCheckOuts')->willReturn(0);
 
         $handler = new GetReservationStatsHandler($repository);
-        $result = $handler->handle(new GetReservationStats());
+        $result = $handler->handle(new GetReservationStats);
 
         $this->assertSame(0, $result->total);
         $this->assertEmpty($result->byStatus);
@@ -69,7 +69,7 @@ final class GetReservationStatsHandlerTest extends TestCase
     }
 
     #[Test]
-    public function toArrayReturnsCorrectStructure(): void
+    public function to_array_returns_correct_structure(): void
     {
         $repository = $this->createMock(ReservationRepository::class);
 
@@ -80,7 +80,7 @@ final class GetReservationStatsHandlerTest extends TestCase
         $repository->method('countTodayCheckOuts')->willReturn(0);
 
         $handler = new GetReservationStatsHandler($repository);
-        $array = $handler->handle(new GetReservationStats())->toArray();
+        $array = $handler->handle(new GetReservationStats)->toArray();
 
         $this->assertSame(3, $array['total']);
         $this->assertSame(['pending' => 3], $array['by_status']);

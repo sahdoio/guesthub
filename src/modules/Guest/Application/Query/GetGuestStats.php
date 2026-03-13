@@ -4,6 +4,4 @@ declare(strict_types=1);
 
 namespace Modules\Guest\Application\Query;
 
-final readonly class GetGuestStats
-{
-}
+final readonly class GetGuestStats {}

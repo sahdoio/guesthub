@@ -23,6 +23,7 @@ final class ReservationStatsTest extends TestCase
     use RefreshDatabase;
 
     private ReservationRepository $repository;
+
     private string $guestId;
 
     protected function setUp(): void
@@ -47,7 +48,7 @@ final class ReservationStatsTest extends TestCase
             document: 'DOC123',
             loyaltyTier: LoyaltyTier::BRONZE,
             preferences: [],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
         $guestRepo->save($guest);
         $this->guestId = (string) $guest->uuid;
@@ -71,13 +72,13 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function countReturnsZeroWithNoReservations(): void
+    public function count_returns_zero_with_no_reservations(): void
     {
         $this->assertSame(0, $this->repository->count());
     }
 
     #[Test]
-    public function countReturnsTotalReservations(): void
+    public function count_returns_total_reservations(): void
     {
         $this->createReservation();
         $this->createReservation();
@@ -86,7 +87,7 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function countByStatusGroupsCorrectly(): void
+    public function count_by_status_groups_correctly(): void
     {
         $this->createReservation();
 
@@ -106,7 +107,7 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function countByRoomTypeGroupsCorrectly(): void
+    public function count_by_room_type_groups_correctly(): void
     {
         $this->createReservation('SINGLE');
         $this->createReservation('DOUBLE');
@@ -121,7 +122,7 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function countTodayCheckInsReturnsZeroByDefault(): void
+    public function count_today_check_ins_returns_zero_by_default(): void
     {
         $this->createReservation();
 
@@ -129,7 +130,7 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function countTodayCheckInsCountsCorrectly(): void
+    public function count_today_check_ins_counts_correctly(): void
     {
         $r1 = $this->createReservation();
         $r1->confirm();
@@ -145,7 +146,7 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function countTodayCheckOutsCountsCorrectly(): void
+    public function count_today_check_outs_counts_correctly(): void
     {
         $r = $this->createReservation();
         $r->confirm();
@@ -157,13 +158,13 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function countByStatusReturnsEmptyWhenNoReservations(): void
+    public function count_by_status_returns_empty_when_no_reservations(): void
     {
         $this->assertSame([], $this->repository->countByStatus());
     }
 
     #[Test]
-    public function countByRoomTypeReturnsEmptyWhenNoReservations(): void
+    public function count_by_room_type_returns_empty_when_no_reservations(): void
     {
         $this->assertSame([], $this->repository->countByRoomType());
     }

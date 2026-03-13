@@ -27,12 +27,12 @@ final class RoomTest extends TestCase
             capacity: 2,
             pricePerNight: 250.00,
             amenities: ['wifi', 'tv'],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
     }
 
     #[Test]
-    public function itCreatesARoomWithAvailableStatus(): void
+    public function it_creates_a_room_with_available_status(): void
     {
         $room = $this->createRoom();
 
@@ -47,7 +47,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itCanBeOccupied(): void
+    public function it_can_be_occupied(): void
     {
         $room = $this->createRoom();
         $room->occupy();
@@ -57,7 +57,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itCanBeReleasedFromOccupied(): void
+    public function it_can_be_released_from_occupied(): void
     {
         $room = $this->createRoom();
         $room->occupy();
@@ -67,7 +67,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itCannotBeOccupiedWhenNotAvailable(): void
+    public function it_cannot_be_occupied_when_not_available(): void
     {
         $room = $this->createRoom();
         $room->markMaintenance();
@@ -77,7 +77,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itCannotBeReleasedWhenNotOccupied(): void
+    public function it_cannot_be_released_when_not_occupied(): void
     {
         $room = $this->createRoom();
 
@@ -86,7 +86,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itCanBeMarkedForMaintenance(): void
+    public function it_can_be_marked_for_maintenance(): void
     {
         $room = $this->createRoom();
         $room->markMaintenance();
@@ -95,7 +95,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itCannotBeMarkedForMaintenanceWhenOccupied(): void
+    public function it_cannot_be_marked_for_maintenance_when_occupied(): void
     {
         $room = $this->createRoom();
         $room->occupy();
@@ -105,7 +105,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itCanBeMarkedOutOfOrder(): void
+    public function it_can_be_marked_out_of_order(): void
     {
         $room = $this->createRoom();
         $room->markOutOfOrder();
@@ -114,7 +114,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itCannotBeMarkedOutOfOrderWhenOccupied(): void
+    public function it_cannot_be_marked_out_of_order_when_occupied(): void
     {
         $room = $this->createRoom();
         $room->occupy();
@@ -124,7 +124,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itCanBeMarkedAvailableFromMaintenance(): void
+    public function it_can_be_marked_available_from_maintenance(): void
     {
         $room = $this->createRoom();
         $room->markMaintenance();
@@ -134,7 +134,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itCannotBeMarkedAvailableWhenOccupied(): void
+    public function it_cannot_be_marked_available_when_occupied(): void
     {
         $room = $this->createRoom();
         $room->occupy();
@@ -144,7 +144,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itUpdatesPrice(): void
+    public function it_updates_price(): void
     {
         $room = $this->createRoom();
         $room->updateDetails(pricePerNight: 300.00);
@@ -154,7 +154,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itUpdatesAmenities(): void
+    public function it_updates_amenities(): void
     {
         $room = $this->createRoom();
         $room->updateDetails(amenities: ['wifi', 'tv', 'minibar']);
@@ -163,7 +163,7 @@ final class RoomTest extends TestCase
     }
 
     #[Test]
-    public function itUpdatesOnlyProvidedFields(): void
+    public function it_updates_only_provided_fields(): void
     {
         $room = $this->createRoom();
         $room->updateDetails(pricePerNight: 999.00);

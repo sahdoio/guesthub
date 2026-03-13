@@ -42,7 +42,7 @@ final readonly class CancelReservationAction
     private function enforceReservationOwnership(string $reservationUuid): void
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return;
         }
         $user->load('roles');

@@ -71,7 +71,7 @@ final readonly class EloquentRoomRepository implements RoomRepository
         $paginator = $query->paginate(perPage: $perPage, page: $page);
 
         $items = collect($paginator->items())
-            ->map(fn(object $record) => $this->toEntity($record))
+            ->map(fn (object $record) => $this->toEntity($record))
             ->all();
 
         return new PaginatedResult(

@@ -51,7 +51,7 @@ class RoomSeeder extends Seeder
                 capacity: $capacity,
                 pricePerNight: $price,
                 amenities: $amenities,
-                createdAt: new DateTimeImmutable(),
+                createdAt: new DateTimeImmutable,
             );
             $this->repository->save($room);
         }

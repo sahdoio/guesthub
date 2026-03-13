@@ -15,7 +15,7 @@ use Modules\Shared\Domain\Identity;
 final class Guest extends AggregateRoot
 {
     /**
-     * @param string[] $preferences
+     * @param  string[]  $preferences
      */
     private function __construct(
         public readonly GuestId $uuid,
@@ -30,7 +30,7 @@ final class Guest extends AggregateRoot
     ) {}
 
     /**
-     * @param string[] $preferences
+     * @param  string[]  $preferences
      */
     public static function create(
         GuestId $uuid,
@@ -68,14 +68,14 @@ final class Guest extends AggregateRoot
         $this->fullName = $fullName;
         $this->email = $email;
         $this->phone = $phone;
-        $this->updatedAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable;
         $this->recordEvent(new GuestContactInfoUpdated($this->uuid));
     }
 
     public function changeLoyaltyTier(LoyaltyTier $tier): void
     {
         $this->loyaltyTier = $tier;
-        $this->updatedAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable;
         $this->recordEvent(new GuestLoyaltyTierChanged($this->uuid, $tier));
     }
 
@@ -83,6 +83,6 @@ final class Guest extends AggregateRoot
     public function setPreferences(array $preferences): void
     {
         $this->preferences = $preferences;
-        $this->updatedAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable;
     }
 }

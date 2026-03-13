@@ -28,7 +28,7 @@ final class Room extends AggregateRoot
     ) {}
 
     /**
-     * @param string[] $amenities
+     * @param  string[]  $amenities
      */
     public static function create(
         RoomId $uuid,
@@ -66,7 +66,7 @@ final class Room extends AggregateRoot
         }
 
         $this->status = RoomStatus::OCCUPIED;
-        $this->updatedAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable;
     }
 
     public function release(): void
@@ -76,7 +76,7 @@ final class Room extends AggregateRoot
         }
 
         $this->status = RoomStatus::AVAILABLE;
-        $this->updatedAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable;
     }
 
     public function markMaintenance(): void
@@ -86,7 +86,7 @@ final class Room extends AggregateRoot
         }
 
         $this->status = RoomStatus::MAINTENANCE;
-        $this->updatedAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable;
     }
 
     public function markOutOfOrder(): void
@@ -96,7 +96,7 @@ final class Room extends AggregateRoot
         }
 
         $this->status = RoomStatus::OUT_OF_ORDER;
-        $this->updatedAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable;
     }
 
     public function markAvailable(): void
@@ -106,11 +106,11 @@ final class Room extends AggregateRoot
         }
 
         $this->status = RoomStatus::AVAILABLE;
-        $this->updatedAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable;
     }
 
     /**
-     * @param string[] $amenities
+     * @param  string[]  $amenities
      */
     public function updateDetails(
         ?float $pricePerNight = null,
@@ -124,6 +124,6 @@ final class Room extends AggregateRoot
             $this->amenities = $amenities;
         }
 
-        $this->updatedAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable;
     }
 }

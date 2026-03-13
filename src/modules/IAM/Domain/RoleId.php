@@ -6,6 +6,4 @@ namespace Modules\IAM\Domain;
 
 use Modules\Shared\Domain\Identity;
 
-final class RoleId extends Identity
-{
-}
+final class RoleId extends Identity {}

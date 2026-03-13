@@ -49,12 +49,12 @@ final class EloquentGuestRepositoryTest extends TestCase
             document: $overrides['document'] ?? 'ABC123',
             loyaltyTier: $overrides['loyaltyTier'] ?? LoyaltyTier::BRONZE,
             preferences: $overrides['preferences'] ?? [],
-            createdAt: $overrides['createdAt'] ?? new DateTimeImmutable(),
+            createdAt: $overrides['createdAt'] ?? new DateTimeImmutable,
         );
     }
 
     #[Test]
-    public function itSavesAndFindsByUuid(): void
+    public function it_saves_and_finds_by_uuid(): void
     {
         $profile = $this->createProfile();
         $this->repository->save($profile);
@@ -68,13 +68,13 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsNullForUnknownUuid(): void
+    public function it_returns_null_for_unknown_uuid(): void
     {
         $this->assertNull($this->repository->findByUuid(GuestId::generate()));
     }
 
     #[Test]
-    public function itFindsByEmail(): void
+    public function it_finds_by_email(): void
     {
         $profile = $this->createProfile(['email' => 'bob@hotel.com']);
         $this->repository->save($profile);
@@ -86,7 +86,7 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itFindsByDocument(): void
+    public function it_finds_by_document(): void
     {
         $profile = $this->createProfile(['document' => 'XYZ999']);
         $this->repository->save($profile);
@@ -98,7 +98,7 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itUpdatesExistingProfile(): void
+    public function it_updates_existing_profile(): void
     {
         $profile = $this->createProfile();
         $this->repository->save($profile);
@@ -113,7 +113,7 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itRemovesAProfile(): void
+    public function it_removes_a_profile(): void
     {
         $profile = $this->createProfile();
         $this->repository->save($profile);
@@ -125,7 +125,7 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itListsProfiles(): void
+    public function it_lists_profiles(): void
     {
         for ($i = 0; $i < 3; $i++) {
             $this->repository->save($this->createProfile([
@@ -143,7 +143,7 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itGeneratesUniqueIdentities(): void
+    public function it_generates_unique_identities(): void
     {
         $id1 = $this->repository->nextIdentity();
         $id2 = $this->repository->nextIdentity();

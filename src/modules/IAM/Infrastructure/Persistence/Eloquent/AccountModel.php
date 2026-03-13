@@ -6,6 +6,13 @@ namespace Modules\IAM\Infrastructure\Persistence\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property string $name
+ * @property string $created_at
+ * @property string|null $updated_at
+ */
 final class AccountModel extends Model
 {
     protected $table = 'accounts';

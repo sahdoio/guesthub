@@ -1,7 +1,7 @@
 # Variables
 DC=docker compose --file docker-compose.yml
 
-.PHONY: help go go-hard up setup down sh test paratest test-coverage logs db-migrate db-seed db-rollback db-reset log clear phpstan
+.PHONY: help go go-hard up setup down sh test paratest test-coverage logs db-migrate db-seed db-rollback db-reset log clear phpstan pint
 
 .DEFAULT_GOAL := help
 
@@ -87,3 +87,6 @@ log: ## Follow Laravel application log
 
 phpstan: ## Run PHPStan static analysis
 	$(DC) exec guesthub ./vendor/bin/phpstan analyse --memory-limit=2G
+
+pint: ## Run Laravel Pint code style fixer
+	$(DC) exec guesthub ./vendor/bin/pint

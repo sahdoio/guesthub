@@ -14,10 +14,10 @@ use Tests\TestCase;
 
 final class CreateReservationTest extends TestCase
 {
-    use RefreshDatabase;
     use CreatesGuest;
-    use SeedsRooms;
+    use RefreshDatabase;
     use SeedsRolesAndAccount;
+    use SeedsRooms;
 
     private string $guestId;
 
@@ -43,7 +43,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function itCreatesAReservation(): void
+    public function it_creates_a_reservation(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload());
 
@@ -72,7 +72,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function itCreatesAVipReservation(): void
+    public function it_creates_a_vip_reservation(): void
     {
         $this->putJson("/api/guests/{$this->guestId}", [
             'loyalty_tier' => 'gold',
@@ -85,7 +85,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function itValidatesRequiredFields(): void
+    public function it_validates_required_fields(): void
     {
         $response = $this->postJson('/api/reservations', []);
 
@@ -99,7 +99,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function itValidatesGuestIdFormat(): void
+    public function it_validates_guest_id_format(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
             'guest_id' => 'not-a-uuid',
@@ -110,7 +110,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function itValidatesCheckinNotInPast(): void
+    public function it_validates_checkin_not_in_past(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
             'check_in' => now()->subDay()->format('Y-m-d'),
@@ -121,7 +121,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function itValidatesCheckoutAfterCheckin(): void
+    public function it_validates_checkout_after_checkin(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
             'check_in' => now()->addDays(5)->format('Y-m-d'),
@@ -133,7 +133,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function itValidatesRoomType(): void
+    public function it_validates_room_type(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
             'room_type' => 'PENTHOUSE',

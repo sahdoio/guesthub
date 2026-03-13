@@ -7,7 +7,7 @@ namespace Modules\Guest\Application\Command;
 final readonly class UpdateGuest
 {
     /**
-     * @param string[]|null $preferences
+     * @param  string[]|null  $preferences
      */
     public function __construct(
         public string $guestId,

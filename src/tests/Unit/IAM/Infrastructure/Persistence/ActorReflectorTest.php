@@ -21,6 +21,7 @@ use PHPUnit\Framework\TestCase;
 final class ActorReflectorTest extends TestCase
 {
     private AccountId $accountId;
+
     private RoleId $roleId;
 
     protected function setUp(): void
@@ -31,7 +32,7 @@ final class ActorReflectorTest extends TestCase
     }
 
     #[Test]
-    public function itReconstructsAGuestActor(): void
+    public function it_reconstructs_a_guest_actor(): void
     {
         $uuid = ActorId::generate();
         $createdAt = new DateTimeImmutable('2026-01-15 10:00:00');
@@ -64,7 +65,7 @@ final class ActorReflectorTest extends TestCase
     }
 
     #[Test]
-    public function itReconstructsAnAdminActor(): void
+    public function it_reconstructs_an_admin_actor(): void
     {
         $actor = ActorReflector::reconstruct(
             uuid: ActorId::generate(),
@@ -75,7 +76,7 @@ final class ActorReflectorTest extends TestCase
             password: new HashedPassword('$2y$10$hash'),
             subjectType: null,
             subjectId: null,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
             updatedAt: null,
         );
 
@@ -85,7 +86,7 @@ final class ActorReflectorTest extends TestCase
     }
 
     #[Test]
-    public function itReconstructsWithUpdatedAt(): void
+    public function it_reconstructs_with_updated_at(): void
     {
         $actor = ActorReflector::reconstruct(
             uuid: ActorId::generate(),
@@ -96,8 +97,8 @@ final class ActorReflectorTest extends TestCase
             password: new HashedPassword('$2y$10$hash'),
             subjectType: null,
             subjectId: null,
-            createdAt: new DateTimeImmutable(),
-            updatedAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
+            updatedAt: new DateTimeImmutable,
         );
 
         $this->assertNull($actor->subjectType);
@@ -106,7 +107,7 @@ final class ActorReflectorTest extends TestCase
     }
 
     #[Test]
-    public function itDoesNotRecordDomainEvents(): void
+    public function it_does_not_record_domain_events(): void
     {
         $actor = ActorReflector::reconstruct(
             uuid: ActorId::generate(),
@@ -117,7 +118,7 @@ final class ActorReflectorTest extends TestCase
             password: new HashedPassword('$2y$10$hash'),
             subjectType: null,
             subjectId: null,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
             updatedAt: null,
         );
 

@@ -41,11 +41,12 @@ class GuestSeeder extends Seeder
 
             if ($existing !== null) {
                 self::$guestIds[$email] = (string) $existing->id();
+
                 continue;
             }
 
             $id = $this->repository->nextIdentity();
-            $guest = Guest::create($id, $name, $email, $phone, $document, $tier, $preferences, new DateTimeImmutable());
+            $guest = Guest::create($id, $name, $email, $phone, $document, $tier, $preferences, new DateTimeImmutable);
             $this->repository->save($guest);
 
             self::$guestIds[$email] = (string) $id;

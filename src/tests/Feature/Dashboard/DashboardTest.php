@@ -41,12 +41,12 @@ final class DashboardTest extends TestCase
         $guest = Guest::create(
             uuid: $repository->nextIdentity(),
             fullName: $overrides['full_name'] ?? 'Jane Doe',
-            email: $overrides['email'] ?? 'jane' . uniqid() . '@hotel.com',
+            email: $overrides['email'] ?? 'jane'.uniqid().'@hotel.com',
             phone: $overrides['phone'] ?? '+5511999999999',
-            document: $overrides['document'] ?? 'DOC' . uniqid(),
+            document: $overrides['document'] ?? 'DOC'.uniqid(),
             loyaltyTier: LoyaltyTier::from($overrides['loyalty_tier'] ?? 'bronze'),
             preferences: [],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $repository->save($guest);
@@ -102,21 +102,21 @@ final class DashboardTest extends TestCase
             capacity: 2,
             pricePerNight: 250.00,
             amenities: ['wifi'],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $repository->save($room);
     }
 
     #[Test]
-    public function itRequiresAuthentication(): void
+    public function it_requires_authentication(): void
     {
         $this->get('/dashboard')
             ->assertRedirect('/login');
     }
 
     #[Test]
-    public function itBlocksGuestActors(): void
+    public function it_blocks_guest_actors(): void
     {
         $guest = $this->createGuestActor();
 
@@ -126,7 +126,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function itShowsDashboardWithEmptyStats(): void
+    public function it_shows_dashboard_with_empty_stats(): void
     {
         $response = $this->actingAs($this->actor)
             ->get('/dashboard');
@@ -146,7 +146,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function itShowsCorrectGuestTotals(): void
+    public function it_shows_correct_guest_totals(): void
     {
         $this->createGuest();
         $this->createGuest();
@@ -161,7 +161,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function itShowsGuestsByLoyaltyTier(): void
+    public function it_shows_guests_by_loyalty_tier(): void
     {
         $this->createGuest(['loyalty_tier' => 'bronze']);
         $this->createGuest(['loyalty_tier' => 'bronze']);
@@ -179,7 +179,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function itShowsReservationTotals(): void
+    public function it_shows_reservation_totals(): void
     {
         $guestId = $this->createGuest();
         $this->createReservation($guestId);
@@ -194,7 +194,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function itShowsReservationsByStatus(): void
+    public function it_shows_reservations_by_status(): void
     {
         $guestId = $this->createGuest();
         $this->createReservation($guestId);
@@ -213,7 +213,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function itShowsReservationsByRoomType(): void
+    public function it_shows_reservations_by_room_type(): void
     {
         $guestId = $this->createGuest();
         $this->createReservation($guestId, ['room_type' => 'SINGLE']);
@@ -232,7 +232,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function itShowsRoomStats(): void
+    public function it_shows_room_stats(): void
     {
         $this->createRoom('101', 'SINGLE');
         $this->createRoom('201', 'DOUBLE');

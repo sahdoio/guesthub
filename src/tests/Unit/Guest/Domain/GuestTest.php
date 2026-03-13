@@ -25,12 +25,12 @@ final class GuestTest extends TestCase
             document: $overrides['document'] ?? 'ABC123456',
             loyaltyTier: $overrides['loyaltyTier'] ?? LoyaltyTier::BRONZE,
             preferences: $overrides['preferences'] ?? [],
-            createdAt: $overrides['createdAt'] ?? new DateTimeImmutable(),
+            createdAt: $overrides['createdAt'] ?? new DateTimeImmutable,
         );
     }
 
     #[Test]
-    public function itCreatesAGuestProfile(): void
+    public function it_creates_a_guest_profile(): void
     {
         $id = GuestId::generate();
 
@@ -42,7 +42,7 @@ final class GuestTest extends TestCase
             document: 'ABC123456',
             loyaltyTier: LoyaltyTier::BRONZE,
             preferences: ['late_checkout', 'high_floor'],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->assertTrue($profile->id()->equals($id));
@@ -56,7 +56,7 @@ final class GuestTest extends TestCase
     }
 
     #[Test]
-    public function itUpdatesContactInfo(): void
+    public function it_updates_contact_info(): void
     {
         $profile = $this->createProfile();
 
@@ -69,7 +69,7 @@ final class GuestTest extends TestCase
     }
 
     #[Test]
-    public function itChangesLoyaltyTier(): void
+    public function it_changes_loyalty_tier(): void
     {
         $profile = $this->createProfile();
 
@@ -80,7 +80,7 @@ final class GuestTest extends TestCase
     }
 
     #[Test]
-    public function itSetsPreferences(): void
+    public function it_sets_preferences(): void
     {
         $profile = $this->createProfile();
 
@@ -91,7 +91,7 @@ final class GuestTest extends TestCase
     }
 
     #[Test]
-    public function entityEqualityById(): void
+    public function entity_equality_by_id(): void
     {
         $id = GuestId::generate();
 
@@ -102,7 +102,7 @@ final class GuestTest extends TestCase
     }
 
     #[Test]
-    public function entityInequalityById(): void
+    public function entity_inequality_by_id(): void
     {
         $a = $this->createProfile();
         $b = $this->createProfile();

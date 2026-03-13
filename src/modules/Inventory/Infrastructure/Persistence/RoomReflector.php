@@ -14,7 +14,7 @@ use ReflectionClass;
 final class RoomReflector
 {
     /**
-     * @param string[] $amenities
+     * @param  string[]  $amenities
      */
     public static function reconstruct(
         RoomId $uuid,

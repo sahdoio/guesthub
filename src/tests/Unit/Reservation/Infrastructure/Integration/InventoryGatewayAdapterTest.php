@@ -10,8 +10,8 @@ use Modules\Inventory\Infrastructure\Integration\InventoryApi;
 use Modules\Reservation\Domain\Dto\AvailableRoom;
 use Modules\Reservation\Domain\Dto\RoomAvailability;
 use Modules\Reservation\Domain\Dto\RoomTypeInfo;
-use Modules\Reservation\Infrastructure\Integration\InventoryGatewayAdapter;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
+use Modules\Reservation\Infrastructure\Integration\InventoryGatewayAdapter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,6 +20,7 @@ use PHPUnit\Framework\TestCase;
 final class InventoryGatewayAdapterTest extends TestCase
 {
     private InventoryGatewayAdapter $adapter;
+
     private InventoryApi $inventoryApi;
 
     protected function setUp(): void
@@ -29,7 +30,7 @@ final class InventoryGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsAvailabilityForSingleRoom(): void
+    public function it_returns_availability_for_single_room(): void
     {
         $this->inventoryApi->method('countAvailableByType')
             ->with('SINGLE')
@@ -49,7 +50,7 @@ final class InventoryGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsAvailabilityForSuite(): void
+    public function it_returns_availability_for_suite(): void
     {
         $this->inventoryApi->method('countAvailableByType')
             ->with('SUITE')
@@ -66,7 +67,7 @@ final class InventoryGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsRoomTypeInfo(): void
+    public function it_returns_room_type_info(): void
     {
         $result = $this->adapter->getRoomTypeInfo('DOUBLE');
 
@@ -77,7 +78,7 @@ final class InventoryGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsDefaultForUnknownRoomType(): void
+    public function it_returns_default_for_unknown_room_type(): void
     {
         $this->inventoryApi->method('countAvailableByType')
             ->with('UNKNOWN')
@@ -94,7 +95,7 @@ final class InventoryGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itListsAvailableRooms(): void
+    public function it_lists_available_rooms(): void
     {
         $this->inventoryApi->method('listAvailableByType')
             ->with('DOUBLE')
@@ -112,7 +113,7 @@ final class InventoryGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itChecksRoomAvailability(): void
+    public function it_checks_room_availability(): void
     {
         $this->inventoryApi->method('isRoomAvailable')
             ->with('201')
@@ -122,7 +123,7 @@ final class InventoryGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsFalseForUnavailableRoom(): void
+    public function it_returns_false_for_unavailable_room(): void
     {
         $this->inventoryApi->method('isRoomAvailable')
             ->with('999')

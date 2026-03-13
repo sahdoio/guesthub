@@ -28,7 +28,7 @@ final class RegisterSubmitView
         ]);
 
         $this->handler->handle(new RegisterActor(
-            accountName: $data['name'] . "'s Account",
+            accountName: $data['name']."'s Account",
             name: $data['name'],
             email: $data['email'],
             password: $data['password'],

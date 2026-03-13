@@ -71,7 +71,7 @@ final readonly class EloquentReservationRepository implements ReservationReposit
         $paginator = $query->paginate(perPage: $perPage, page: $page);
 
         $items = collect($paginator->items())
-            ->map(fn(object $record) => $this->toEntity($record))
+            ->map(fn (object $record) => $this->toEntity($record))
             ->all();
 
         return new PaginatedResult(
@@ -176,7 +176,7 @@ final readonly class EloquentReservationRepository implements ReservationReposit
     /** @param SpecialRequest[] $requests */
     private function serializeSpecialRequests(array $requests): array
     {
-        return array_map(fn(SpecialRequest $sr) => [
+        return array_map(fn (SpecialRequest $sr) => [
             'id' => (string) $sr->id,
             'type' => $sr->type->value,
             'description' => $sr->description,

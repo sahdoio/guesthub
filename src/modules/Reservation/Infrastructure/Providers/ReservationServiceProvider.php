@@ -28,7 +28,7 @@ final class ReservationServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../Config/reservation.php', 'reservation');
+        $this->mergeConfigFrom(__DIR__.'/../Config/reservation.php', 'reservation');
 
         $this->app->bind(ReservationRepository::class, EloquentReservationRepository::class);
         $this->app->bind(InventoryGateway::class, InventoryGatewayAdapter::class);
@@ -38,14 +38,14 @@ final class ReservationServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../Persistence/Migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../Persistence/Migrations');
 
         Route::prefix('api')
             ->middleware('api')
-            ->group(__DIR__ . '/../Routes/api.php');
+            ->group(__DIR__.'/../Routes/api.php');
 
         Route::middleware('web')
-            ->group(__DIR__ . '/../Routes/web.php');
+            ->group(__DIR__.'/../Routes/web.php');
 
         Event::listen(ReservationConfirmed::class, OnReservationConfirmed::class);
         Event::listen(ReservationCancelled::class, OnReservationCancelled::class);

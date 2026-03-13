@@ -39,26 +39,26 @@ final class GuestStatsTest extends TestCase
     {
         $profile = Guest::create(
             uuid: $this->repository->nextIdentity(),
-            fullName: 'Guest ' . uniqid(),
-            email: uniqid() . '@hotel.com',
+            fullName: 'Guest '.uniqid(),
+            email: uniqid().'@hotel.com',
             phone: '+5511999999999',
-            document: 'DOC' . uniqid(),
+            document: 'DOC'.uniqid(),
             loyaltyTier: LoyaltyTier::from($loyaltyTier),
             preferences: [],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->repository->save($profile);
     }
 
     #[Test]
-    public function countReturnsZeroWithNoGuests(): void
+    public function count_returns_zero_with_no_guests(): void
     {
         $this->assertSame(0, $this->repository->count());
     }
 
     #[Test]
-    public function countReturnsTotalGuests(): void
+    public function count_returns_total_guests(): void
     {
         $this->createGuest();
         $this->createGuest();
@@ -68,13 +68,13 @@ final class GuestStatsTest extends TestCase
     }
 
     #[Test]
-    public function countByLoyaltyTierReturnsEmptyWhenNoGuests(): void
+    public function count_by_loyalty_tier_returns_empty_when_no_guests(): void
     {
         $this->assertSame([], $this->repository->countByLoyaltyTier());
     }
 
     #[Test]
-    public function countByLoyaltyTierGroupsCorrectly(): void
+    public function count_by_loyalty_tier_groups_correctly(): void
     {
         $this->createGuest('bronze');
         $this->createGuest('bronze');

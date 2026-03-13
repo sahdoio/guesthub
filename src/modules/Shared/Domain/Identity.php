@@ -11,18 +11,20 @@ abstract class Identity extends ValueObject
     public function __construct(
         public readonly string $value,
     ) {
-        if (!Uuid::isValid($value)) {
+        if (! Uuid::isValid($value)) {
             throw new \InvalidArgumentException("Invalid UUID: {$value}");
         }
     }
 
     public static function generate(): static
     {
+        /** @phpstan-ignore new.static */
         return new static(Uuid::uuid7()->toString());
     }
 
     public static function fromString(string $id): static
     {
+        /** @phpstan-ignore new.static */
         return new static($id);
     }
 

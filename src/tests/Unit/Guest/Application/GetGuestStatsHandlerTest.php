@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 final class GetGuestStatsHandlerTest extends TestCase
 {
     #[Test]
-    public function itReturnsGuestStatsDto(): void
+    public function it_returns_guest_stats_dto(): void
     {
         $repository = $this->createMock(GuestRepository::class);
 
@@ -29,7 +29,7 @@ final class GetGuestStatsHandlerTest extends TestCase
         ]);
 
         $handler = new GetGuestStatsHandler($repository);
-        $result = $handler->handle(new GetGuestStats());
+        $result = $handler->handle(new GetGuestStats);
 
         $this->assertInstanceOf(GuestStatsResult::class, $result);
         $this->assertSame(42, $result->total);
@@ -40,7 +40,7 @@ final class GetGuestStatsHandlerTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsEmptyStatsWhenNoGuests(): void
+    public function it_returns_empty_stats_when_no_guests(): void
     {
         $repository = $this->createMock(GuestRepository::class);
 
@@ -48,14 +48,14 @@ final class GetGuestStatsHandlerTest extends TestCase
         $repository->method('countByLoyaltyTier')->willReturn([]);
 
         $handler = new GetGuestStatsHandler($repository);
-        $result = $handler->handle(new GetGuestStats());
+        $result = $handler->handle(new GetGuestStats);
 
         $this->assertSame(0, $result->total);
         $this->assertEmpty($result->byLoyaltyTier);
     }
 
     #[Test]
-    public function toArrayReturnsCorrectStructure(): void
+    public function to_array_returns_correct_structure(): void
     {
         $repository = $this->createMock(GuestRepository::class);
 
@@ -63,7 +63,7 @@ final class GetGuestStatsHandlerTest extends TestCase
         $repository->method('countByLoyaltyTier')->willReturn(['gold' => 5]);
 
         $handler = new GetGuestStatsHandler($repository);
-        $result = $handler->handle(new GetGuestStats());
+        $result = $handler->handle(new GetGuestStats);
 
         $array = $result->toArray();
 

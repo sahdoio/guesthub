@@ -6,7 +6,6 @@ namespace Modules\IAM\Infrastructure\Http\View;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 
 final class SwitchAccountView
 {
@@ -20,7 +19,7 @@ final class SwitchAccountView
         $user->load('roles');
         $roleNames = $user->roles->pluck('name')->toArray();
 
-        if (!in_array('superadmin', $roleNames, true)) {
+        if (! in_array('superadmin', $roleNames, true)) {
             abort(403, 'Only superadmins can switch accounts.');
         }
 

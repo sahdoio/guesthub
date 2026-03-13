@@ -4,6 +4,4 @@ declare(strict_types=1);
 
 namespace Modules\Inventory\Application\Query;
 
-final readonly class GetRoomStats
-{
-}
+final readonly class GetRoomStats {}

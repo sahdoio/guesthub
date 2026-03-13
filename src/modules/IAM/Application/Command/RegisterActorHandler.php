@@ -42,7 +42,7 @@ final readonly class RegisterActorHandler
         $account = Account::create(
             uuid: $accountId,
             name: $command->accountName,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
         $this->accountRepository->save($account);
 
@@ -72,7 +72,7 @@ final readonly class RegisterActorHandler
             password: $this->hasher->hash($command->password),
             subjectType: 'guest',
             subjectId: $guestId,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->repository->save($actor);

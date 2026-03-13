@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 final class SpecialRequestReflectorTest extends TestCase
 {
     #[Test]
-    public function itReconstructsAPendingSpecialRequest(): void
+    public function it_reconstructs_a_pending_special_request(): void
     {
         $id = SpecialRequestId::generate();
         $createdAt = new DateTimeImmutable('2026-01-15 10:00:00');
@@ -42,7 +42,7 @@ final class SpecialRequestReflectorTest extends TestCase
     }
 
     #[Test]
-    public function itReconstructsAFulfilledSpecialRequest(): void
+    public function it_reconstructs_a_fulfilled_special_request(): void
     {
         $fulfilledAt = new DateTimeImmutable('2026-01-16 14:00:00');
 

@@ -10,18 +10,17 @@ use Modules\Guest\Domain\Guest;
 use Modules\Guest\Domain\Repository\GuestRepository;
 use Modules\Guest\Domain\ValueObject\LoyaltyTier;
 use Modules\Guest\Infrastructure\Persistence\Eloquent\GuestModel;
+use Modules\IAM\Domain\Account;
 use Modules\IAM\Domain\AccountId;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
 use Modules\IAM\Domain\Repository\RoleRepository;
-use Modules\IAM\Domain\Account;
 use Modules\IAM\Domain\Role;
-use Modules\IAM\Domain\RoleId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
 use Modules\IAM\Domain\ValueObject\RoleName;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentActorRepository;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -34,9 +33,13 @@ final class EloquentActorRepositoryTest extends TestCase
     use RefreshDatabase;
 
     private ActorRepository $repository;
+
     private AccountId $accountId;
+
     private Role $guestRole;
+
     private Role $adminRole;
+
     private int $guestId;
 
     protected function setUp(): void
@@ -57,7 +60,7 @@ final class EloquentActorRepositoryTest extends TestCase
         $account = Account::create(
             uuid: $accountRepository->nextIdentity(),
             name: 'Test Hotel',
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
         $accountRepository->save($account);
         $this->accountId = $account->uuid;
@@ -76,7 +79,7 @@ final class EloquentActorRepositoryTest extends TestCase
             document: 'DOC123',
             loyaltyTier: LoyaltyTier::BRONZE,
             preferences: [],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
         $guestRepo->save($guest);
         $this->guestId = GuestModel::where('uuid', (string) $guest->uuid)->value('id');
@@ -93,12 +96,12 @@ final class EloquentActorRepositoryTest extends TestCase
             password: $overrides['password'] ?? new HashedPassword('$2y$10$somehash'),
             subjectType: array_key_exists('subjectType', $overrides) ? $overrides['subjectType'] : 'guest',
             subjectId: array_key_exists('subjectId', $overrides) ? $overrides['subjectId'] : $this->guestId,
-            createdAt: $overrides['createdAt'] ?? new DateTimeImmutable(),
+            createdAt: $overrides['createdAt'] ?? new DateTimeImmutable,
         );
     }
 
     #[Test]
-    public function itSavesAndFindsByUuid(): void
+    public function it_saves_and_finds_by_uuid(): void
     {
         $actor = $this->registerActor();
         $this->repository->save($actor);
@@ -115,13 +118,13 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsNullForUnknownUuid(): void
+    public function it_returns_null_for_unknown_uuid(): void
     {
         $this->assertNull($this->repository->findByUuid(ActorId::generate()));
     }
 
     #[Test]
-    public function itFindsByEmail(): void
+    public function it_finds_by_email(): void
     {
         $actor = $this->registerActor(['email' => 'jane@hotel.com']);
         $this->repository->save($actor);
@@ -133,13 +136,13 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsNullForUnknownEmail(): void
+    public function it_returns_null_for_unknown_email(): void
     {
         $this->assertNull($this->repository->findByEmail('nonexistent@hotel.com'));
     }
 
     #[Test]
-    public function itUpdatesExistingActor(): void
+    public function it_updates_existing_actor(): void
     {
         $actor = $this->registerActor();
         $this->repository->save($actor);
@@ -153,7 +156,7 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itSavesActorWithNullSubject(): void
+    public function it_saves_actor_with_null_subject(): void
     {
         $actor = $this->registerActor([
             'roles' => [$this->adminRole],
@@ -170,7 +173,7 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itGeneratesUniqueIdentities(): void
+    public function it_generates_unique_identities(): void
     {
         $id1 = $this->repository->nextIdentity();
         $id2 = $this->repository->nextIdentity();
@@ -179,7 +182,7 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itSavesSuperAdminWithNullAccount(): void
+    public function it_saves_super_admin_with_null_account(): void
     {
         $roleRepository = $this->app->make(\Modules\IAM\Domain\Repository\RoleRepository::class);
         $superadminRole = Role::create(uuid: $roleRepository->nextIdentity(), name: RoleName::SUPERADMIN);
@@ -194,7 +197,7 @@ final class EloquentActorRepositoryTest extends TestCase
             password: new HashedPassword('$2y$10$somehash'),
             subjectType: null,
             subjectId: null,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
         $this->repository->save($actor);
 
@@ -206,7 +209,7 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itPersistsMultipleRoles(): void
+    public function it_persists_multiple_roles(): void
     {
         $actor = $this->registerActor([
             'roles' => [$this->guestRole, $this->adminRole],

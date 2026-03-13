@@ -7,9 +7,24 @@ namespace Modules\Inventory\Infrastructure\Persistence\Eloquent;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Shared\Infrastructure\Persistence\Eloquent\BelongsToTenant;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $account_id
+ * @property string $number
+ * @property string $type
+ * @property int $floor
+ * @property int $capacity
+ * @property float $price_per_night
+ * @property string $status
+ * @property array<string, mixed>|null $amenities
+ * @property string $created_at
+ * @property string|null $updated_at
+ */
 final class RoomModel extends Model
 {
     use BelongsToTenant;
+
     protected $table = 'rooms';
 
     public $timestamps = false;

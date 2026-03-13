@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\IAM\Infrastructure\Persistence\Eloquent;
 
 use DateTimeImmutable;
+use Illuminate\Support\Facades\DB;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
@@ -14,7 +15,6 @@ use Modules\IAM\Domain\RoleId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
 use Modules\IAM\Domain\ValueObject\RoleName;
 use Modules\IAM\Infrastructure\Persistence\ActorReflector;
-use Illuminate\Support\Facades\DB;
 
 final class EloquentActorRepository implements ActorRepository
 {
@@ -49,7 +49,7 @@ final class EloquentActorRepository implements ActorRepository
             ->where('uuid', $uuid->value)
             ->first();
 
-        if (!$record) {
+        if (! $record) {
             return null;
         }
 
@@ -64,7 +64,7 @@ final class EloquentActorRepository implements ActorRepository
             ->where('email', $email)
             ->first();
 
-        if (!$record) {
+        if (! $record) {
             return null;
         }
 

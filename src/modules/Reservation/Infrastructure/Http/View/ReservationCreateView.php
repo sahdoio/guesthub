@@ -20,7 +20,7 @@ final class ReservationCreateView
 
     public function __invoke(Request $request): Response
     {
-        $guests = $this->guestHandler->handle(new ListGuests(), new Pagination(1, 100));
+        $guests = $this->guestHandler->handle(new ListGuests, new Pagination(1, 100));
 
         return Inertia::render('Reservations/Create', [
             'guests' => array_map(

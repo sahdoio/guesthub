@@ -24,6 +24,7 @@ final class GuestGatewayAdapterTest extends TestCase
     use RefreshDatabase;
 
     private GuestGateway $gateway;
+
     private GuestRepository $guestRepo;
 
     protected function setUp(): void
@@ -48,10 +49,10 @@ final class GuestGatewayAdapterTest extends TestCase
             fullName: 'Test Guest',
             email: $email,
             phone: '+5511999999999',
-            document: 'DOC-' . uniqid(),
+            document: 'DOC-'.uniqid(),
             loyaltyTier: $tier,
             preferences: [],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->guestRepo->save($guest);
@@ -60,7 +61,7 @@ final class GuestGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itFindsGuestInfoByUuid(): void
+    public function it_finds_guest_info_by_uuid(): void
     {
         $uuid = $this->seedGuest('alice@hotel.com');
 
@@ -74,13 +75,13 @@ final class GuestGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsNullForUnknownUuid(): void
+    public function it_returns_null_for_unknown_uuid(): void
     {
         $this->assertNull($this->gateway->findByUuid('00000000-0000-0000-0000-000000000000'));
     }
 
     #[Test]
-    public function itIdentifiesGoldGuestAsVip(): void
+    public function it_identifies_gold_guest_as_vip(): void
     {
         $uuid = $this->seedGuest('gold@hotel.com', LoyaltyTier::GOLD);
 
@@ -90,7 +91,7 @@ final class GuestGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itIdentifiesPlatinumGuestAsVip(): void
+    public function it_identifies_platinum_guest_as_vip(): void
     {
         $uuid = $this->seedGuest('platinum@hotel.com', LoyaltyTier::PLATINUM);
 
@@ -100,7 +101,7 @@ final class GuestGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itIdentifiesSilverGuestAsNonVip(): void
+    public function it_identifies_silver_guest_as_non_vip(): void
     {
         $uuid = $this->seedGuest('silver@hotel.com', LoyaltyTier::SILVER);
 

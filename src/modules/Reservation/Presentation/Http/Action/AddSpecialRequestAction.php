@@ -50,7 +50,7 @@ final readonly class AddSpecialRequestAction
     private function enforceReservationOwnership(string $reservationUuid): void
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return;
         }
         $user->load('roles');

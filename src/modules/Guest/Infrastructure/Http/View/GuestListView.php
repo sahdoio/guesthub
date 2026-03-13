@@ -21,7 +21,7 @@ final class GuestListView
     public function __invoke(Request $request): Response
     {
         $result = $this->handler->handle(
-            new ListGuests(),
+            new ListGuests,
             new Pagination(
                 page: (int) $request->query('page', 1),
                 perPage: (int) $request->query('per_page', 15),
@@ -30,7 +30,7 @@ final class GuestListView
 
         return Inertia::render('Guests/Index', [
             'guests' => array_map(
-                fn($profile) => GuestPresenter::fromDomain($profile),
+                fn ($profile) => GuestPresenter::fromDomain($profile),
                 $result->items,
             ),
             'meta' => [

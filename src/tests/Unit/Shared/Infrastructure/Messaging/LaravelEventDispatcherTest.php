@@ -15,9 +15,9 @@ use stdClass;
 final class LaravelEventDispatcherTest extends TestCase
 {
     #[Test]
-    public function itDelegatesToLaravelDispatcher(): void
+    public function it_delegates_to_laravel_dispatcher(): void
     {
-        $event = new stdClass();
+        $event = new stdClass;
 
         $laravelDispatcher = $this->createMock(Dispatcher::class);
         $laravelDispatcher->expects($this->once())

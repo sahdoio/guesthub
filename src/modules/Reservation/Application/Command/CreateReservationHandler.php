@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Modules\Reservation\Application\Command;
 
 use DomainException;
-use Modules\Reservation\Domain\Specification\ReservationCreationSpecification;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ReservationId;
 use Modules\Reservation\Domain\Service\GuestGateway;
+use Modules\Reservation\Domain\Specification\ReservationCreationSpecification;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
@@ -32,7 +32,7 @@ final readonly class CreateReservationHandler extends EventDispatchingHandler
 
         $period = new ReservationPeriod($command->checkIn, $command->checkOut);
 
-        if (!$this->specification->isSatisfiedBy($guestInfo->isVip, $period, $command->roomType)) {
+        if (! $this->specification->isSatisfiedBy($guestInfo->isVip, $period, $command->roomType)) {
             throw new DomainException('Reservation cannot be created: policy check failed.');
         }
 

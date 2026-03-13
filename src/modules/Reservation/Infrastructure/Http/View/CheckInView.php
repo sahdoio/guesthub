@@ -25,7 +25,7 @@ final readonly class CheckInView
             'room_number.regex' => 'Room number must be 1-4 digits optionally followed by a letter (e.g., 201, 101A).',
         ]);
 
-        if (!$this->inventoryGateway->isRoomAvailable($data['room_number'])) {
+        if (! $this->inventoryGateway->isRoomAvailable($data['room_number'])) {
             return redirect("/reservations/{$id}")
                 ->withErrors(['room_number' => 'The selected room is not available.']);
         }

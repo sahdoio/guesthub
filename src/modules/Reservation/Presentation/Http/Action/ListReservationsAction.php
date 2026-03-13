@@ -31,7 +31,7 @@ final readonly class ListReservationsAction
         if ($user) {
             $user->load('roles');
             $roleNames = $user->roles->pluck('name')->toArray();
-            if (!in_array('admin', $roleNames, true) && !in_array('superadmin', $roleNames, true)) {
+            if (! in_array('admin', $roleNames, true) && ! in_array('superadmin', $roleNames, true)) {
                 // Guest role: scope to own reservations
                 if ($user->subject_type === 'guest' && $user->subject_id) {
                     $guestId = GuestModel::where('id', $user->subject_id)->value('uuid');
@@ -49,7 +49,7 @@ final readonly class ListReservationsAction
         );
 
         return $this->responder->ok([
-            'data' => array_map(fn($item) => $item->jsonSerialize(), $result->items),
+            'data' => array_map(fn ($item) => $item->jsonSerialize(), $result->items),
             'meta' => [
                 'current_page' => $result->currentPage,
                 'last_page' => $result->lastPage,

@@ -13,7 +13,7 @@ use ReflectionClass;
 final class GuestReflector
 {
     /**
-     * @param string[] $preferences
+     * @param  string[]  $preferences
      */
     public static function reconstruct(
         GuestId $uuid,

@@ -28,7 +28,7 @@ final readonly class CreateGuestHandler
             document: $command->document,
             loyaltyTier: LoyaltyTier::BRONZE,
             preferences: [],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->repository->save($guest);

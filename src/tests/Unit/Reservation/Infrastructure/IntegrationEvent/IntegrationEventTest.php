@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 final class IntegrationEventTest extends TestCase
 {
     #[Test]
-    public function reservationConfirmedEventSerializesCorrectly(): void
+    public function reservation_confirmed_event_serializes_correctly(): void
     {
         $occurredAt = new DateTimeImmutable('2026-01-15 10:00:00');
         $event = new ReservationConfirmedEvent(
@@ -48,7 +48,7 @@ final class IntegrationEventTest extends TestCase
     }
 
     #[Test]
-    public function reservationCancelledEventSerializesCorrectly(): void
+    public function reservation_cancelled_event_serializes_correctly(): void
     {
         $occurredAt = new DateTimeImmutable('2026-01-15 12:00:00');
         $event = new ReservationCancelledEvent(
@@ -69,7 +69,7 @@ final class IntegrationEventTest extends TestCase
     }
 
     #[Test]
-    public function guestCheckedInEventSerializesCorrectly(): void
+    public function guest_checked_in_event_serializes_correctly(): void
     {
         $occurredAt = new DateTimeImmutable('2026-02-01 14:00:00');
         $event = new GuestCheckedInEvent(
@@ -90,7 +90,7 @@ final class IntegrationEventTest extends TestCase
     }
 
     #[Test]
-    public function guestCheckedOutEventSerializesCorrectly(): void
+    public function guest_checked_out_event_serializes_correctly(): void
     {
         $occurredAt = new DateTimeImmutable('2026-02-05 11:00:00');
         $event = new GuestCheckedOutEvent(

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Modules\Reservation\Application\Listeners;
 
-use Modules\Shared\Application\EventDispatcher;
-use Modules\Reservation\Infrastructure\IntegrationEvent\ReservationConfirmedEvent;
 use Modules\Reservation\Domain\Event\ReservationConfirmed;
 use Modules\Reservation\Domain\Exception\ReservationNotFoundException;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\Service\GuestGateway;
+use Modules\Reservation\Infrastructure\IntegrationEvent\ReservationConfirmedEvent;
+use Modules\Shared\Application\EventDispatcher;
 
 final readonly class OnReservationConfirmed
 {
@@ -28,11 +28,11 @@ final readonly class OnReservationConfirmed
 
         $this->dispatcher->dispatch(new ReservationConfirmedEvent(
             reservationId: (string) $event->reservationId,
-            guestEmail: $guestInfo?->email ?? '',
+            guestEmail: $guestInfo->email ?? '',
             roomType: $reservation->roomType,
             checkIn: $reservation->period->checkIn->format('Y-m-d'),
             checkOut: $reservation->period->checkOut->format('Y-m-d'),
-            isVip: $guestInfo?->isVip ?? false,
+            isVip: $guestInfo->isVip ?? false,
             occurredAt: $event->occurredOn(),
         ));
     }

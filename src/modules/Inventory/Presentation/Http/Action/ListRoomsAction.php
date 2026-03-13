@@ -37,7 +37,7 @@ final readonly class ListRoomsAction
 
         return $this->responder->ok([
             'data' => array_map(
-                fn($room) => RoomPresenter::fromDomain($room),
+                fn ($room) => RoomPresenter::fromDomain($room),
                 $result->items,
             ),
             'meta' => [

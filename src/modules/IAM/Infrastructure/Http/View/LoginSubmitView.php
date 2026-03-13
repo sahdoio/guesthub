@@ -18,7 +18,7 @@ final class LoginSubmitView
             'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::attempt($credentials)) {
+        if (! Auth::attempt($credentials)) {
             throw ValidationException::withMessages([
                 'email' => 'The provided credentials do not match our records.',
             ]);
@@ -28,7 +28,7 @@ final class LoginSubmitView
         $user->load('roles');
         $roleNames = $user->roles->pluck('name')->toArray();
 
-        if (!in_array('admin', $roleNames, true) && !in_array('superadmin', $roleNames, true)) {
+        if (! in_array('admin', $roleNames, true) && ! in_array('superadmin', $roleNames, true)) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

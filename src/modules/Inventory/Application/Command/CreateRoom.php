@@ -7,7 +7,7 @@ namespace Modules\Inventory\Application\Command;
 final readonly class CreateRoom
 {
     /**
-     * @param string[] $amenities
+     * @param  string[]  $amenities
      */
     public function __construct(
         public string $number,

@@ -21,6 +21,7 @@ final class GuestGatewayAdapterTest extends TestCase
     use RefreshDatabase;
 
     private GuestGateway $gateway;
+
     private GuestRepository $guestRepo;
 
     protected function setUp(): void
@@ -39,7 +40,7 @@ final class GuestGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itCreatesAGuestAndReturnsNumericId(): void
+    public function it_creates_a_guest_and_returns_numeric_id(): void
     {
         $id = $this->gateway->create(
             name: 'Alice Johnson',
@@ -59,7 +60,7 @@ final class GuestGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function itCreatesGuestReadableByGuestRepository(): void
+    public function it_creates_guest_readable_by_guest_repository(): void
     {
         $this->gateway->create(
             name: 'Bob Williams',

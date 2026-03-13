@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 final class ReservationPeriodTest extends TestCase
 {
     #[Test]
-    public function itCreatesAValidPeriod(): void
+    public function it_creates_a_valid_period(): void
     {
         $checkIn = new DateTimeImmutable('+1 day');
         $checkOut = new DateTimeImmutable('+4 days');
@@ -27,7 +27,7 @@ final class ReservationPeriodTest extends TestCase
     }
 
     #[Test]
-    public function itCalculatesNights(): void
+    public function it_calculates_nights(): void
     {
         $period = new ReservationPeriod(
             new DateTimeImmutable('+1 day'),
@@ -38,7 +38,7 @@ final class ReservationPeriodTest extends TestCase
     }
 
     #[Test]
-    public function itRejectsCheckoutBeforeCheckin(): void
+    public function it_rejects_checkout_before_checkin(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Check-out must be after check-in');
@@ -50,7 +50,7 @@ final class ReservationPeriodTest extends TestCase
     }
 
     #[Test]
-    public function itRejectsSameDayCheckout(): void
+    public function it_rejects_same_day_checkout(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -59,7 +59,7 @@ final class ReservationPeriodTest extends TestCase
     }
 
     #[Test]
-    public function itAllowsPastDatesForReconstruction(): void
+    public function it_allows_past_dates_for_reconstruction(): void
     {
         $period = new ReservationPeriod(
             new DateTimeImmutable('-3 days'),
@@ -70,7 +70,7 @@ final class ReservationPeriodTest extends TestCase
     }
 
     #[Test]
-    public function itRejectsStayOver365Nights(): void
+    public function it_rejects_stay_over365_nights(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Maximum stay is 365 nights');
@@ -82,7 +82,7 @@ final class ReservationPeriodTest extends TestCase
     }
 
     #[Test]
-    public function itDetectsOverlappingPeriods(): void
+    public function it_detects_overlapping_periods(): void
     {
         $a = new ReservationPeriod(
             new DateTimeImmutable('+1 day'),
@@ -98,7 +98,7 @@ final class ReservationPeriodTest extends TestCase
     }
 
     #[Test]
-    public function itDetectsNonOverlappingPeriods(): void
+    public function it_detects_non_overlapping_periods(): void
     {
         $a = new ReservationPeriod(
             new DateTimeImmutable('+1 day'),
@@ -113,7 +113,7 @@ final class ReservationPeriodTest extends TestCase
     }
 
     #[Test]
-    public function itChecksIfDateIsContained(): void
+    public function it_checks_if_date_is_contained(): void
     {
         $period = new ReservationPeriod(
             new DateTimeImmutable('+1 day'),
@@ -125,7 +125,7 @@ final class ReservationPeriodTest extends TestCase
     }
 
     #[Test]
-    public function itComparesEqualPeriods(): void
+    public function it_compares_equal_periods(): void
     {
         $checkIn = new DateTimeImmutable('+1 day');
         $checkOut = new DateTimeImmutable('+3 days');

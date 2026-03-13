@@ -34,7 +34,7 @@ final class RoomListView
 
         return Inertia::render('Rooms/Index', [
             'rooms' => array_map(
-                fn($room) => RoomPresenter::fromDomain($room),
+                fn ($room) => RoomPresenter::fromDomain($room),
                 $result->items,
             ),
             'meta' => [

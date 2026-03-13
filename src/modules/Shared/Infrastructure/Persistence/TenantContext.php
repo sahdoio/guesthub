@@ -21,7 +21,7 @@ final class TenantContext
 
         $user = auth()->user();
 
-        if ($user !== null && !empty($user->account_id)) {
+        if ($user !== null && ! empty($user->account_id)) {
             return (int) $user->account_id;
         }
 
@@ -38,6 +38,7 @@ final class TenantContext
     {
         try {
             $this->id();
+
             return true;
         } catch (\RuntimeException) {
             return false;

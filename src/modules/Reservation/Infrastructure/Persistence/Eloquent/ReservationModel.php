@@ -7,9 +7,29 @@ namespace Modules\Reservation\Infrastructure\Persistence\Eloquent;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Shared\Infrastructure\Persistence\Eloquent\BelongsToTenant;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int $account_id
+ * @property string $status
+ * @property string $guest_id
+ * @property string $check_in
+ * @property string $check_out
+ * @property string $room_type
+ * @property string|null $assigned_room_number
+ * @property array<int, array<string, mixed>>|null $special_requests
+ * @property string|null $cancellation_reason
+ * @property string $created_at
+ * @property string|null $updated_at
+ * @property string|null $confirmed_at
+ * @property string|null $checked_in_at
+ * @property string|null $checked_out_at
+ * @property string|null $cancelled_at
+ */
 final class ReservationModel extends Model
 {
     use BelongsToTenant;
+
     protected $table = 'reservations';
 
     public $timestamps = false;

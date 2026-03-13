@@ -11,7 +11,9 @@ use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 final class ReservationCreationSpecification
 {
     private const int MAX_ADVANCE_DAYS_REGULAR = 60;
+
     private const int MAX_ADVANCE_DAYS_VIP = 90;
+
     private const int MIN_STAY_NIGHTS = 1;
 
     public function __construct(

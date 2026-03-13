@@ -45,7 +45,7 @@ final class EloquentRoomRepositoryTest extends TestCase
             capacity: $type === 'SUITE' ? 4 : ($type === 'DOUBLE' ? 2 : 1),
             pricePerNight: 250.00,
             amenities: ['wifi', 'tv'],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->repository->save($room);
@@ -54,7 +54,7 @@ final class EloquentRoomRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itSavesAndFindsById(): void
+    public function it_saves_and_finds_by_id(): void
     {
         $room = $this->createRoom();
         $found = $this->repository->findByUuid($room->uuid);
@@ -66,7 +66,7 @@ final class EloquentRoomRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itFindsByNumber(): void
+    public function it_finds_by_number(): void
     {
         $this->createRoom('305');
         $found = $this->repository->findByNumber('305');
@@ -76,13 +76,13 @@ final class EloquentRoomRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsNullForUnknownNumber(): void
+    public function it_returns_null_for_unknown_number(): void
     {
         $this->assertNull($this->repository->findByNumber('999'));
     }
 
     #[Test]
-    public function itListsWithPagination(): void
+    public function it_lists_with_pagination(): void
     {
         $this->createRoom('101');
         $this->createRoom('102');
@@ -96,7 +96,7 @@ final class EloquentRoomRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itFiltersListByStatus(): void
+    public function it_filters_list_by_status(): void
     {
         $r1 = $this->createRoom('101');
         $r1->markMaintenance();
@@ -111,7 +111,7 @@ final class EloquentRoomRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itFiltersListByType(): void
+    public function it_filters_list_by_type(): void
     {
         $this->createRoom('101', 'SINGLE');
         $this->createRoom('201', 'DOUBLE');
@@ -124,7 +124,7 @@ final class EloquentRoomRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itFiltersListByFloor(): void
+    public function it_filters_list_by_floor(): void
     {
         $this->createRoom('101');
         $this->createRoom('201');
@@ -136,7 +136,7 @@ final class EloquentRoomRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itRemovesARoom(): void
+    public function it_removes_a_room(): void
     {
         $room = $this->createRoom();
         $this->repository->remove($room);
@@ -145,7 +145,7 @@ final class EloquentRoomRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function itPersistsStatusChanges(): void
+    public function it_persists_status_changes(): void
     {
         $room = $this->createRoom();
         $room->occupy();
@@ -156,7 +156,7 @@ final class EloquentRoomRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function countReturnsTotal(): void
+    public function count_returns_total(): void
     {
         $this->createRoom('101');
         $this->createRoom('102');
@@ -165,7 +165,7 @@ final class EloquentRoomRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function countByStatusGroupsCorrectly(): void
+    public function count_by_status_groups_correctly(): void
     {
         $this->createRoom('101');
 
@@ -180,7 +180,7 @@ final class EloquentRoomRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function countByTypeGroupsCorrectly(): void
+    public function count_by_type_groups_correctly(): void
     {
         $this->createRoom('101', 'SINGLE');
         $this->createRoom('201', 'DOUBLE');
@@ -193,7 +193,7 @@ final class EloquentRoomRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function countAvailableByTypeFiltersCorrectly(): void
+    public function count_available_by_type_filters_correctly(): void
     {
         $this->createRoom('101', 'DOUBLE');
         $this->createRoom('102', 'DOUBLE');

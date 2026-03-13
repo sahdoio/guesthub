@@ -28,7 +28,7 @@ final readonly class CreateRoomHandler
             capacity: $command->capacity,
             pricePerNight: $command->pricePerNight,
             amenities: $command->amenities,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->repository->save($room);

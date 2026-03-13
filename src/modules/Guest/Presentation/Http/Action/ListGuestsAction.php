@@ -26,11 +26,11 @@ final readonly class ListGuestsAction
         $page = max(1, (int) ($query['page'] ?? 1));
         $perPage = min(100, max(1, (int) ($query['per_page'] ?? 15)));
 
-        $result = $this->handler->handle(new ListGuests(), new Pagination($page, $perPage));
+        $result = $this->handler->handle(new ListGuests, new Pagination($page, $perPage));
 
         return $this->responder->ok([
             'data' => array_map(
-                fn($guest) => GuestPresenter::fromDomain($guest),
+                fn ($guest) => GuestPresenter::fromDomain($guest),
                 $result->items,
             ),
             'meta' => [

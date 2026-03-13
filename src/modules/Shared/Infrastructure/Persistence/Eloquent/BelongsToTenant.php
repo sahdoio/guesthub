@@ -14,7 +14,7 @@ trait BelongsToTenant
         static::addGlobalScope('tenant', function (Builder $builder) {
             $tenantContext = app(TenantContext::class);
             if ($tenantContext->isSet()) {
-                $builder->where($builder->getModel()->getTable() . '.account_id', $tenantContext->id());
+                $builder->where($builder->getModel()->getTable().'.account_id', $tenantContext->id());
             }
         });
     }

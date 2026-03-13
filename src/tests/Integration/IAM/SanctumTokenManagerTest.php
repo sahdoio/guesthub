@@ -49,7 +49,7 @@ final class SanctumTokenManagerTest extends TestCase
     }
 
     #[Test]
-    public function itCreatesAToken(): void
+    public function it_creates_a_token(): void
     {
         $this->createActorModel();
 
@@ -60,7 +60,7 @@ final class SanctumTokenManagerTest extends TestCase
     }
 
     #[Test]
-    public function itRevokesAllTokens(): void
+    public function it_revokes_all_tokens(): void
     {
         $model = $this->createActorModel();
         $this->tokenManager->createToken('john@hotel.com');

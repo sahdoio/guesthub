@@ -25,9 +25,9 @@ final class DashboardView
     public function __invoke(Request $request): Response
     {
         return Inertia::render('Dashboard', [
-            'guestStats' => $this->guestStatsHandler->handle(new GetGuestStats())->toArray(),
-            'reservationStats' => $this->reservationStatsHandler->handle(new GetReservationStats())->toArray(),
-            'roomStats' => $this->roomStatsHandler->handle(new GetRoomStats())->toArray(),
+            'guestStats' => $this->guestStatsHandler->handle(new GetGuestStats)->toArray(),
+            'reservationStats' => $this->reservationStatsHandler->handle(new GetReservationStats)->toArray(),
+            'roomStats' => $this->roomStatsHandler->handle(new GetRoomStats)->toArray(),
         ]);
     }
 }

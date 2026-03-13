@@ -20,6 +20,7 @@ use PHPUnit\Framework\TestCase;
 final class ActorTest extends TestCase
 {
     private AccountId $accountId;
+
     private RoleId $roleId;
 
     protected function setUp(): void
@@ -30,7 +31,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function itCreatesAGuestActor(): void
+    public function it_creates_a_guest_actor(): void
     {
         $id = ActorId::generate();
         $actor = Actor::register(
@@ -42,7 +43,7 @@ final class ActorTest extends TestCase
             password: new HashedPassword('$2y$10$somehash'),
             subjectType: 'guest',
             subjectId: 1,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->assertSame($id, $actor->uuid);
@@ -58,7 +59,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function itCreatesAnAdminActor(): void
+    public function it_creates_an_admin_actor(): void
     {
         $actor = Actor::register(
             uuid: ActorId::generate(),
@@ -69,7 +70,7 @@ final class ActorTest extends TestCase
             password: new HashedPassword('$2y$10$somehash'),
             subjectType: null,
             subjectId: null,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->assertCount(1, $actor->roles());
@@ -78,7 +79,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function itCreatesActorWithoutSubject(): void
+    public function it_creates_actor_without_subject(): void
     {
         $actor = Actor::register(
             uuid: ActorId::generate(),
@@ -89,7 +90,7 @@ final class ActorTest extends TestCase
             password: new HashedPassword('$2y$10$somehash'),
             subjectType: null,
             subjectId: null,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->assertNull($actor->subjectType);
@@ -97,7 +98,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function itChangesPassword(): void
+    public function it_changes_password(): void
     {
         $actor = Actor::register(
             uuid: ActorId::generate(),
@@ -108,7 +109,7 @@ final class ActorTest extends TestCase
             password: new HashedPassword('$2y$10$oldhash'),
             subjectType: null,
             subjectId: null,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $newPassword = new HashedPassword('$2y$10$newhash');
@@ -119,7 +120,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function itValidatesRoleName(): void
+    public function it_validates_role_name(): void
     {
         $this->assertSame('admin', RoleName::ADMIN->value);
         $this->assertSame('guest', RoleName::GUEST->value);
@@ -127,14 +128,14 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function itRejectsEmptyHashedPassword(): void
+    public function it_rejects_empty_hashed_password(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         new HashedPassword('');
     }
 
     #[Test]
-    public function itIdentifiesSuperAdmin(): void
+    public function it_identifies_super_admin(): void
     {
         $actor = Actor::register(
             uuid: ActorId::generate(),
@@ -145,7 +146,7 @@ final class ActorTest extends TestCase
             password: new HashedPassword('$2y$10$somehash'),
             subjectType: null,
             subjectId: null,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->assertTrue($actor->isSuperAdmin());
@@ -153,7 +154,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function itChecksHasRole(): void
+    public function it_checks_has_role(): void
     {
         $actor = Actor::register(
             uuid: ActorId::generate(),
@@ -167,7 +168,7 @@ final class ActorTest extends TestCase
             password: new HashedPassword('$2y$10$somehash'),
             subjectType: null,
             subjectId: null,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->assertTrue($actor->hasRole(RoleName::ADMIN));

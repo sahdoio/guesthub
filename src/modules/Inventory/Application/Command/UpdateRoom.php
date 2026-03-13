@@ -7,7 +7,7 @@ namespace Modules\Inventory\Application\Command;
 final readonly class UpdateRoom
 {
     /**
-     * @param string[]|null $amenities
+     * @param  string[]|null  $amenities
      */
     public function __construct(
         public string $roomId,

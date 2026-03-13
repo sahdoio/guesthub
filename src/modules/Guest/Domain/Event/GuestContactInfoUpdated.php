@@ -15,7 +15,7 @@ final readonly class GuestContactInfoUpdated implements DomainEvent
     public function __construct(
         public GuestId $guestId,
     ) {
-        $this->occurredOn = new DateTimeImmutable();
+        $this->occurredOn = new DateTimeImmutable;
     }
 
     public function occurredOn(): DateTimeImmutable

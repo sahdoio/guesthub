@@ -16,11 +16,11 @@ final class JsonResponderTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->responder = new JsonResponder();
+        $this->responder = new JsonResponder;
     }
 
     #[Test]
-    public function okReturns200WithJsonBody(): void
+    public function ok_returns200_with_json_body(): void
     {
         $response = $this->responder->ok(['key' => 'value']);
 
@@ -30,7 +30,7 @@ final class JsonResponderTest extends TestCase
     }
 
     #[Test]
-    public function createdReturns201WithJsonBody(): void
+    public function created_returns201_with_json_body(): void
     {
         $response = $this->responder->created(['id' => 1]);
 
@@ -40,7 +40,7 @@ final class JsonResponderTest extends TestCase
     }
 
     #[Test]
-    public function noContentReturns204WithEmptyBody(): void
+    public function no_content_returns204_with_empty_body(): void
     {
         $response = $this->responder->noContent();
 
@@ -49,7 +49,7 @@ final class JsonResponderTest extends TestCase
     }
 
     #[Test]
-    public function errorReturnsGivenStatusWithErrorsPayload(): void
+    public function error_returns_given_status_with_errors_payload(): void
     {
         $response = $this->responder->error(['field' => 'required'], 422);
 

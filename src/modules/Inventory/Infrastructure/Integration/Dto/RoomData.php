@@ -7,7 +7,7 @@ namespace Modules\Inventory\Infrastructure\Integration\Dto;
 final readonly class RoomData
 {
     /**
-     * @param string[] $amenities
+     * @param  string[]  $amenities
      */
     public function __construct(
         public string $uuid,

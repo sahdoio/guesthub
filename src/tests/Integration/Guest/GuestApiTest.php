@@ -21,6 +21,7 @@ final class GuestApiTest extends TestCase
     use RefreshDatabase;
 
     private GuestApi $api;
+
     private GuestRepository $repository;
 
     protected function setUp(): void
@@ -39,7 +40,7 @@ final class GuestApiTest extends TestCase
     }
 
     #[Test]
-    public function itCreatesAGuestProfileAndReturnsNumericId(): void
+    public function it_creates_a_guest_profile_and_returns_numeric_id(): void
     {
         $id = $this->api->create(
             name: 'Alice Johnson',
@@ -57,7 +58,7 @@ final class GuestApiTest extends TestCase
     }
 
     #[Test]
-    public function itFindsGuestProfileByUuid(): void
+    public function it_finds_guest_profile_by_uuid(): void
     {
         $this->api->create(
             name: 'Alice Johnson',
@@ -81,7 +82,7 @@ final class GuestApiTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsNullForUnknownUuid(): void
+    public function it_returns_null_for_unknown_uuid(): void
     {
         $data = $this->api->findByUuid('00000000-0000-0000-0000-000000000000');
 

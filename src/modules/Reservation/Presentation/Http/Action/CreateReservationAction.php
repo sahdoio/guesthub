@@ -54,7 +54,7 @@ final readonly class CreateReservationAction
     private function enforceGuestOwnership(string $guestUuid): void
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return;
         }
         $user->load('roles');

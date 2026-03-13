@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Modules\Reservation\Application\Listeners;
 
-use Modules\Shared\Application\EventDispatcher;
-use Modules\Reservation\Infrastructure\IntegrationEvent\GuestCheckedOutEvent;
 use Modules\Reservation\Domain\Event\GuestCheckedOut;
 use Modules\Reservation\Domain\Exception\ReservationNotFoundException;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\Service\GuestGateway;
+use Modules\Reservation\Infrastructure\IntegrationEvent\GuestCheckedOutEvent;
+use Modules\Shared\Application\EventDispatcher;
 
 final readonly class OnGuestCheckedOut
 {
@@ -29,7 +29,7 @@ final readonly class OnGuestCheckedOut
         $this->dispatcher->dispatch(new GuestCheckedOutEvent(
             reservationId: (string) $event->reservationId,
             roomNumber: $reservation->assignedRoomNumber ?? '',
-            guestEmail: $guestInfo?->email ?? '',
+            guestEmail: $guestInfo->email ?? '',
             occurredAt: $event->occurredOn(),
         ));
     }

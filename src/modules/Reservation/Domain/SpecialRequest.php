@@ -10,7 +10,6 @@ use Modules\Reservation\Domain\ValueObject\RequestStatus;
 use Modules\Reservation\Domain\ValueObject\RequestType;
 use Modules\Reservation\Domain\ValueObject\SpecialRequestId;
 use Modules\Shared\Domain\Entity;
-use Modules\Shared\Domain\Identity;
 
 final class SpecialRequest extends Entity
 {
@@ -39,7 +38,7 @@ final class SpecialRequest extends Entity
         );
     }
 
-    public function id(): Identity
+    public function id(): SpecialRequestId
     {
         return $this->id;
     }
@@ -51,7 +50,7 @@ final class SpecialRequest extends Entity
         }
 
         $this->status = RequestStatus::FULFILLED;
-        $this->fulfilledAt = new DateTimeImmutable();
+        $this->fulfilledAt = new DateTimeImmutable;
     }
 
     public function cancel(): void

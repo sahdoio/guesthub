@@ -23,7 +23,7 @@ trait CreatesGuest
             document: $overrides['document'] ?? '12345678900',
             loyaltyTier: LoyaltyTier::from($overrides['loyalty_tier'] ?? 'bronze'),
             preferences: $overrides['preferences'] ?? [],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $repository->save($guest);

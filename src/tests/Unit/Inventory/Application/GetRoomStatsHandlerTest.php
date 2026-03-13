@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 final class GetRoomStatsHandlerTest extends TestCase
 {
     #[Test]
-    public function itReturnsRoomStatsDto(): void
+    public function it_returns_room_stats_dto(): void
     {
         $repository = $this->createMock(RoomRepository::class);
 
@@ -33,7 +33,7 @@ final class GetRoomStatsHandlerTest extends TestCase
         ]);
 
         $handler = new GetRoomStatsHandler($repository);
-        $result = $handler->handle(new GetRoomStats());
+        $result = $handler->handle(new GetRoomStats);
 
         $this->assertInstanceOf(RoomStatsResult::class, $result);
         $this->assertSame(10, $result->total);
@@ -42,7 +42,7 @@ final class GetRoomStatsHandlerTest extends TestCase
     }
 
     #[Test]
-    public function toArrayReturnsCorrectStructure(): void
+    public function to_array_returns_correct_structure(): void
     {
         $repository = $this->createMock(RoomRepository::class);
 
@@ -51,7 +51,7 @@ final class GetRoomStatsHandlerTest extends TestCase
         $repository->method('countByType')->willReturn(['SUITE' => 5]);
 
         $handler = new GetRoomStatsHandler($repository);
-        $array = $handler->handle(new GetRoomStats())->toArray();
+        $array = $handler->handle(new GetRoomStats)->toArray();
 
         $this->assertSame(5, $array['total']);
         $this->assertSame(['available' => 5], $array['by_status']);

@@ -14,7 +14,7 @@ final class EnsureActorRole
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             abort(401);
         }
 

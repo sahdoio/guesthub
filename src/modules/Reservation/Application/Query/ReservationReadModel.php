@@ -38,7 +38,7 @@ final readonly class ReservationReadModel implements JsonSerializable
             nights: $reservation->period->nights(),
             roomType: $reservation->roomType,
             assignedRoomNumber: $reservation->assignedRoomNumber,
-            specialRequests: array_map(fn(SpecialRequest $sr) => [
+            specialRequests: array_map(fn (SpecialRequest $sr) => [
                 'id' => (string) $sr->id,
                 'type' => $sr->type->value,
                 'description' => $sr->description,

@@ -6,8 +6,8 @@ namespace Modules\IAM\Domain;
 
 use DateTimeImmutable;
 use Modules\IAM\Domain\Event\ActorRegistered;
-use Modules\IAM\Domain\ValueObject\RoleName;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
+use Modules\IAM\Domain\ValueObject\RoleName;
 use Modules\Shared\Domain\AggregateRoot;
 use Modules\Shared\Domain\Identity;
 
@@ -28,7 +28,7 @@ final class Actor extends AggregateRoot
     ) {}
 
     /**
-     * @param list<Role> $roles
+     * @param  list<Role>  $roles
      */
     public static function register(
         ActorId $uuid,
@@ -75,6 +75,7 @@ final class Actor extends AggregateRoot
                 return true;
             }
         }
+
         return false;
     }
 
@@ -92,6 +93,6 @@ final class Actor extends AggregateRoot
     public function changePassword(HashedPassword $password): void
     {
         $this->password = $password;
-        $this->updatedAt = new DateTimeImmutable();
+        $this->updatedAt = new DateTimeImmutable;
     }
 }

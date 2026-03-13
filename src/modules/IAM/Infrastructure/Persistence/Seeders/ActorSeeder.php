@@ -52,7 +52,7 @@ class ActorSeeder extends Seeder
                 password: $this->hasher->hash('password'),
                 subjectType: null,
                 subjectId: null,
-                createdAt: new DateTimeImmutable(),
+                createdAt: new DateTimeImmutable,
             );
 
             $this->repository->save($actor);
@@ -83,7 +83,7 @@ class ActorSeeder extends Seeder
                 password: $this->hasher->hash('password'),
                 subjectType: null,
                 subjectId: null,
-                createdAt: new DateTimeImmutable(),
+                createdAt: new DateTimeImmutable,
             );
 
             $this->repository->save($actor);
@@ -121,7 +121,7 @@ class ActorSeeder extends Seeder
                 password: $this->hasher->hash('password'),
                 subjectType: 'guest',
                 subjectId: $guestId,
-                createdAt: new DateTimeImmutable(),
+                createdAt: new DateTimeImmutable,
             );
 
             $this->repository->save($actor);

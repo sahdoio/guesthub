@@ -17,7 +17,7 @@ final readonly class GuestLoyaltyTierChanged implements DomainEvent
         public GuestId $guestId,
         public LoyaltyTier $newTier,
     ) {
-        $this->occurredOn = new DateTimeImmutable();
+        $this->occurredOn = new DateTimeImmutable;
     }
 
     public function occurredOn(): DateTimeImmutable

@@ -19,7 +19,7 @@ final class SetTenantContext
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             abort(401);
         }
 

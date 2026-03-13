@@ -39,7 +39,7 @@ final class GuestCrudTest extends TestCase
             document: $overrides['document'] ?? 'ABC123456',
             loyaltyTier: LoyaltyTier::from($overrides['loyalty_tier'] ?? 'bronze'),
             preferences: $overrides['preferences'] ?? ['late_checkout', 'high_floor'],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $repository->save($profile);
@@ -50,7 +50,7 @@ final class GuestCrudTest extends TestCase
     // --- Show ---
 
     #[Test]
-    public function itShowsAGuestProfile(): void
+    public function it_shows_a_guest_profile(): void
     {
         $id = $this->createGuest();
 
@@ -62,7 +62,7 @@ final class GuestCrudTest extends TestCase
     }
 
     #[Test]
-    public function showReturnsErrorForUnknownGuest(): void
+    public function show_returns_error_for_unknown_guest(): void
     {
         $this->getJson('/api/guests/00000000-0000-0000-0000-000000000000')
             ->assertStatus(500);
@@ -71,7 +71,7 @@ final class GuestCrudTest extends TestCase
     // --- Update ---
 
     #[Test]
-    public function itUpdatesContactInfo(): void
+    public function it_updates_contact_info(): void
     {
         $id = $this->createGuest();
 
@@ -93,7 +93,7 @@ final class GuestCrudTest extends TestCase
     }
 
     #[Test]
-    public function itUpdatesLoyaltyTier(): void
+    public function it_updates_loyalty_tier(): void
     {
         $id = $this->createGuest();
 
@@ -106,7 +106,7 @@ final class GuestCrudTest extends TestCase
     }
 
     #[Test]
-    public function itUpdatesPreferences(): void
+    public function it_updates_preferences(): void
     {
         $id = $this->createGuest();
 
@@ -119,7 +119,7 @@ final class GuestCrudTest extends TestCase
     }
 
     #[Test]
-    public function updateValidatesEmailFormat(): void
+    public function update_validates_email_format(): void
     {
         $id = $this->createGuest();
 
@@ -131,7 +131,7 @@ final class GuestCrudTest extends TestCase
     // --- Delete ---
 
     #[Test]
-    public function itDeletesAGuestProfile(): void
+    public function it_deletes_a_guest_profile(): void
     {
         $id = $this->createGuest();
 
@@ -142,7 +142,7 @@ final class GuestCrudTest extends TestCase
     }
 
     #[Test]
-    public function deleteReturnsErrorForUnknownGuest(): void
+    public function delete_returns_error_for_unknown_guest(): void
     {
         $this->deleteJson('/api/guests/00000000-0000-0000-0000-000000000000')
             ->assertStatus(500);
@@ -151,7 +151,7 @@ final class GuestCrudTest extends TestCase
     // --- List ---
 
     #[Test]
-    public function itListsGuestProfilesWithPagination(): void
+    public function it_lists_guest_profiles_with_pagination(): void
     {
         $this->createGuest(['document' => 'DOC001', 'email' => 'a@hotel.com']);
         $this->createGuest(['document' => 'DOC002', 'email' => 'b@hotel.com']);
@@ -168,7 +168,7 @@ final class GuestCrudTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsEmptyListWhenNoGuests(): void
+    public function it_returns_empty_list_when_no_guests(): void
     {
         $response = $this->getJson('/api/guests');
 

@@ -39,7 +39,7 @@ final class RoomCrudTest extends TestCase
             capacity: $overrides['capacity'] ?? 2,
             pricePerNight: $overrides['price_per_night'] ?? 250.00,
             amenities: $overrides['amenities'] ?? ['wifi', 'tv'],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $repository->save($room);
@@ -50,7 +50,7 @@ final class RoomCrudTest extends TestCase
     // --- List ---
 
     #[Test]
-    public function itListsRoomsWithPagination(): void
+    public function it_lists_rooms_with_pagination(): void
     {
         $this->createRoom(['number' => '101']);
         $this->createRoom(['number' => '102']);
@@ -65,7 +65,7 @@ final class RoomCrudTest extends TestCase
     }
 
     #[Test]
-    public function itFiltersRoomsByStatus(): void
+    public function it_filters_rooms_by_status(): void
     {
         $id = $this->createRoom(['number' => '101']);
         $this->createRoom(['number' => '102']);
@@ -84,7 +84,7 @@ final class RoomCrudTest extends TestCase
     }
 
     #[Test]
-    public function itFiltersRoomsByType(): void
+    public function it_filters_rooms_by_type(): void
     {
         $this->createRoom(['number' => '101', 'type' => 'SINGLE']);
         $this->createRoom(['number' => '201', 'type' => 'SUITE']);
@@ -99,7 +99,7 @@ final class RoomCrudTest extends TestCase
     // --- Show ---
 
     #[Test]
-    public function itShowsARoom(): void
+    public function it_shows_a_room(): void
     {
         $id = $this->createRoom();
 
@@ -117,7 +117,7 @@ final class RoomCrudTest extends TestCase
     // --- Update ---
 
     #[Test]
-    public function itUpdatesPriceAndAmenities(): void
+    public function it_updates_price_and_amenities(): void
     {
         $id = $this->createRoom();
 
@@ -134,7 +134,7 @@ final class RoomCrudTest extends TestCase
     // --- Change Status ---
 
     #[Test]
-    public function itChangesRoomStatusToMaintenance(): void
+    public function it_changes_room_status_to_maintenance(): void
     {
         $id = $this->createRoom();
 
@@ -147,7 +147,7 @@ final class RoomCrudTest extends TestCase
     }
 
     #[Test]
-    public function itRejectsInvalidStatus(): void
+    public function it_rejects_invalid_status(): void
     {
         $id = $this->createRoom();
 
@@ -158,7 +158,7 @@ final class RoomCrudTest extends TestCase
     // --- Delete ---
 
     #[Test]
-    public function itDeletesARoom(): void
+    public function it_deletes_a_room(): void
     {
         $id = $this->createRoom();
 
@@ -169,7 +169,7 @@ final class RoomCrudTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsEmptyListWhenNoRooms(): void
+    public function it_returns_empty_list_when_no_rooms(): void
     {
         $response = $this->getJson('/api/rooms');
 

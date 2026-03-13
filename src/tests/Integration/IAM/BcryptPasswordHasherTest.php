@@ -23,7 +23,7 @@ final class BcryptPasswordHasherTest extends TestCase
     }
 
     #[Test]
-    public function itHashesAPassword(): void
+    public function it_hashes_a_password(): void
     {
         $hashed = $this->hasher->hash('password123');
 
@@ -33,7 +33,7 @@ final class BcryptPasswordHasherTest extends TestCase
     }
 
     #[Test]
-    public function itVerifiesCorrectPassword(): void
+    public function it_verifies_correct_password(): void
     {
         $hashed = $this->hasher->hash('password123');
 
@@ -41,7 +41,7 @@ final class BcryptPasswordHasherTest extends TestCase
     }
 
     #[Test]
-    public function itRejectsWrongPassword(): void
+    public function it_rejects_wrong_password(): void
     {
         $hashed = $this->hasher->hash('password123');
 
@@ -49,7 +49,7 @@ final class BcryptPasswordHasherTest extends TestCase
     }
 
     #[Test]
-    public function itGeneratesDifferentHashesForSamePassword(): void
+    public function it_generates_different_hashes_for_same_password(): void
     {
         $hash1 = $this->hasher->hash('password123');
         $hash2 = $this->hasher->hash('password123');

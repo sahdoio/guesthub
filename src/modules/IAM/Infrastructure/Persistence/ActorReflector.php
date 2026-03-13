@@ -15,7 +15,7 @@ use ReflectionClass;
 final class ActorReflector
 {
     /**
-     * @param list<Role> $roles
+     * @param  list<Role>  $roles
      */
     public static function reconstruct(
         ActorId $uuid,

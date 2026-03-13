@@ -7,7 +7,6 @@ namespace Modules\IAM\Infrastructure\Persistence\Seeders;
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
 use Modules\IAM\Domain\Account;
-use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 
@@ -34,6 +33,7 @@ class AccountSeeder extends Seeder
                 if (self::$defaultAccountUuid === null) {
                     self::$defaultAccountUuid = $existing->uuid;
                 }
+
                 continue;
             }
 
@@ -41,7 +41,7 @@ class AccountSeeder extends Seeder
             $account = Account::create(
                 uuid: $id,
                 name: $name,
-                createdAt: new DateTimeImmutable(),
+                createdAt: new DateTimeImmutable,
             );
 
             $this->repository->save($account);

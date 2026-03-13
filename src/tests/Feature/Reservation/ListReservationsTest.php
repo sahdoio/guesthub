@@ -14,10 +14,10 @@ use Tests\TestCase;
 
 final class ListReservationsTest extends TestCase
 {
-    use RefreshDatabase;
     use CreatesGuest;
-    use SeedsRooms;
+    use RefreshDatabase;
     use SeedsRolesAndAccount;
+    use SeedsRooms;
 
     private string $guestId;
 
@@ -48,7 +48,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsEmptyList(): void
+    public function it_returns_empty_list(): void
     {
         $response = $this->getJson('/api/reservations');
 
@@ -63,7 +63,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function itListsReservations(): void
+    public function it_lists_reservations(): void
     {
         $this->createReservation();
         $this->createReservation();
@@ -77,7 +77,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function itPaginatesResults(): void
+    public function it_paginates_results(): void
     {
         for ($i = 0; $i < 5; $i++) {
             $this->createReservation();
@@ -94,7 +94,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function itReturnsSecondPage(): void
+    public function it_returns_second_page(): void
     {
         for ($i = 0; $i < 5; $i++) {
             $this->createReservation();
@@ -113,7 +113,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function eachItemHasReservationStructure(): void
+    public function each_item_has_reservation_structure(): void
     {
         $this->createReservation();
 
@@ -137,7 +137,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function itFiltersbyStatus(): void
+    public function it_filtersby_status(): void
     {
         $id = $this->createReservation();
         $this->createReservation();
@@ -152,7 +152,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function itFiltersByRoomType(): void
+    public function it_filters_by_room_type(): void
     {
         $this->createReservation(['room_type' => 'DOUBLE']);
         $this->createReservation(['room_type' => 'SUITE']);
@@ -166,7 +166,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function itCombinesFilters(): void
+    public function it_combines_filters(): void
     {
         $id = $this->createReservation(['room_type' => 'DOUBLE']);
         $this->createReservation(['room_type' => 'SUITE']);
@@ -183,7 +183,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function itCapsPerPageAt100(): void
+    public function it_caps_per_page_at100(): void
     {
         $response = $this->getJson('/api/reservations?per_page=999');
 
@@ -192,7 +192,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function itDefaultsTo15PerPage(): void
+    public function it_defaults_to15_per_page(): void
     {
         $response = $this->getJson('/api/reservations');
 

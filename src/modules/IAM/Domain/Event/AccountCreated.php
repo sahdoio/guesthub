@@ -16,7 +16,7 @@ final readonly class AccountCreated implements DomainEvent
         public AccountId $accountId,
         public string $name,
     ) {
-        $this->occurredOn = new DateTimeImmutable();
+        $this->occurredOn = new DateTimeImmutable;
     }
 
     public function occurredOn(): DateTimeImmutable

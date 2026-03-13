@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\IAM;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\SeedsRolesAndAccount;
 use Tests\TestCase;
@@ -22,7 +21,7 @@ final class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function itRegistersAGuestActor(): void
+    public function it_registers_a_guest_actor(): void
     {
         $response = $this->postJson('/api/auth/register', [
             'name' => 'John Doe',
@@ -61,7 +60,7 @@ final class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function itPreventsDuplicateEmailRegistration(): void
+    public function it_prevents_duplicate_email_registration(): void
     {
         $this->postJson('/api/auth/register', [
             'name' => 'John Doe',
@@ -81,7 +80,7 @@ final class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function itValidatesRegistrationFields(): void
+    public function it_validates_registration_fields(): void
     {
         $response = $this->postJson('/api/auth/register', []);
 
@@ -90,7 +89,7 @@ final class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function itValidatesPasswordMinLength(): void
+    public function it_validates_password_min_length(): void
     {
         $response = $this->postJson('/api/auth/register', [
             'name' => 'John',
@@ -105,7 +104,7 @@ final class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function itLogsInAndReturnsToken(): void
+    public function it_logs_in_and_returns_token(): void
     {
         $this->postJson('/api/auth/register', [
             'name' => 'John Doe',
@@ -127,7 +126,7 @@ final class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function itRejectsInvalidCredentials(): void
+    public function it_rejects_invalid_credentials(): void
     {
         $this->postJson('/api/auth/register', [
             'name' => 'John Doe',
@@ -146,7 +145,7 @@ final class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function itLogsOutAndRevokesTokens(): void
+    public function it_logs_out_and_revokes_tokens(): void
     {
         $this->postJson('/api/auth/register', [
             'name' => 'John Doe',
@@ -170,14 +169,14 @@ final class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function logoutRequiresAuthentication(): void
+    public function logout_requires_authentication(): void
     {
         $this->postJson('/api/auth/logout')
             ->assertStatus(401);
     }
 
     #[Test]
-    public function protectedRoutesRequireAuthentication(): void
+    public function protected_routes_require_authentication(): void
     {
         $this->getJson('/api/reservations')->assertStatus(401);
         $this->getJson('/api/guests')->assertStatus(401);
@@ -186,7 +185,7 @@ final class AuthenticationTest extends TestCase
     // --- Web Login (Admin Access) ---
 
     #[Test]
-    public function adminCanLoginViaWeb(): void
+    public function admin_can_login_via_web(): void
     {
         $this->createAdminActor([
             'email' => 'admin@guesthub.com',
@@ -199,7 +198,7 @@ final class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function guestRoleCannotLoginViaWeb(): void
+    public function guest_role_cannot_login_via_web(): void
     {
         $this->createGuestActor([
             'email' => 'guest@hotel.com',
@@ -212,7 +211,7 @@ final class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function guestRoleCannotAccessWebRoutes(): void
+    public function guest_role_cannot_access_web_routes(): void
     {
         $guest = $this->createGuestActor([
             'email' => 'guest@hotel.com',

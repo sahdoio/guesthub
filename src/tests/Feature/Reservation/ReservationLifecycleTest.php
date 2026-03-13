@@ -14,10 +14,10 @@ use Tests\TestCase;
 
 final class ReservationLifecycleTest extends TestCase
 {
-    use RefreshDatabase;
     use CreatesGuest;
-    use SeedsRooms;
+    use RefreshDatabase;
     use SeedsRolesAndAccount;
+    use SeedsRooms;
 
     private string $guestId;
 
@@ -50,7 +50,7 @@ final class ReservationLifecycleTest extends TestCase
     // --- Show ---
 
     #[Test]
-    public function itShowsAReservation(): void
+    public function it_shows_a_reservation(): void
     {
         $id = $this->createReservation();
 
@@ -62,7 +62,7 @@ final class ReservationLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function itReturns404ForUnknownReservation(): void
+    public function it_returns404_for_unknown_reservation(): void
     {
         $response = $this->getJson('/api/reservations/00000000-0000-0000-0000-000000000000');
 
@@ -72,7 +72,7 @@ final class ReservationLifecycleTest extends TestCase
     // --- Full Lifecycle ---
 
     #[Test]
-    public function fullLifecycleCreateConfirmCheckinCheckout(): void
+    public function full_lifecycle_create_confirm_checkin_checkout(): void
     {
         $id = $this->createReservation();
 
@@ -105,7 +105,7 @@ final class ReservationLifecycleTest extends TestCase
     // --- Cancellation ---
 
     #[Test]
-    public function cancelPendingReservation(): void
+    public function cancel_pending_reservation(): void
     {
         $id = $this->createReservation();
 
@@ -121,7 +121,7 @@ final class ReservationLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function cancelConfirmedReservation(): void
+    public function cancel_confirmed_reservation(): void
     {
         $id = $this->createReservation();
         $this->postJson("/api/reservations/{$id}/confirm");
@@ -133,7 +133,7 @@ final class ReservationLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function cancelRequiresReasonWithMinLength(): void
+    public function cancel_requires_reason_with_min_length(): void
     {
         $id = $this->createReservation();
 
@@ -145,7 +145,7 @@ final class ReservationLifecycleTest extends TestCase
     // --- Special Requests ---
 
     #[Test]
-    public function addSpecialRequest(): void
+    public function add_special_request(): void
     {
         $id = $this->createReservation();
 
@@ -164,7 +164,7 @@ final class ReservationLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function addSpecialRequestValidatesType(): void
+    public function add_special_request_validates_type(): void
     {
         $id = $this->createReservation();
 
@@ -178,7 +178,7 @@ final class ReservationLifecycleTest extends TestCase
     // --- Check-in Validation ---
 
     #[Test]
-    public function checkinRequiresRoomNumber(): void
+    public function checkin_requires_room_number(): void
     {
         $id = $this->createReservation();
         $this->postJson("/api/reservations/{$id}/confirm");
@@ -189,7 +189,7 @@ final class ReservationLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function checkinValidatesRoomNumberFormat(): void
+    public function checkin_validates_room_number_format(): void
     {
         $id = $this->createReservation();
         $this->postJson("/api/reservations/{$id}/confirm");

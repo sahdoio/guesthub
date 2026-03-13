@@ -19,7 +19,7 @@ final class EnsureActorIsAdmin
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             if ($request->expectsJson()) {
                 abort(403, 'Access denied.');
             }
@@ -30,7 +30,7 @@ final class EnsureActorIsAdmin
         $user->load('roles');
         $roleNames = $user->roles->pluck('name')->toArray();
 
-        if (!in_array('admin', $roleNames, true) && !in_array('superadmin', $roleNames, true)) {
+        if (! in_array('admin', $roleNames, true) && ! in_array('superadmin', $roleNames, true)) {
             if ($request->expectsJson()) {
                 abort(403, 'Access denied.');
             }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Reservation\Application\Query;
 
-use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
+use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\Service\GuestGateway;
 use Modules\Shared\Application\Query\Pagination;
 use Modules\Shared\Domain\PaginatedResult;
@@ -29,7 +29,7 @@ final readonly class ListReservationsHandler
         );
 
         $enrichedItems = array_map(
-            fn(Reservation $reservation) => $this->enrichWithGuest(
+            fn (Reservation $reservation) => $this->enrichWithGuest(
                 ReservationReadModel::fromReservation($reservation),
             ),
             $result->items,

@@ -7,8 +7,8 @@ namespace Modules\Inventory\Application\Query;
 final readonly class RoomStatsResult
 {
     /**
-     * @param array<string, int> $byStatus
-     * @param array<string, int> $byType
+     * @param  array<string, int>  $byStatus
+     * @param  array<string, int>  $byType
      */
     public function __construct(
         public int $total,

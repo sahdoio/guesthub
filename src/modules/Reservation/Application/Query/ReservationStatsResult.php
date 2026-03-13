@@ -7,8 +7,8 @@ namespace Modules\Reservation\Application\Query;
 final readonly class ReservationStatsResult
 {
     /**
-     * @param array<string, int> $byStatus
-     * @param array<string, int> $byRoomType
+     * @param  array<string, int>  $byStatus
+     * @param  array<string, int>  $byRoomType
      */
     public function __construct(
         public int $total,

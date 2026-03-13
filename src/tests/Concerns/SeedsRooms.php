@@ -24,7 +24,7 @@ trait SeedsRooms
                 capacity: $type === 'SUITE' ? 4 : ($type === 'DOUBLE' ? 2 : 1),
                 pricePerNight: 250.00,
                 amenities: ['wifi'],
-                createdAt: new DateTimeImmutable(),
+                createdAt: new DateTimeImmutable,
             );
             $repository->save($room);
         }

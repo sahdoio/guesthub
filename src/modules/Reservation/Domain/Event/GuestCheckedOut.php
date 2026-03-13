@@ -15,7 +15,7 @@ final readonly class GuestCheckedOut implements DomainEvent
     public function __construct(
         public ReservationId $reservationId,
     ) {
-        $this->occurredOn = new DateTimeImmutable();
+        $this->occurredOn = new DateTimeImmutable;
     }
 
     public function occurredOn(): DateTimeImmutable

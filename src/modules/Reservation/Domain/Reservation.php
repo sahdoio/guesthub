@@ -26,7 +26,7 @@ final class Reservation extends AggregateRoot
     private const int MAX_SPECIAL_REQUESTS = 5;
 
     /**
-     * @param SpecialRequest[] $specialRequests
+     * @param  SpecialRequest[]  $specialRequests
      */
     private function __construct(
         public readonly ReservationId $uuid,
@@ -58,7 +58,7 @@ final class Reservation extends AggregateRoot
             status: ReservationStatus::PENDING,
             assignedRoomNumber: null,
             specialRequests: [],
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
             confirmedAt: null,
             checkedInAt: null,
             checkedOutAt: null,
@@ -70,10 +70,12 @@ final class Reservation extends AggregateRoot
 
         return $reservation;
     }
+
     public function id(): Identity
     {
         return $this->uuid;
     }
+
     public function confirm(): void
     {
         if ($this->status !== ReservationStatus::PENDING) {
@@ -81,7 +83,7 @@ final class Reservation extends AggregateRoot
         }
 
         $this->status = ReservationStatus::CONFIRMED;
-        $this->confirmedAt = new DateTimeImmutable();
+        $this->confirmedAt = new DateTimeImmutable;
 
         $this->recordEvent(new ReservationConfirmed($this->uuid));
     }
@@ -95,7 +97,7 @@ final class Reservation extends AggregateRoot
 
         $this->status = ReservationStatus::CHECKED_IN;
         $this->assignedRoomNumber = $roomNumber;
-        $this->checkedInAt = new DateTimeImmutable();
+        $this->checkedInAt = new DateTimeImmutable;
 
         $this->recordEvent(new GuestCheckedIn($this->uuid, $roomNumber));
     }
@@ -107,20 +109,20 @@ final class Reservation extends AggregateRoot
         }
 
         $this->status = ReservationStatus::CHECKED_OUT;
-        $this->checkedOutAt = new DateTimeImmutable();
+        $this->checkedOutAt = new DateTimeImmutable;
 
         $this->recordEvent(new GuestCheckedOut($this->uuid));
     }
 
     public function cancel(string $reason): void
     {
-        if (!in_array($this->status, [ReservationStatus::PENDING, ReservationStatus::CONFIRMED], true)) {
+        if (! in_array($this->status, [ReservationStatus::PENDING, ReservationStatus::CONFIRMED], true)) {
             throw InvalidReservationStateException::forTransition($this->status, ReservationStatus::CANCELLED);
         }
 
         $this->status = ReservationStatus::CANCELLED;
         $this->cancellationReason = $reason;
-        $this->cancelledAt = new DateTimeImmutable();
+        $this->cancelledAt = new DateTimeImmutable;
 
         $this->recordEvent(new ReservationCancelled($this->uuid, $reason));
     }
@@ -132,11 +134,11 @@ final class Reservation extends AggregateRoot
         }
 
         if (count($this->specialRequests) >= self::MAX_SPECIAL_REQUESTS) {
-            throw new MaxSpecialRequestsExceededException();
+            throw new MaxSpecialRequestsExceededException;
         }
 
         $requestId = SpecialRequestId::generate();
-        $this->specialRequests[] = SpecialRequest::create($requestId, $type, $description, new DateTimeImmutable());
+        $this->specialRequests[] = SpecialRequest::create($requestId, $type, $description, new DateTimeImmutable);
 
         $this->recordEvent(new SpecialRequestAdded($this->uuid, $requestId));
 
@@ -160,7 +162,7 @@ final class Reservation extends AggregateRoot
         $this->specialRequests = array_values(
             array_filter(
                 $this->specialRequests,
-                fn(SpecialRequest $sr) => !$sr->id()->equals($requestId),
+                fn (SpecialRequest $sr) => ! $sr->id()->equals($requestId),
             )
         );
     }

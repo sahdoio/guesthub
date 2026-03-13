@@ -14,8 +14,11 @@ use Ramsey\Uuid\Uuid;
 trait SeedsRolesAndAccount
 {
     private RoleModel $adminRole;
+
     private RoleModel $guestRole;
+
     private RoleModel $superadminRole;
+
     private AccountModel $account;
 
     protected function seedRolesAndAccount(): void

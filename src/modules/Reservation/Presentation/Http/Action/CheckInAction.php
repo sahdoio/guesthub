@@ -36,7 +36,7 @@ final readonly class CheckInAction
             'room_number.regex' => 'Room number must be 1-4 digits optionally followed by a letter (e.g., 201, 101A).',
         ]);
 
-        if (!$this->inventoryGateway->isRoomAvailable($data['room_number'])) {
+        if (! $this->inventoryGateway->isRoomAvailable($data['room_number'])) {
             throw new DomainException('The selected room is not available.');
         }
 
@@ -51,7 +51,7 @@ final readonly class CheckInAction
     private function enforceReservationOwnership(string $reservationUuid): void
     {
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return;
         }
         $user->load('roles');

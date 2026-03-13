@@ -17,7 +17,7 @@ final readonly class SpecialRequestAdded implements DomainEvent
         public ReservationId $reservationId,
         public SpecialRequestId $requestId,
     ) {
-        $this->occurredOn = new DateTimeImmutable();
+        $this->occurredOn = new DateTimeImmutable;
     }
 
     public function occurredOn(): DateTimeImmutable

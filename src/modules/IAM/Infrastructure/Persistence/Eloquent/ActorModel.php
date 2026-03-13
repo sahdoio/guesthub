@@ -9,6 +9,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property int|null $account_id
+ * @property string $name
+ * @property string $email
+ * @property string $password
+ * @property string|null $subject_type
+ * @property int|null $subject_id
+ * @property string $created_at
+ * @property string|null $updated_at
+ */
 final class ActorModel extends Authenticatable
 {
     use HasApiTokens;

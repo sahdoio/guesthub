@@ -6,8 +6,8 @@ namespace Tests\Unit\Reservation\Domain\Specification;
 
 use DateTimeImmutable;
 use Modules\Reservation\Domain\Dto\RoomAvailability;
-use Modules\Reservation\Domain\Specification\ReservationCreationSpecification;
 use Modules\Reservation\Domain\Service\InventoryGateway;
+use Modules\Reservation\Domain\Specification\ReservationCreationSpecification;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,7 +27,7 @@ final class ReservationCreationSpecificationTest extends TestCase
     }
 
     #[Test]
-    public function itRejectsCheckinInThePast(): void
+    public function it_rejects_checkin_in_the_past(): void
     {
         $spec = new ReservationCreationSpecification($this->inventory);
 
@@ -40,7 +40,7 @@ final class ReservationCreationSpecificationTest extends TestCase
     }
 
     #[Test]
-    public function itAllowsCheckinToday(): void
+    public function it_allows_checkin_today(): void
     {
         $spec = new ReservationCreationSpecification($this->inventory);
 
@@ -53,7 +53,7 @@ final class ReservationCreationSpecificationTest extends TestCase
     }
 
     #[Test]
-    public function itRejectsBookingTooFarInAdvanceForRegularGuest(): void
+    public function it_rejects_booking_too_far_in_advance_for_regular_guest(): void
     {
         $spec = new ReservationCreationSpecification($this->inventory);
 
@@ -66,7 +66,7 @@ final class ReservationCreationSpecificationTest extends TestCase
     }
 
     #[Test]
-    public function itAllowsVipToBookFurtherInAdvance(): void
+    public function it_allows_vip_to_book_further_in_advance(): void
     {
         $spec = new ReservationCreationSpecification($this->inventory);
 
@@ -79,7 +79,7 @@ final class ReservationCreationSpecificationTest extends TestCase
     }
 
     #[Test]
-    public function itRejectsWhenNoRoomsAvailable(): void
+    public function it_rejects_when_no_rooms_available(): void
     {
         $inventory = $this->createStub(InventoryGateway::class);
         $inventory->method('checkAvailability')->willReturn(

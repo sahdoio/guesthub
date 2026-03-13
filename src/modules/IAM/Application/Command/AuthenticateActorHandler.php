@@ -26,8 +26,8 @@ final readonly class AuthenticateActorHandler
         $actor = $this->repository->findByEmail($command->email)
             ?? throw ActorNotFoundException::withEmail($command->email);
 
-        if (!$this->hasher->verify($command->password, $actor->password)) {
-            throw new InvalidCredentialsException();
+        if (! $this->hasher->verify($command->password, $actor->password)) {
+            throw new InvalidCredentialsException;
         }
 
         $token = $this->tokenManager->createToken($command->email);

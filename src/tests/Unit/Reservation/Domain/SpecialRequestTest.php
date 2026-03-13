@@ -25,12 +25,12 @@ final class SpecialRequestTest extends TestCase
             SpecialRequestId::generate(),
             $type,
             $description,
-            new DateTimeImmutable(),
+            new DateTimeImmutable,
         );
     }
 
     #[Test]
-    public function itCreatesWithPendingStatus(): void
+    public function it_creates_with_pending_status(): void
     {
         $request = $this->createRequest();
 
@@ -41,7 +41,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function itCanBeFulfilled(): void
+    public function it_can_be_fulfilled(): void
     {
         $request = $this->createRequest();
 
@@ -52,7 +52,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function itCannotBeFulfilledTwice(): void
+    public function it_cannot_be_fulfilled_twice(): void
     {
         $request = $this->createRequest();
         $request->fulfill();
@@ -62,7 +62,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function itCanBeCancelled(): void
+    public function it_can_be_cancelled(): void
     {
         $request = $this->createRequest();
 
@@ -72,7 +72,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function itCannotCancelAfterFulfillment(): void
+    public function it_cannot_cancel_after_fulfillment(): void
     {
         $request = $this->createRequest();
         $request->fulfill();
@@ -82,7 +82,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function itCannotFulfillAfterCancellation(): void
+    public function it_cannot_fulfill_after_cancellation(): void
     {
         $request = $this->createRequest();
         $request->cancel();
@@ -92,7 +92,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function itChangesDescription(): void
+    public function it_changes_description(): void
     {
         $request = $this->createRequest();
 
@@ -102,7 +102,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function itRejectsEmptyDescription(): void
+    public function it_rejects_empty_description(): void
     {
         $request = $this->createRequest();
 

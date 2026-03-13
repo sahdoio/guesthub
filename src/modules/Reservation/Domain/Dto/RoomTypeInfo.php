@@ -7,7 +7,7 @@ namespace Modules\Reservation\Domain\Dto;
 final readonly class RoomTypeInfo
 {
     /**
-     * @param string[] $amenities
+     * @param  string[]  $amenities
      */
     public function __construct(
         public string $type,

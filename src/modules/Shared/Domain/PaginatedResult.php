@@ -10,7 +10,7 @@ namespace Modules\Shared\Domain;
 final readonly class PaginatedResult
 {
     /**
-     * @param T[] $items
+     * @param  T[]  $items
      */
     public function __construct(
         public array $items,
