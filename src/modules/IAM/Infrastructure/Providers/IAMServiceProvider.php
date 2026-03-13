@@ -32,5 +32,8 @@ final class IAMServiceProvider extends ServiceProvider
         Route::prefix('api')
             ->middleware('api')
             ->group(__DIR__ . '/../Routes/api.php');
+
+        Route::middleware('web')
+            ->group(__DIR__ . '/../Routes/web.php');
     }
 }

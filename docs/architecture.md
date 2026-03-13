@@ -72,11 +72,11 @@ PENDING ──> CONFIRMED ──> CHECKED_IN ──> CHECKED_OUT
 
 ```
 ┌──────────┐       GuestProfileApi         ┌──────────────┐
-│  Guest   │ <─────────────────────────── │  Reservation  │
+│  Guest   │  <─────────────────────────── │ Reservation  │
 │          │   (GuestGateway adapter)      │              │
 │          │                               │              │
 │          │       GuestProfileApi         │              │    stub (future BC)
-│          │ <────────────────────────    │              │ <── InventoryGateway
+│          │  <────────────────────────    │              │ <── InventoryGateway
 └──────────┘   (GuestProfileGateway)       └──────────────┘
      ▲
      │  GuestProfileApi

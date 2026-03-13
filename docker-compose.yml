@@ -48,6 +48,19 @@ services:
     networks:
       - guesthub-network
 
+  guesthub-nodejs:
+    container_name: guesthub-nodejs
+    build:
+      context: docker
+      dockerfile: nodejs.Dockerfile
+    image: guesthub/nodejs
+    ports:
+      - '${FORWARD_VITE_PORT:-5173}:${FORWARD_VITE_PORT:-5173}'
+    volumes:
+      - ./src:/var/www
+    networks:
+      - guesthub-network
+
   guesthub-redis:
     container_name: guesthub-redis
     image: redis:alpine

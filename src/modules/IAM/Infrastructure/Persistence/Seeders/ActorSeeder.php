@@ -39,7 +39,7 @@ class ActorSeeder extends Seeder
                 type: ActorType::GUEST,
                 name: $name,
                 email: $email,
-                password: $this->hasher->hash('password123'),
+                password: $this->hasher->hash('password'),
                 profileType: ActorType::GUEST->value,
                 profileId: $guestProfileUuid,
                 createdAt: new DateTimeImmutable(),

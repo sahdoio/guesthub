@@ -23,4 +23,16 @@ interface ReservationRepository
     ): PaginatedResult;
 
     public function nextIdentity(): ReservationId;
+
+    public function count(): int;
+
+    /** @return array<string, int> */
+    public function countByStatus(): array;
+
+    /** @return array<string, int> */
+    public function countByRoomType(): array;
+
+    public function countTodayCheckIns(): int;
+
+    public function countTodayCheckOuts(): int;
 }

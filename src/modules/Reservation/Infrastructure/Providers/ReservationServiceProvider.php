@@ -44,6 +44,9 @@ final class ReservationServiceProvider extends ServiceProvider
             ->middleware('api')
             ->group(__DIR__ . '/../Routes/api.php');
 
+        Route::middleware('web')
+            ->group(__DIR__ . '/../Routes/web.php');
+
         Event::listen(ReservationConfirmed::class, OnReservationConfirmed::class);
         Event::listen(ReservationCancelled::class, OnReservationCancelled::class);
         Event::listen(GuestCheckedIn::class, OnGuestCheckedIn::class);

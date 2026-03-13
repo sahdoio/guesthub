@@ -8,10 +8,10 @@ use Modules\Guest\Domain\Repository\GuestProfileRepository;
 use Modules\Shared\Application\Query\Pagination;
 use Modules\Shared\Domain\PaginatedResult;
 
-final class ListGuestProfilesHandler
+final readonly class ListGuestProfilesHandler
 {
     public function __construct(
-        private readonly GuestProfileRepository $repository,
+        private GuestProfileRepository $repository,
     ) {}
 
     /** @return PaginatedResult<\Modules\Guest\Domain\GuestProfile> */

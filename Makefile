@@ -21,6 +21,7 @@ go: ## Start containers, install deps, and run migrations
 	sleep 2
 	make setup
 	make db-migrate
+	make vite
 
 go-hard: ## Full reset: remove volume, rebuild, seed database
 	@test -f src/.env || cp src/.env.example src/.env && echo "Created .env from .env.example"
@@ -31,6 +32,7 @@ go-hard: ## Full reset: remove volume, rebuild, seed database
 	make setup
 	make db-migrate
 	make db-seed
+	make vite
 
 up: ## Start containers in detached mode with build
 	$(DC) up -d --build
@@ -73,6 +75,9 @@ clear: ## Clear all Laravel caches
 	$(DC) exec guesthub php artisan route:clear
 	$(DC) exec guesthub php artisan config:clear
 	$(DC) exec guesthub php artisan optimize:clear
+
+vite: ## Start Vite dev server
+	$(DC) exec guesthub-nodejs npm run dev
 
 logs: ## Follow Docker container logs
 	$(DC) logs -f -n 10

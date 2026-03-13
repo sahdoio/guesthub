@@ -89,6 +89,7 @@ final class Reservation extends AggregateRoot
 
     public function checkIn(string $roomNumber): void
     {
+        // business invariant
         if ($this->status !== ReservationStatus::CONFIRMED) {
             throw InvalidReservationStateException::forTransition($this->status, ReservationStatus::CHECKED_IN);
         }

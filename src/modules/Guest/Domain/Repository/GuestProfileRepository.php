@@ -24,4 +24,9 @@ interface GuestProfileRepository
     public function remove(GuestProfile $profile): void;
 
     public function nextIdentity(): GuestProfileId;
+
+    public function count(): int;
+
+    /** @return array<string, int> */
+    public function countByLoyaltyTier(): array;
 }

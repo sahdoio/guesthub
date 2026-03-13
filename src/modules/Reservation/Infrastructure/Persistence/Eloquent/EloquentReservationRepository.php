@@ -81,6 +81,43 @@ final readonly class EloquentReservationRepository implements ReservationReposit
         return ReservationId::generate();
     }
 
+    public function count(): int
+    {
+        return (int) $this->model->newQuery()->count();
+    }
+
+    public function countByStatus(): array
+    {
+        return $this->model->newQuery()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->all();
+    }
+
+    public function countByRoomType(): array
+    {
+        return $this->model->newQuery()
+            ->selectRaw('room_type, count(*) as total')
+            ->groupBy('room_type')
+            ->pluck('total', 'room_type')
+            ->all();
+    }
+
+    public function countTodayCheckIns(): int
+    {
+        return (int) $this->model->newQuery()
+            ->whereDate('checked_in_at', now()->toDateString())
+            ->count();
+    }
+
+    public function countTodayCheckOuts(): int
+    {
+        return (int) $this->model->newQuery()
+            ->whereDate('checked_out_at', now()->toDateString())
+            ->count();
+    }
+
     private function toRecord(Reservation $reservation): array
     {
         return [

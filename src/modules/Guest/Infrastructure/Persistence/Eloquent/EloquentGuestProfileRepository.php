@@ -84,6 +84,20 @@ final class EloquentGuestProfileRepository implements GuestProfileRepository
         return GuestProfileId::generate();
     }
 
+    public function count(): int
+    {
+        return (int) $this->model->newQuery()->count();
+    }
+
+    public function countByLoyaltyTier(): array
+    {
+        return $this->model->newQuery()
+            ->selectRaw('loyalty_tier, count(*) as total')
+            ->groupBy('loyalty_tier')
+            ->pluck('total', 'loyalty_tier')
+            ->all();
+    }
+
     private function toEntity(object $record): GuestProfile
     {
         return GuestProfileReflector::reconstruct(
