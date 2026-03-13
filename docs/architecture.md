@@ -300,10 +300,14 @@ This API is the single entry point for cross-BC access to guest data. Both the R
 
 Same Anti-Corruption Layer pattern, now backed by the Inventory BC:
 
-1. **Port** — `InventoryGateway` defines `checkAvailability()` and `getRoomTypeInfo()`
-2. **Adapter** — `InventoryGatewayAdapter` delegates to the Inventory BC's `InventoryApi` for real availability counts
+1. **Port** — `InventoryGateway` defines `checkAvailability()`, `getRoomTypeInfo()`, `listAvailableRooms()`, and `isRoomAvailable()`
+2. **DTOs** — `RoomAvailability`, `RoomTypeInfo`, `AvailableRoom` — owned by the Reservation BC
+3. **Adapter** — `InventoryGatewayAdapter` delegates to the Inventory BC's `InventoryApi` and maps to Reservation DTOs
 
-**Used by:** `ReservationCreationSpecification` — validates room availability before creation.
+**Used by:**
+- `ReservationCreationSpecification` — validates room availability before creation
+- `ReservationShowView` — lists available rooms for check-in dropdown
+- `CheckInView` / `CheckInAction` — validates the selected room is available before check-in
 
 ### Inventory Integration API
 
@@ -312,6 +316,8 @@ The Inventory BC exposes an `InventoryApi` (in `Infrastructure/Integration/`) fo
 - `findByUuid(string): ?RoomData` — returns room data by UUID
 - `findByNumber(string): ?RoomData` — returns room data by room number
 - `countAvailableByType(string): int` — counts available rooms of a given type
+- `listAvailableByType(string): RoomData[]` — lists available rooms of a given type
+- `isRoomAvailable(string): bool` — checks if a specific room number is available
 
 ### No Direct Coupling
 
