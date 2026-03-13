@@ -7,6 +7,7 @@ defineOptions({ layout: AuthenticatedLayout });
 
 const props = defineProps({
     reservation: Object,
+    availableRooms: { type: Array, default: () => [] },
 });
 
 const r = props.reservation;
@@ -219,18 +220,28 @@ const requestStatusColors = {
                         <!-- Check In -->
                         <div v-if="r.status === 'confirmed'">
                             <form @submit.prevent="submitCheckIn" class="space-y-2">
-                                <input
+                                <select
                                     v-model="checkInForm.room_number"
-                                    type="text"
-                                    placeholder="Room number (e.g., 201, 101A)"
                                     required
                                     class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                                     :class="{ 'border-red-500': checkInForm.errors.room_number }"
-                                />
+                                >
+                                    <option value="" disabled>Select a room</option>
+                                    <option
+                                        v-for="room in props.availableRooms"
+                                        :key="room.number"
+                                        :value="room.number"
+                                    >
+                                        Room {{ room.number }} — Floor {{ room.floor }} — ${{ room.price_per_night }}/night
+                                    </option>
+                                </select>
+                                <p v-if="props.availableRooms.length === 0" class="text-sm text-amber-600">
+                                    No rooms available for this type.
+                                </p>
                                 <p v-if="checkInForm.errors.room_number" class="text-sm text-red-600">{{ checkInForm.errors.room_number }}</p>
                                 <button
                                     type="submit"
-                                    :disabled="checkInForm.processing"
+                                    :disabled="checkInForm.processing || props.availableRooms.length === 0"
                                     class="w-full bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
                                 >
                                     Check In

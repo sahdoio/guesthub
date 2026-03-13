@@ -30,6 +30,13 @@ class GuestSeeder extends Seeder
         ];
 
         foreach ($guests as [$name, $email, $phone, $document, $tier, $preferences]) {
+            $existing = $this->repository->findByDocument($document);
+
+            if ($existing !== null) {
+                self::$guestIds[$email] = (string) $existing->id();
+                continue;
+            }
+
             $id = $this->repository->nextIdentity();
             $guest = GuestProfile::create($id, $name, $email, $phone, $document, $tier, $preferences, new DateTimeImmutable());
             $this->repository->save($guest);

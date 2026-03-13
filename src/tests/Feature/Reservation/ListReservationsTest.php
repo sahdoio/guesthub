@@ -9,12 +9,14 @@ use Laravel\Sanctum\Sanctum;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\CreatesGuestProfile;
+use Tests\Concerns\SeedsRooms;
 use Tests\TestCase;
 
 final class ListReservationsTest extends TestCase
 {
     use RefreshDatabase;
     use CreatesGuestProfile;
+    use SeedsRooms;
 
     private string $guestProfileId;
 
@@ -32,6 +34,7 @@ final class ListReservationsTest extends TestCase
         ]));
 
         $this->guestProfileId = $this->createGuestProfile();
+        $this->seedRooms();
     }
 
     private function createReservation(array $overrides = []): string

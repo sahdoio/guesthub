@@ -10,6 +10,9 @@ use Modules\Guest\Domain\GuestProfile;
 use Modules\Guest\Domain\Repository\GuestProfileRepository;
 use Modules\Guest\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
+use Modules\Inventory\Domain\Repository\RoomRepository;
+use Modules\Inventory\Domain\Room;
+use Modules\Inventory\Domain\ValueObject\RoomType;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
@@ -93,6 +96,24 @@ final class DashboardTest extends TestCase
         return $reservation;
     }
 
+    private function createRoom(string $number = '101', string $type = 'DOUBLE'): void
+    {
+        $repository = $this->app->make(RoomRepository::class);
+
+        $room = Room::create(
+            uuid: $repository->nextIdentity(),
+            number: $number,
+            type: RoomType::from($type),
+            floor: (int) substr($number, 0, 1),
+            capacity: 2,
+            pricePerNight: 250.00,
+            amenities: ['wifi'],
+            createdAt: new DateTimeImmutable(),
+        );
+
+        $repository->save($room);
+    }
+
     #[Test]
     public function itRequiresAuthentication(): void
     {
@@ -111,10 +132,12 @@ final class DashboardTest extends TestCase
             ->component('Dashboard')
             ->has('guestStats')
             ->has('reservationStats')
+            ->has('roomStats')
             ->where('guestStats.total', 0)
             ->where('reservationStats.total', 0)
             ->where('reservationStats.today_check_ins', 0)
             ->where('reservationStats.today_check_outs', 0)
+            ->where('roomStats.total', 0)
         );
     }
 
@@ -201,6 +224,26 @@ final class DashboardTest extends TestCase
             ->where('reservationStats.by_room_type.SINGLE', 1)
             ->where('reservationStats.by_room_type.DOUBLE', 2)
             ->where('reservationStats.by_room_type.SUITE', 1)
+        );
+    }
+
+    #[Test]
+    public function itShowsRoomStats(): void
+    {
+        $this->createRoom('101', 'SINGLE');
+        $this->createRoom('201', 'DOUBLE');
+        $this->createRoom('202', 'DOUBLE');
+        $this->createRoom('301', 'SUITE');
+
+        $response = $this->actingAs($this->actor)
+            ->get('/dashboard');
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('roomStats.total', 4)
+            ->where('roomStats.by_type.SINGLE', 1)
+            ->where('roomStats.by_type.DOUBLE', 2)
+            ->where('roomStats.by_type.SUITE', 1)
+            ->where('roomStats.by_status.available', 4)
         );
     }
 }

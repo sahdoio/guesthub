@@ -9,12 +9,14 @@ use Laravel\Sanctum\Sanctum;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\CreatesGuestProfile;
+use Tests\Concerns\SeedsRooms;
 use Tests\TestCase;
 
 final class ReservationLifecycleTest extends TestCase
 {
     use RefreshDatabase;
     use CreatesGuestProfile;
+    use SeedsRooms;
 
     private string $guestProfileId;
 
@@ -32,6 +34,7 @@ final class ReservationLifecycleTest extends TestCase
         ]));
 
         $this->guestProfileId = $this->createGuestProfile();
+        $this->seedRooms();
     }
 
     private function createReservation(array $overrides = []): string
@@ -85,15 +88,15 @@ final class ReservationLifecycleTest extends TestCase
 
         $this->assertDatabaseHas('reservations', ['uuid' => $id, 'status' => 'confirmed']);
 
-        // Check-in
-        $this->postJson("/api/reservations/{$id}/check-in", ['room_number' => '201'])
+        // Check-in (room 102 is the DOUBLE room created by seedRooms)
+        $this->postJson("/api/reservations/{$id}/check-in", ['room_number' => '102'])
             ->assertOk()
             ->assertJsonPath('message', 'Guest checked in.');
 
         $this->assertDatabaseHas('reservations', [
             'uuid' => $id,
             'status' => 'checked_in',
-            'assigned_room_number' => '201',
+            'assigned_room_number' => '102',
         ]);
 
         // Check-out

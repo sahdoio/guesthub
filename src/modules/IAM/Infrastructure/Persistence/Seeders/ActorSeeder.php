@@ -32,6 +32,10 @@ class ActorSeeder extends Seeder
         ];
 
         foreach ($actors as [$name, $email]) {
+            if ($this->repository->findByEmail($email) !== null) {
+                continue;
+            }
+
             $guestProfileUuid = $guestIds[$email];
 
             $actor = Actor::register(

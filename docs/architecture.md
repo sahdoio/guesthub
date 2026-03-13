@@ -44,6 +44,27 @@ Handles actors, authentication, and token management. See [IAM Deep Dive](#iam-d
 
 No domain events.
 
+### Inventory
+
+Manages the hotel's room inventory — room definitions, availability, status, and pricing.
+
+| Concept | Class |
+|---|---|
+| Aggregate | `Room` |
+| Identity | `RoomId` |
+| Value Objects | `RoomType` (enum: SINGLE, DOUBLE, SUITE), `RoomStatus` (enum: AVAILABLE, OCCUPIED, MAINTENANCE, OUT_OF_ORDER) |
+
+Room state machine:
+
+```
+AVAILABLE ──> OCCUPIED ──> AVAILABLE (release)
+    │
+    ├──> MAINTENANCE ──> AVAILABLE
+    └──> OUT_OF_ORDER ──> AVAILABLE
+```
+
+No domain events — state changes are managed through direct commands.
+
 ### Reservation
 
 The richest BC. Manages the full reservation lifecycle, special requests, and emits domain/integration events.
@@ -71,12 +92,12 @@ PENDING ──> CONFIRMED ──> CHECKED_IN ──> CHECKED_OUT
 ## Context Map
 
 ```
-┌──────────┐       GuestProfileApi         ┌──────────────┐
-│  Guest   │  <─────────────────────────── │ Reservation  │
-│          │   (GuestGateway adapter)      │              │
-│          │                               │              │
-│          │       GuestProfileApi         │              │    stub (future BC)
-│          │  <────────────────────────    │              │ <── InventoryGateway
+┌──────────┐       GuestProfileApi         ┌──────────────┐        InventoryApi        ┌─────────────┐
+│  Guest   │  <─────────────────────────── │ Reservation  │ ─────────────────────────> │  Inventory  │
+│          │   (GuestGateway adapter)      │              │  (InventoryGateway adapter)│             │
+│          │                               │              │                            │             │
+│          │       GuestProfileApi         │              │                            │             │
+│          │  <────────────────────────    │              │                            └─────────────┘
 └──────────┘   (GuestProfileGateway)       └──────────────┘
      ▲
      │  GuestProfileApi
@@ -93,7 +114,7 @@ PENDING ──> CONFIRMED ──> CHECKED_IN ──> CHECKED_OUT
 |---|---|---|---|
 | Guest | Reservation | **Anti-Corruption Layer** (read-only via `GuestProfileApi`) | Reservation reads guest data (name, email, VIP status) via `GuestGateway` |
 | Guest | IAM | **Anti-Corruption Layer** (write via `GuestProfileApi`) | IAM creates guest profiles during registration via `GuestProfileGateway` |
-| (future) Inventory | Reservation | **Anti-Corruption Layer** (stubbed) | `InventoryGateway` checks room availability and pricing |
+| Inventory | Reservation | **Anti-Corruption Layer** (via `InventoryApi`) | `InventoryGateway` checks room availability and pricing |
 | IAM | All BCs | **Sanctum middleware** | `auth:sanctum` protects Guest and Reservation API routes |
 
 No BC calls another BC's repository directly. All cross-boundary data flows through Gateway adapters and the Guest BC's `GuestProfileApi`.
@@ -275,14 +296,22 @@ The Guest BC exposes a `GuestProfileApi` (in `Infrastructure/Integration/`) for 
 
 This API is the single entry point for cross-BC access to guest data. Both the Reservation and IAM adapters depend on it.
 
-### InventoryGateway (Reservation → future Inventory BC)
+### InventoryGateway (Reservation → Inventory)
 
-Same pattern, currently stubbed with hardcoded data:
+Same Anti-Corruption Layer pattern, now backed by the Inventory BC:
 
 1. **Port** — `InventoryGateway` defines `checkAvailability()` and `getRoomTypeInfo()`
-2. **Adapter** — `InventoryGatewayAdapter` returns static data (always available)
+2. **Adapter** — `InventoryGatewayAdapter` delegates to the Inventory BC's `InventoryApi` for real availability counts
 
-**Used by:** `ReservationPolicy` — validates room availability before creation.
+**Used by:** `ReservationCreationSpecification` — validates room availability before creation.
+
+### Inventory Integration API
+
+The Inventory BC exposes an `InventoryApi` (in `Infrastructure/Integration/`) for other BCs to consume. It provides:
+
+- `findByUuid(string): ?RoomData` — returns room data by UUID
+- `findByNumber(string): ?RoomData` — returns room data by room number
+- `countAvailableByType(string): int` — counts available rooms of a given type
 
 ### No Direct Coupling
 
@@ -320,6 +349,7 @@ return $profile;
 
 | Reflector | Reconstitutes | Used By |
 |---|---|---|
+| `RoomReflector` | `Room` | `EloquentRoomRepository` |
 | `GuestProfileReflector` | `GuestProfile` | `EloquentGuestProfileRepository` |
 | `ActorReflector` | `Actor` | `EloquentActorRepository` |
 | `ReservationReflector` | `Reservation` (with nested `SpecialRequest[]`) | `EloquentReservationRepository` |

@@ -8,11 +8,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Modules\Reservation\Application\Command\CheckInGuest;
 use Modules\Reservation\Application\Command\CheckInGuestHandler;
+use Modules\Reservation\Domain\Service\InventoryGateway;
 
 final readonly class CheckInView
 {
     public function __construct(
         private CheckInGuestHandler $handler,
+        private InventoryGateway $inventoryGateway,
     ) {}
 
     public function __invoke(Request $request, string $id): RedirectResponse
@@ -22,6 +24,11 @@ final readonly class CheckInView
         ], [
             'room_number.regex' => 'Room number must be 1-4 digits optionally followed by a letter (e.g., 201, 101A).',
         ]);
+
+        if (!$this->inventoryGateway->isRoomAvailable($data['room_number'])) {
+            return redirect("/reservations/{$id}")
+                ->withErrors(['room_number' => 'The selected room is not available.']);
+        }
 
         $this->handler->handle(new CheckInGuest(
             reservationId: $id,

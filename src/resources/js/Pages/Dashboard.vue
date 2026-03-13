@@ -7,6 +7,7 @@ defineOptions({ layout: AuthenticatedLayout });
 const props = defineProps({
     guestStats: Object,
     reservationStats: Object,
+    roomStats: Object,
 });
 
 const statusLabels = {
@@ -80,6 +81,32 @@ const roomEntries = computed(() => {
 });
 
 const roomTotal = computed(() => Math.max(1, roomEntries.value.reduce((sum, e) => sum + e.count, 0)));
+
+const roomStatusLabels = {
+    available: 'Available',
+    occupied: 'Occupied',
+    maintenance: 'Maintenance',
+    out_of_order: 'Out of Order',
+};
+
+const roomStatusColors = {
+    available: 'bg-green-400',
+    occupied: 'bg-blue-400',
+    maintenance: 'bg-yellow-400',
+    out_of_order: 'bg-red-400',
+};
+
+const roomStatusEntries = computed(() => {
+    const byStatus = props.roomStats.by_status || {};
+    return Object.keys(roomStatusLabels).map(key => ({
+        key,
+        label: roomStatusLabels[key],
+        count: byStatus[key] || 0,
+        color: roomStatusColors[key],
+    }));
+});
+
+const roomStatusMax = computed(() => Math.max(1, ...roomStatusEntries.value.map(e => e.count)));
 </script>
 
 <template>
@@ -87,7 +114,7 @@ const roomTotal = computed(() => Math.max(1, roomEntries.value.reduce((sum, e) =
         <h1 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h1>
 
         <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Reservations</h2>
                 <p class="mt-2 text-3xl font-bold text-gray-900">{{ reservationStats.total }}</p>
@@ -106,6 +133,11 @@ const roomTotal = computed(() => Math.max(1, roomEntries.value.reduce((sum, e) =
             <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Check-outs Today</h2>
                 <p class="mt-2 text-3xl font-bold text-gray-600">{{ reservationStats.today_check_outs }}</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Rooms</h2>
+                <p class="mt-2 text-3xl font-bold text-gray-900">{{ roomStats.total }}</p>
             </div>
         </div>
 
@@ -140,6 +172,24 @@ const roomTotal = computed(() => Math.max(1, roomEntries.value.reduce((sum, e) =
                                 class="h-full rounded-full transition-all duration-500"
                                 :class="entry.color"
                                 :style="{ width: (entry.count / tierMax * 100) + '%', minWidth: entry.count > 0 ? '1.5rem' : '0' }"
+                            ></div>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 w-8 text-right">{{ entry.count }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Inventory by Status -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Room Inventory</h2>
+                <div class="space-y-3">
+                    <div v-for="entry in roomStatusEntries" :key="entry.key" class="flex items-center gap-3">
+                        <span class="text-sm text-gray-600 w-24 shrink-0">{{ entry.label }}</span>
+                        <div class="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+                            <div
+                                class="h-full rounded-full transition-all duration-500"
+                                :class="entry.color"
+                                :style="{ width: (entry.count / roomStatusMax * 100) + '%', minWidth: entry.count > 0 ? '1.5rem' : '0' }"
                             ></div>
                         </div>
                         <span class="text-sm font-semibold text-gray-700 w-8 text-right">{{ entry.count }}</span>
