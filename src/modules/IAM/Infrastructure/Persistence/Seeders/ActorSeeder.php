@@ -11,7 +11,6 @@ use Modules\Guest\Infrastructure\Persistence\Seeders\GuestSeeder;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\Repository\ActorRepository;
-use Modules\IAM\Domain\Repository\RoleRepository;
 use Modules\IAM\Domain\Service\PasswordHasher;
 use Modules\IAM\Domain\ValueObject\RoleName;
 
@@ -19,7 +18,6 @@ class ActorSeeder extends Seeder
 {
     public function __construct(
         private readonly ActorRepository $repository,
-        private readonly RoleRepository $roleRepository,
         private readonly PasswordHasher $hasher,
     ) {}
 
@@ -32,7 +30,7 @@ class ActorSeeder extends Seeder
 
     private function seedSuperAdmins(): void
     {
-        $superadminRole = $this->roleRepository->findByName(RoleName::SUPERADMIN);
+        $superadminRole = $this->repository->findRoleByName(RoleName::SUPERADMIN);
 
         $superadmins = [
             ['Super Admin', 'superadmin@guesthub.com'],
@@ -61,7 +59,7 @@ class ActorSeeder extends Seeder
 
     private function seedAdmins(): void
     {
-        $adminRole = $this->roleRepository->findByName(RoleName::ADMIN);
+        $adminRole = $this->repository->findRoleByName(RoleName::ADMIN);
         $accountId = AccountId::fromString(AccountSeeder::$defaultAccountUuid);
 
         $admins = [
@@ -92,7 +90,7 @@ class ActorSeeder extends Seeder
 
     private function seedGuests(): void
     {
-        $guestRole = $this->roleRepository->findByName(RoleName::GUEST);
+        $guestRole = $this->repository->findRoleByName(RoleName::GUEST);
         $accountId = AccountId::fromString(AccountSeeder::$defaultAccountUuid);
         $guestIds = GuestSeeder::$guestIds;
 

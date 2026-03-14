@@ -11,7 +11,6 @@ use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Exception\ActorAlreadyExistsException;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
-use Modules\IAM\Domain\Repository\RoleRepository;
 use Modules\IAM\Domain\Service\GuestGateway;
 use Modules\IAM\Domain\Service\PasswordHasher;
 use Modules\IAM\Domain\ValueObject\RoleName;
@@ -23,7 +22,6 @@ final readonly class RegisterActorHandler
     public function __construct(
         private ActorRepository $repository,
         private AccountRepository $accountRepository,
-        private RoleRepository $roleRepository,
         private PasswordHasher $hasher,
         private GuestGateway $guestGateway,
         private TenantContext $tenantContext,
@@ -59,7 +57,7 @@ final readonly class RegisterActorHandler
         );
 
         // Get the guest role
-        $guestRole = $this->roleRepository->findByName(RoleName::GUEST);
+        $guestRole = $this->repository->findRoleByName(RoleName::GUEST);
 
         $id = $this->repository->nextIdentity();
 

@@ -16,7 +16,6 @@ use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
-use Modules\IAM\Domain\Repository\RoleRepository;
 use Modules\IAM\Domain\Role;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
 use Modules\IAM\Domain\ValueObject\RoleName;
@@ -48,12 +47,11 @@ final class EloquentActorRepositoryTest extends TestCase
         $this->repository = $this->app->make(ActorRepository::class);
 
         // Seed roles
-        $roleRepository = $this->app->make(RoleRepository::class);
-        $this->guestRole = Role::create(uuid: $roleRepository->nextIdentity(), name: RoleName::GUEST);
-        $roleRepository->save($this->guestRole);
+        $this->guestRole = Role::create(uuid: $this->repository->nextRoleIdentity(), name: RoleName::GUEST);
+        $this->repository->saveRole($this->guestRole);
 
-        $this->adminRole = Role::create(uuid: $roleRepository->nextIdentity(), name: RoleName::ADMIN);
-        $roleRepository->save($this->adminRole);
+        $this->adminRole = Role::create(uuid: $this->repository->nextRoleIdentity(), name: RoleName::ADMIN);
+        $this->repository->saveRole($this->adminRole);
 
         // Seed account
         $accountRepository = $this->app->make(AccountRepository::class);
@@ -184,9 +182,8 @@ final class EloquentActorRepositoryTest extends TestCase
     #[Test]
     public function it_saves_super_admin_with_null_account(): void
     {
-        $roleRepository = $this->app->make(\Modules\IAM\Domain\Repository\RoleRepository::class);
-        $superadminRole = Role::create(uuid: $roleRepository->nextIdentity(), name: RoleName::SUPERADMIN);
-        $roleRepository->save($superadminRole);
+        $superadminRole = Role::create(uuid: $this->repository->nextRoleIdentity(), name: RoleName::SUPERADMIN);
+        $this->repository->saveRole($superadminRole);
 
         $actor = Actor::register(
             uuid: $this->repository->nextIdentity(),

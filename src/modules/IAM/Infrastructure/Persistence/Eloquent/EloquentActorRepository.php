@@ -78,6 +78,33 @@ final class EloquentActorRepository implements ActorRepository
         return ActorId::generate();
     }
 
+    public function saveRole(Role $role): void
+    {
+        RoleModel::query()->updateOrInsert(
+            ['uuid' => $role->uuid->value],
+            ['name' => $role->name->value],
+        );
+    }
+
+    public function findRoleByName(RoleName $name): ?Role
+    {
+        $record = RoleModel::where('name', $name->value)->first();
+
+        if (! $record) {
+            return null;
+        }
+
+        return Role::create(
+            uuid: RoleId::fromString($record->uuid),
+            name: RoleName::from($record->name),
+        );
+    }
+
+    public function nextRoleIdentity(): RoleId
+    {
+        return RoleId::generate();
+    }
+
     /** @return list<Role> */
     private function loadRoles(int $actorId): array
     {
