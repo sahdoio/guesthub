@@ -1,512 +1,479 @@
 # Event Storming — GuestHub
 
-> Mapa de cores baseado na notacao de Event Storming.
+> Color map based on Event Storming notation.
 >
-> Referencia: [Remote Event Storming Workshop — DDD Practitioners](https://ddd-practitioners.com/2023/03/20/remote-eventstorming-workshop/)
+> Reference: [Remote Event Storming Workshop — DDD Practitioners](https://ddd-practitioners.com/2023/03/20/remote-eventstorming-workshop/)
 
-| Cor | Elemento | Funcao |
-|-----|----------|--------|
-| :orange_square: Laranja | **Event** | Algo que aconteceu no dominio (passado) |
-| :blue_square: Azul | **Command** | Intencao de causar um evento |
-| :yellow_square: Amarelo | **Actor** | Quem dispara o comando |
-| :purple_square: Roxo | **Policy** | Regra reativa ("whenever X, then Y") |
-| :green_square: Verde | **Read Model** | Projecao de dados para tomada de decisao |
-| :red_square: Vermelho | **Test** | Criterios de aceitacao |
-| :white_large_square: Cinza | **Question** | Duvidas ou incertezas |
-| :black_large_square: Roxo escuro | **Invariant** | Regras que nunca podem ser violadas |
+| Color | Element | Role |
+|-------|---------|------|
+| 🟧 Orange | **Event** | Something that happened in the domain (past tense) |
+| 🟦 Blue | **Command** | Intent to cause an event |
+| 🟨 Yellow | **Actor** | Who triggers the command |
+| 🟪 Purple | **Policy** | Reactive rule ("whenever X, then Y") |
+| 🟩 Green | **Read Model** | Data projection for decision-making |
+| 🟥 Red | **Test** | Acceptance criteria |
+| ⬜ Gray | **Question** | Doubts or uncertainties |
+| ◼️ Dark | **Invariant** | Rules that can never be violated |
 
 ---
 
 ## Bounded Context: IAM (Identity & Access Management)
 
-### Fluxo: Registro de Ator (Guest Self-Registration)
+### Flow: Actor Registration (Guest Self-Registration)
 
-```
-:yellow_square: Actor: Visitante (usuario anonimo)
+🟨 **Actor:** Visitor (anonymous user)
 
-:green_square: Read Model: Formulario de registro (nome, email, senha, telefone, documento)
+🟩 **Read Model:** Registration form (name, email, password, phone, document)
 
-:blue_square: Command: Register Actor
-  -> accountName, name, email, password, phone, document
+🟦 **Command:** Register Actor
+> `accountName, name, email, password, phone, document`
 
-:black_large_square: Invariant: Email deve ser unico no sistema
-:black_large_square: Invariant: Documento deve ser unico no sistema
-:black_large_square: Invariant: Senha deve ter formato valido (hashed via bcrypt)
+◼️ **Invariant:** Email must be unique across the system
+◼️ **Invariant:** Document must be unique across the system
+◼️ **Invariant:** Password must be valid (hashed via bcrypt)
 
-:orange_square: Event: Account Created
-  -> accountId, name
+🟧 **Event:** Account Created
+> `accountId, name`
 
-:orange_square: Event: Actor Registered
-  -> actorId, accountId, email, role=GUEST
+🟧 **Event:** Actor Registered
+> `actorId, accountId, email, role=GUEST`
 
-:purple_square: Policy: Whenever Actor Registered (role=GUEST), then Create Guest
-  -> Integracao via GuestGateway
+🟪 **Policy:** Whenever Actor Registered (role=GUEST), then Create Guest
+> Integration via GuestGateway
 
-:orange_square: Event: Guest Created
-  -> guestId, email, loyaltyTier=BRONZE
+🟧 **Event:** Guest Created
+> `guestId, email, loyaltyTier=BRONZE`
 
-:purple_square: Policy: Whenever Guest Created, then Link Actor to Guest
-  -> Actor.subjectType='guest', Actor.subjectId=guestId
-```
-
-### Fluxo: Autenticacao (Login)
-
-```
-:yellow_square: Actor: Visitante (usuario anonimo)
-
-:green_square: Read Model: Formulario de login (email, senha)
-
-:blue_square: Command: Authenticate Actor
-  -> email, password
-
-:black_large_square: Invariant: Email deve existir no sistema
-:black_large_square: Invariant: Senha deve corresponder ao hash armazenado
-
-:orange_square: Event: Actor Authenticated
-  -> actorId, token (Sanctum)
-
-:red_square: Test: Login com credenciais validas retorna token
-:red_square: Test: Login com credenciais invalidas retorna erro 401
-```
-
-### Fluxo: Logout
-
-```
-:yellow_square: Actor: Guest | Admin | SuperAdmin
-
-:blue_square: Command: Revoke Token
-
-:orange_square: Event: Token Revoked
-  -> actorId
-```
-
-### :white_large_square: Questions — IAM
-
-- Como funciona a recuperacao de senha?
-- Existe fluxo de verificacao de email?
-- Admins podem ser criados via API ou apenas via seeder?
+🟪 **Policy:** Whenever Guest Created, then Link Actor to Guest
+> `Actor.subjectType='guest', Actor.subjectId=guestId`
 
 ---
 
-## Bounded Context: Guest (Gestao de Hospedes)
+### Flow: Authentication (Login)
 
-### Fluxo: Criacao de Guest (via API admin)
+🟨 **Actor:** Visitor (anonymous user)
 
-```
-:yellow_square: Actor: Admin | SuperAdmin
+🟩 **Read Model:** Login form (email, password)
 
-:green_square: Read Model: Lista de guests existentes
+🟦 **Command:** Authenticate Actor
+> `email, password`
 
-:blue_square: Command: Create Guest
-  -> fullName, email, phone, document
+◼️ **Invariant:** Email must exist in the system
+◼️ **Invariant:** Password must match the stored hash
 
-:black_large_square: Invariant: Documento deve ser unico
+🟧 **Event:** Actor Authenticated
+> `actorId, token (Sanctum)`
 
-:orange_square: Event: Guest Created
-  -> guestId, email, loyaltyTier=BRONZE
-```
+🟥 **Test:** Login with valid credentials returns token
+🟥 **Test:** Login with invalid credentials returns 401 error
 
-### Fluxo: Atualizacao de Guest
+---
 
-```
-:yellow_square: Actor: Guest (proprio perfil) | Admin | SuperAdmin
+### Flow: Logout
 
-:green_square: Read Model: Guest Data (nome, email, telefone, loyalty tier, preferencias)
+🟨 **Actor:** Guest | Admin | SuperAdmin
 
-:blue_square: Command: Update Guest
-  -> guestId, fullName?, email?, phone?, loyaltyTier?, preferences?
+🟦 **Command:** Revoke Token
 
-:black_large_square: Invariant: Guest so pode editar o proprio perfil (exceto admin/superadmin)
+🟧 **Event:** Token Revoked
+> `actorId`
 
-:orange_square: Event: Guest Contact Info Updated
-  -> guestId
+---
 
-:orange_square: Event: Guest Loyalty Tier Changed (se tier alterado)
-  -> guestId, tier (BRONZE | SILVER | GOLD | PLATINUM)
-```
+### ⬜ Questions — IAM
+
+- How does password recovery work?
+- Is there an email verification flow?
+- Can Admins be created via API or only via seeder?
+
+---
+
+## Bounded Context: Guest (Guest Management)
+
+### Flow: Guest Creation (via admin API)
+
+🟨 **Actor:** Admin | SuperAdmin
+
+🟩 **Read Model:** Existing guest list
+
+🟦 **Command:** Create Guest
+> `fullName, email, phone, document`
+
+◼️ **Invariant:** Document must be unique
+
+🟧 **Event:** Guest Created
+> `guestId, email, loyaltyTier=BRONZE`
+
+---
+
+### Flow: Guest Update
+
+🟨 **Actor:** Guest (own profile) | Admin | SuperAdmin
+
+🟩 **Read Model:** Guest Data (name, email, phone, loyalty tier, preferences)
+
+🟦 **Command:** Update Guest
+> `guestId, fullName?, email?, phone?, loyaltyTier?, preferences?`
+
+◼️ **Invariant:** Guest can only edit their own profile (except admin/superadmin)
+
+🟧 **Event:** Guest Contact Info Updated
+> `guestId`
+
+🟧 **Event:** Guest Loyalty Tier Changed *(if tier changed)*
+> `guestId, tier (BRONZE | SILVER | GOLD | PLATINUM)`
+
+---
 
 ### Read Models — Guest
 
-```
-:green_square: Read Model: Guest List (paginado, admin/superadmin only)
-  -> fullName, email, phone, document, loyaltyTier
+🟩 **Guest List** *(paginated, admin/superadmin only)*
+> `fullName, email, phone, document, loyaltyTier`
 
-:green_square: Read Model: Guest Stats
-  -> contagem por loyalty tier
+🟩 **Guest Stats**
+> count by loyalty tier
 
-:green_square: Read Model: Guest Detail
-  -> fullName, email, phone, document, loyaltyTier, preferences
-```
-
-### :white_large_square: Questions — Guest
-
-- Existe historico de mudancas de loyalty tier?
-- Preferencias sao free-text ou de um catalogo predefinido?
-- Qual a regra de negocio para upgrade/downgrade de loyalty tier?
+🟩 **Guest Detail**
+> `fullName, email, phone, document, loyaltyTier, preferences`
 
 ---
 
-## Bounded Context: Inventory (Gestao de Quartos)
+### ⬜ Questions — Guest
 
-### Fluxo: Criacao de Quarto
+- Is there a history of loyalty tier changes?
+- Are preferences free-text or from a predefined catalog?
+- What is the business rule for loyalty tier upgrade/downgrade?
 
-```
-:yellow_square: Actor: Admin | SuperAdmin
+---
 
-:blue_square: Command: Create Room
-  -> number, type (SINGLE|DOUBLE|SUITE), floor, capacity, pricePerNight, amenities[]
+## Bounded Context: Inventory (Room Management)
 
-:black_large_square: Invariant: Numero do quarto deve ser unico
+### Flow: Room Creation
 
-:orange_square: Event: Room Created
-  -> roomId, number, type, status=AVAILABLE
-```
+🟨 **Actor:** Admin | SuperAdmin
 
-### Fluxo: Atualizacao de Quarto
+🟦 **Command:** Create Room
+> `number, type (SINGLE|DOUBLE|SUITE), floor, capacity, pricePerNight, amenities[]`
 
-```
-:yellow_square: Actor: Admin | SuperAdmin
+◼️ **Invariant:** Room number must be unique
 
-:green_square: Read Model: Room Detail (numero, tipo, andar, capacidade, preco, amenities, status)
+🟧 **Event:** Room Created
+> `roomId, number, type, status=AVAILABLE`
 
-:blue_square: Command: Update Room
-  -> roomId, pricePerNight?, amenities?
+---
 
-:orange_square: Event: Room Updated
-  -> roomId
-```
+### Flow: Room Update
 
-### Fluxo: Mudanca de Status do Quarto
+🟨 **Actor:** Admin | SuperAdmin
 
-```
-:yellow_square: Actor: Admin | SuperAdmin
+🟩 **Read Model:** Room Detail (number, type, floor, capacity, price, amenities, status)
 
-:green_square: Read Model: Room Detail (status atual)
+🟦 **Command:** Update Room
+> `roomId, pricePerNight?, amenities?`
 
-:blue_square: Command: Change Room Status
-  -> roomId, newStatus
+🟧 **Event:** Room Updated
+> `roomId`
 
-:black_large_square: Invariant: Maquina de estados do quarto
-  AVAILABLE -> OCCUPIED (apenas via check-in)
-  OCCUPIED -> AVAILABLE (apenas via check-out/release)
-  AVAILABLE | MAINTENANCE | OUT_OF_ORDER -> MAINTENANCE
-  AVAILABLE | MAINTENANCE | OUT_OF_ORDER -> OUT_OF_ORDER
-  MAINTENANCE | OUT_OF_ORDER -> AVAILABLE
-  OCCUPIED NAO pode ir para MAINTENANCE ou OUT_OF_ORDER
+---
 
-:orange_square: Event: Room Status Changed
-  -> roomId, oldStatus, newStatus
-```
+### Flow: Room Status Change
+
+🟨 **Actor:** Admin | SuperAdmin
+
+🟩 **Read Model:** Room Detail (current status)
+
+🟦 **Command:** Change Room Status
+> `roomId, newStatus`
+
+◼️ **Invariant:** Room state machine
+
+| From | To | Condition |
+|------|----|-----------|
+| AVAILABLE | OCCUPIED | only via check-in |
+| OCCUPIED | AVAILABLE | only via check-out/release |
+| AVAILABLE / MAINTENANCE / OUT_OF_ORDER | MAINTENANCE | — |
+| AVAILABLE / MAINTENANCE / OUT_OF_ORDER | OUT_OF_ORDER | — |
+| MAINTENANCE / OUT_OF_ORDER | AVAILABLE | — |
+| OCCUPIED | MAINTENANCE / OUT_OF_ORDER | **FORBIDDEN** |
+
+🟧 **Event:** Room Status Changed
+> `roomId, oldStatus, newStatus`
+
+---
 
 ### Read Models — Inventory
 
-```
-:green_square: Read Model: Room List (paginado, admin/superadmin only)
-  -> number, type, floor, capacity, pricePerNight, status, amenities
+🟩 **Room List** *(paginated, admin/superadmin only)*
+> `number, type, floor, capacity, pricePerNight, status, amenities`
 
-:green_square: Read Model: Room Stats
-  -> contagem por tipo (SINGLE, DOUBLE, SUITE)
-  -> contagem por status (AVAILABLE, OCCUPIED, MAINTENANCE, OUT_OF_ORDER)
+🟩 **Room Stats**
+> count by type (SINGLE, DOUBLE, SUITE) and by status (AVAILABLE, OCCUPIED, MAINTENANCE, OUT_OF_ORDER)
 
-:green_square: Read Model: Room Availability (usado pelo Reservation BC)
-  -> tipo, periodo, quantidade disponivel, preco
-```
-
-### :white_large_square: Questions — Inventory
-
-- Existe historico de manutencao dos quartos?
-- Amenities sao free-text ou de um catalogo?
-- O preco por noite varia por temporada?
+🟩 **Room Availability** *(used by Reservation BC)*
+> `type, period, available count, price`
 
 ---
 
-## Bounded Context: Reservation (Gestao de Reservas)
+### ⬜ Questions — Inventory
 
-### Fluxo: Criacao de Reserva
+- Is there a maintenance history for rooms?
+- Are amenities free-text or from a catalog?
+- Does the nightly rate vary by season?
 
-```
-:yellow_square: Actor: Guest | Admin | SuperAdmin
+---
 
-:green_square: Read Model: Room Availability (tipo, periodo, disponibilidade)
-:green_square: Read Model: Guest Data (loyalty tier -> VIP status)
+## Bounded Context: Reservation (Reservation Management)
 
-:blue_square: Command: Create Reservation
-  -> guestId, checkIn, checkOut, roomType (SINGLE|DOUBLE|SUITE)
+### Flow: Reservation Creation
 
-:black_large_square: Invariant: Check-in nao pode ser no passado
-:black_large_square: Invariant: Estadia minima: 1 noite
-:black_large_square: Invariant: Estadia maxima: 365 noites
-:black_large_square: Invariant: Check-out deve ser posterior ao check-in
-:black_large_square: Invariant: Guest VIP (PLATINUM): pode reservar ate 90 dias de antecedencia
-:black_large_square: Invariant: Guest regular: pode reservar ate 60 dias de antecedencia
-:black_large_square: Invariant: Deve haver quartos disponiveis do tipo solicitado no periodo
-:black_large_square: Invariant: Nao pode haver sobreposicao de reservas no mesmo quarto
+🟨 **Actor:** Guest | Admin | SuperAdmin
 
-:orange_square: Event: Reservation Created
-  -> reservationId, guestId, roomType, period, status=PENDING
-```
+🟩 **Read Model:** Room Availability (type, period, availability)
+🟩 **Read Model:** Guest Data (loyalty tier -> VIP status)
 
-### Fluxo: Confirmacao de Reserva
+🟦 **Command:** Create Reservation
+> `guestId, checkIn, checkOut, roomType (SINGLE|DOUBLE|SUITE)`
 
-```
-:yellow_square: Actor: Admin | SuperAdmin
+◼️ **Invariant:** Check-in cannot be in the past
+◼️ **Invariant:** Minimum stay: 1 night
+◼️ **Invariant:** Maximum stay: 365 nights
+◼️ **Invariant:** Check-out must be after check-in
+◼️ **Invariant:** VIP guest (PLATINUM): can book up to 90 days in advance
+◼️ **Invariant:** Regular guest: can book up to 60 days in advance
+◼️ **Invariant:** Rooms of the requested type must be available for the period
+◼️ **Invariant:** No overlapping reservations on the same room
 
-:green_square: Read Model: Reservation Detail (status atual, dados do guest)
+🟧 **Event:** Reservation Created
+> `reservationId, guestId, roomType, period, status=PENDING`
 
-:blue_square: Command: Confirm Reservation
-  -> reservationId
+---
 
-:black_large_square: Invariant: Reserva deve estar em status PENDING
+### Flow: Reservation Confirmation
 
-:orange_square: Event: Reservation Confirmed
-  -> reservationId, confirmedAt
-```
+🟨 **Actor:** Admin | SuperAdmin
 
-### Fluxo: Check-In
+🟩 **Read Model:** Reservation Detail (current status, guest data)
 
-```
-:yellow_square: Actor: Admin | SuperAdmin
+🟦 **Command:** Confirm Reservation
+> `reservationId`
 
-:green_square: Read Model: Reservation Detail (status, roomType)
-:green_square: Read Model: Room Availability (quartos disponiveis do tipo)
+◼️ **Invariant:** Reservation must be in PENDING status
 
-:blue_square: Command: Check In Guest
-  -> reservationId, roomNumber
+🟧 **Event:** Reservation Confirmed
+> `reservationId, confirmedAt`
 
-:black_large_square: Invariant: Reserva deve estar em status CONFIRMED
-:black_large_square: Invariant: Quarto deve estar AVAILABLE
+---
 
-:orange_square: Event: Guest Checked In
-  -> reservationId, roomNumber, checkedInAt
+### Flow: Check-In
 
-:purple_square: Policy: Whenever Guest Checked In, then Occupy Room
-  -> Room.status = OCCUPIED
+🟨 **Actor:** Admin | SuperAdmin
 
-:orange_square: Event: Room Status Changed
-  -> roomId, AVAILABLE -> OCCUPIED
-```
+🟩 **Read Model:** Reservation Detail (status, roomType)
+🟩 **Read Model:** Room Availability (available rooms of type)
 
-### Fluxo: Check-Out
+🟦 **Command:** Check In Guest
+> `reservationId, roomNumber`
 
-```
-:yellow_square: Actor: Admin | SuperAdmin
+◼️ **Invariant:** Reservation must be in CONFIRMED status
+◼️ **Invariant:** Room must be AVAILABLE
 
-:green_square: Read Model: Reservation Detail (status, quarto atribuido)
+🟧 **Event:** Guest Checked In
+> `reservationId, roomNumber, checkedInAt`
 
-:blue_square: Command: Check Out Guest
-  -> reservationId
+🟪 **Policy:** Whenever Guest Checked In, then Occupy Room
+> `Room.status = OCCUPIED`
 
-:black_large_square: Invariant: Reserva deve estar em status CHECKED_IN
+🟧 **Event:** Room Status Changed
+> `roomId, AVAILABLE -> OCCUPIED`
 
-:orange_square: Event: Guest Checked Out
-  -> reservationId, checkedOutAt
+---
 
-:purple_square: Policy: Whenever Guest Checked Out, then Release Room
-  -> Room.status = AVAILABLE
+### Flow: Check-Out
 
-:orange_square: Event: Room Status Changed
-  -> roomId, OCCUPIED -> AVAILABLE
-```
+🟨 **Actor:** Admin | SuperAdmin
 
-### Fluxo: Cancelamento de Reserva
+🟩 **Read Model:** Reservation Detail (status, assigned room)
 
-```
-:yellow_square: Actor: Guest (propria reserva) | Admin | SuperAdmin
+🟦 **Command:** Check Out Guest
+> `reservationId`
 
-:green_square: Read Model: Reservation Detail (status atual)
+◼️ **Invariant:** Reservation must be in CHECKED_IN status
 
-:blue_square: Command: Cancel Reservation
-  -> reservationId, reason
+🟧 **Event:** Guest Checked Out
+> `reservationId, checkedOutAt`
 
-:black_large_square: Invariant: Reserva deve estar em status PENDING ou CONFIRMED
-:black_large_square: Invariant: Nao pode cancelar se ja CHECKED_IN, CHECKED_OUT ou CANCELLED
+🟪 **Policy:** Whenever Guest Checked Out, then Release Room
+> `Room.status = AVAILABLE`
 
-:orange_square: Event: Reservation Cancelled
-  -> reservationId, reason, cancelledAt
-```
+🟧 **Event:** Room Status Changed
+> `roomId, OCCUPIED -> AVAILABLE`
 
-### Fluxo: Pedidos Especiais (Special Requests)
+---
 
-```
-:yellow_square: Actor: Guest (propria reserva) | Admin | SuperAdmin
+### Flow: Reservation Cancellation
 
-:green_square: Read Model: Reservation Detail (status, special requests existentes)
+🟨 **Actor:** Guest (own reservation) | Admin | SuperAdmin
 
-:blue_square: Command: Add Special Request
-  -> reservationId, requestType, description
-  -> requestType: EARLY_CHECK_IN | LATE_CHECK_OUT | EXTRA_BED
-                  | DIETARY_RESTRICTION | SPECIAL_OCCASION | OTHER
+🟩 **Read Model:** Reservation Detail (current status)
 
-:black_large_square: Invariant: Maximo de 5 special requests por reserva
-:black_large_square: Invariant: Nao pode adicionar se reserva CANCELLED ou CHECKED_OUT
+🟦 **Command:** Cancel Reservation
+> `reservationId, reason`
 
-:orange_square: Event: Special Request Added
-  -> reservationId, requestId, type, status=PENDING
-```
+◼️ **Invariant:** Reservation must be in PENDING or CONFIRMED status
+◼️ **Invariant:** Cannot cancel if already CHECKED_IN, CHECKED_OUT, or CANCELLED
 
-```
-:yellow_square: Actor: Admin | SuperAdmin
+🟧 **Event:** Reservation Cancelled
+> `reservationId, reason, cancelledAt`
 
-:blue_square: Command: Fulfill Special Request
-  -> reservationId, requestId
+---
 
-:orange_square: Event: Special Request Fulfilled
-  -> reservationId, requestId, fulfilledAt
-```
+### Flow: Special Requests
 
-### Maquina de Estados — Reservation
+🟨 **Actor:** Guest (own reservation) | Admin | SuperAdmin
 
-```
-                    +-----------+
-                    |  PENDING  |
-                    +-----+-----+
-                          |
-                +---------+---------+
-                |                   |
-                v                   v
-          +-----------+      +-----------+
-          | CONFIRMED |      | CANCELLED |
-          +-----+-----+      +-----------+
-                |
-                v
-          +-----------+
-          | CHECKED_IN|
-          +-----+-----+
-                |
-                v
-          +------------+
-          | CHECKED_OUT|
-          +------------+
+🟩 **Read Model:** Reservation Detail (status, existing special requests)
+
+🟦 **Command:** Add Special Request
+> `reservationId, requestType, description`
+> requestType: `EARLY_CHECK_IN | LATE_CHECK_OUT | EXTRA_BED | DIETARY_RESTRICTION | SPECIAL_OCCASION | OTHER`
+
+◼️ **Invariant:** Maximum of 5 special requests per reservation
+◼️ **Invariant:** Cannot add if reservation is CANCELLED or CHECKED_OUT
+
+🟧 **Event:** Special Request Added
+> `reservationId, requestId, type, status=PENDING`
+
+---
+
+🟨 **Actor:** Admin | SuperAdmin
+
+🟦 **Command:** Fulfill Special Request
+> `reservationId, requestId`
+
+🟧 **Event:** Special Request Fulfilled
+> `reservationId, requestId, fulfilledAt`
+
+---
+
+### State Machine — Reservation
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> CONFIRMED
+    PENDING --> CANCELLED
+    CONFIRMED --> CHECKED_IN
+    CHECKED_IN --> CHECKED_OUT
+    CHECKED_OUT --> [*]
+    CANCELLED --> [*]
 ```
 
-### Maquina de Estados — Special Request
+### State Machine — Special Request
 
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> FULFILLED
+    PENDING --> CANCELLED
+    FULFILLED --> [*]
+    CANCELLED --> [*]
 ```
-          +---------+
-          | PENDING |
-          +----+----+
-               |
-         +-----+-----+
-         |           |
-         v           v
-   +-----------+ +-----------+
-   | FULFILLED | | CANCELLED |
-   +-----------+ +-----------+
-```
+
+---
 
 ### Read Models — Reservation
 
-```
-:green_square: Read Model: Reservation List (paginado)
-  -> filtravel por: status, roomType, guestId
-  -> dados: id, guest, periodo, roomType, status, assignedRoom
+🟩 **Reservation List** *(paginated)*
+> Filterable by: `status, roomType, guestId`
+> Data: `id, guest, period, roomType, status, assignedRoom`
 
-:green_square: Read Model: Reservation Detail
-  -> reservationId, guest (nome, email, telefone, isVip)
-  -> periodo, roomType, assignedRoomNumber, status
-  -> specialRequests[], timestamps (created, confirmed, checkedIn, checkedOut, cancelled)
+🟩 **Reservation Detail**
+> `reservationId, guest (name, email, phone, isVip), period, roomType, assignedRoomNumber, status, specialRequests[], timestamps (created, confirmed, checkedIn, checkedOut, cancelled)`
 
-:green_square: Read Model: Reservation Stats
-  -> contagem por status
-  -> contagem por roomType
-  -> check-ins de hoje
-  -> check-outs de hoje
-```
-
-### :white_large_square: Questions — Reservation
-
-- Existe cobranca/pagamento associado a reserva?
-- Ha politica de cancelamento (multa, prazo)?
-- Notificacoes sao enviadas ao guest em mudancas de status?
-- Como funciona overbooking? E permitido?
+🟩 **Reservation Stats**
+> count by status, count by roomType, today's check-ins, today's check-outs
 
 ---
 
-## Integracao entre Bounded Contexts (Context Map)
+### ⬜ Questions — Reservation
 
+- Is there billing/payment associated with reservations?
+- Is there a cancellation policy (fees, deadlines)?
+- Are notifications sent to guests on status changes?
+- How does overbooking work? Is it allowed?
+
+---
+
+## Bounded Context Integration (Context Map)
+
+```mermaid
+graph LR
+    IAM -- GuestGateway --> Guest
+    Reservation -- GuestGateway --> Guest
+    Reservation -- InventoryGateway --> Inventory
 ```
-+-------------------+          +-------------------+
-|                   |  Guest   |                   |
-|       IAM         |--------->|      Guest        |
-|                   | Gateway  |                   |
-+-------------------+          +-------------------+
-                                       ^
-                                       | Guest
-                                       | Gateway
-                                       |
-+-------------------+          +-------------------+
-|                   | Inventory|                   |
-|    Inventory      |<---------|   Reservation     |
-|                   | Gateway  |                   |
-+-------------------+          +-------------------+
-```
 
-### Padroes de Integracao
+### Integration Patterns
 
-| Origem | Destino | Gateway | Operacao |
+| Source | Target | Gateway | Operation |
 |--------|---------|---------|----------|
-| IAM | Guest | GuestGateway | Criar guest durante registro de ator |
-| Reservation | Guest | GuestGateway | Buscar info do guest (nome, VIP status) |
-| Reservation | Inventory | InventoryGateway | Verificar disponibilidade de quartos |
-| Reservation | Inventory | InventoryGateway | Ocupar/liberar quarto (check-in/check-out) |
+| IAM | Guest | GuestGateway | Create guest during actor registration |
+| Reservation | Guest | GuestGateway | Fetch guest info (name, VIP status) |
+| Reservation | Inventory | InventoryGateway | Check room availability |
+| Reservation | Inventory | InventoryGateway | Occupy/release room (check-in/check-out) |
 
 ---
 
-## Actors (Papeis do Sistema)
+## Actors (System Roles)
 
-```
-:yellow_square: SuperAdmin
-  -> Administrador do sistema
-  -> Sem account associado
-  -> Acesso total a todos os bounded contexts
+🟨 **SuperAdmin**
+> System administrator. No associated account. Full access to all bounded contexts.
 
-:yellow_square: Admin
-  -> Gerente de propriedade / Front desk
-  -> Associado a um Account (tenant)
-  -> Pode: gerenciar quartos, confirmar/check-in/check-out reservas, ver guests
+🟨 **Admin**
+> Property manager / Front desk. Associated with an Account (tenant). Can: manage rooms, confirm/check-in/check-out reservations, view guests.
 
-:yellow_square: Guest
-  -> Hospede
-  -> Associado a um Account + entidade Guest
-  -> Pode: ver/criar/cancelar proprias reservas, adicionar special requests, editar proprio perfil
-```
+🟨 **Guest**
+> Hotel guest. Associated with an Account + Guest entity. Can: view/create/cancel own reservations, add special requests, edit own profile.
 
 ---
 
-## Timeline Consolidada (Fluxo Principal)
+## Consolidated Timeline (Main Flow)
 
-```
-Visitante           IAM                    Guest              Reservation          Inventory
-    |                 |                      |                     |                    |
-    |--- Register --->|                      |                     |                    |
-    |                 |-- Account Created -->|                     |                    |
-    |                 |-- Actor Registered ->|                     |                    |
-    |                 |                      |-- Guest Created     |                    |
-    |                 |                      |                     |                    |
-    |--- Login ------>|                      |                     |                    |
-    |                 |-- Authenticated      |                     |                    |
-    |                 |                      |                     |                    |
-    |                 |                      |                     |                    |
-  Guest               |                      |                     |                    |
-    |                 |                      |                     |                    |
-    |----------------------------------------+-- Create Reserv -->|                    |
-    |                 |                      |<-- Guest Info ------|                    |
-    |                 |                      |                     |--- Check Avail --->|
-    |                 |                      |                     |<-- Available ------|
-    |                 |                      |                     |                    |
-    |                 |                      |  Reservation Created|                    |
-    |                 |                      |                     |                    |
-  Admin               |                      |                     |                    |
-    |                 |                      |                     |                    |
-    |---------------------------------------------Confirm ------->|                    |
-    |                 |                      |  Reservation Confirmed                   |
-    |                 |                      |                     |                    |
-    |---------------------------------------------Check In ------>|                    |
-    |                 |                      |                     |--- Occupy Room --->|
-    |                 |                      |  Guest Checked In   | Room Occupied      |
-    |                 |                      |                     |                    |
-    |---------------------------------------------Check Out ----->|                    |
-    |                 |                      |                     |--- Release Room -->|
-    |                 |                      |  Guest Checked Out  | Room Available     |
-    |                 |                      |                     |                    |
+```mermaid
+sequenceDiagram
+    participant V as Visitor
+    participant IAM
+    participant G as Guest
+    participant R as Reservation
+    participant I as Inventory
+
+    Note over V: Registration & Auth
+    V->>IAM: Register Actor
+    IAM->>IAM: Account Created
+    IAM->>G: Actor Registered (via GuestGateway)
+    G->>G: Guest Created
+    V->>IAM: Login
+    IAM->>V: Actor Authenticated (token)
+
+    Note over V: Booking (as Guest)
+    V->>R: Create Reservation
+    R->>G: Fetch Guest Info (VIP status)
+    G-->>R: Guest Info
+    R->>I: Check Availability
+    I-->>R: Available rooms
+    R->>R: Reservation Created (PENDING)
+
+    Note over V: Operations (as Admin)
+    V->>R: Confirm Reservation
+    R->>R: Reservation Confirmed
+
+    V->>R: Check In Guest (roomNumber)
+    R->>I: Occupy Room
+    I->>I: Room Status Changed (OCCUPIED)
+    R->>R: Guest Checked In
+
+    V->>R: Check Out Guest
+    R->>I: Release Room
+    I->>I: Room Status Changed (AVAILABLE)
+    R->>R: Guest Checked Out
 ```
