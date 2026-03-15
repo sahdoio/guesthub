@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Modules\Reservation\Presentation\Http\Action;
 
-use Modules\Guest\Infrastructure\Persistence\Eloquent\GuestModel;
 use Modules\Reservation\Application\Query\ListReservations;
 use Modules\Reservation\Application\Query\ListReservationsHandler;
 use Modules\Shared\Application\Query\Pagination;
+use Modules\Shared\Infrastructure\Service\AuthenticatedGuestResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -16,6 +16,7 @@ final readonly class ListReservationsAction
 {
     public function __construct(
         private ListReservationsHandler $handler,
+        private AuthenticatedGuestResolver $guestResolver,
         private JsonResponder $responder,
     ) {}
 
@@ -27,16 +28,8 @@ final readonly class ListReservationsAction
         $perPage = min(100, max(1, (int) ($query['per_page'] ?? 15)));
 
         $guestId = null;
-        $user = auth()->user();
-        if ($user) {
-            $user->load('roles');
-            $roleNames = $user->roles->pluck('name')->toArray();
-            if (! in_array('admin', $roleNames, true) && ! in_array('superadmin', $roleNames, true)) {
-                // Guest role: scope to own reservations
-                if ($user->subject_type === 'guest' && $user->subject_id) {
-                    $guestId = GuestModel::where('id', $user->subject_id)->value('uuid');
-                }
-            }
+        if (! $this->guestResolver->isAdminOrSuperAdmin()) {
+            $guestId = $this->guestResolver->resolveGuestUuid();
         }
 
         $result = $this->handler->handle(

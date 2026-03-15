@@ -6,11 +6,11 @@ namespace Modules\Reservation\Presentation\Http\Action;
 
 use DateMalformedStringException;
 use DateTimeImmutable;
-use Modules\Guest\Infrastructure\Persistence\Eloquent\GuestModel;
 use Modules\Reservation\Application\Command\CreateReservation;
 use Modules\Reservation\Application\Command\CreateReservationHandler;
 use Modules\Reservation\Application\Query\GetReservation;
 use Modules\Reservation\Application\Query\GetReservationHandler;
+use Modules\Shared\Infrastructure\Service\AuthenticatedGuestResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;
 use Modules\Shared\Presentation\Validation\InputValidator;
 use Psr\Http\Message\ResponseInterface;
@@ -21,6 +21,7 @@ final readonly class CreateReservationAction
     public function __construct(
         private CreateReservationHandler $handler,
         private GetReservationHandler $queryHandler,
+        private AuthenticatedGuestResolver $guestResolver,
         private InputValidator $validator,
         private JsonResponder $responder,
     ) {}
@@ -53,21 +54,13 @@ final readonly class CreateReservationAction
 
     private function enforceGuestOwnership(string $guestUuid): void
     {
-        $user = auth()->user();
-        if (! $user) {
+        if ($this->guestResolver->isAdminOrSuperAdmin()) {
             return;
         }
-        $user->load('roles');
-        $roleNames = $user->roles->pluck('name')->toArray();
-        if (in_array('admin', $roleNames, true) || in_array('superadmin', $roleNames, true)) {
-            return;
-        }
-        // Guest role: can only create reservations for themselves
-        if ($user->subject_type === 'guest' && $user->subject_id) {
-            $ownGuestUuid = GuestModel::where('id', $user->subject_id)->value('uuid');
-            if ($ownGuestUuid !== $guestUuid) {
-                abort(403, 'Access denied.');
-            }
+
+        $ownGuestUuid = $this->guestResolver->resolveGuestUuid();
+        if ($ownGuestUuid !== null && $ownGuestUuid !== $guestUuid) {
+            abort(403, 'Access denied.');
         }
     }
 }

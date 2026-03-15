@@ -7,8 +7,8 @@ namespace Modules\Guest\Presentation\Http\Action;
 use Modules\Guest\Domain\Exception\GuestNotFoundException;
 use Modules\Guest\Domain\GuestId;
 use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Infrastructure\Persistence\Eloquent\GuestModel;
 use Modules\Guest\Presentation\Http\Presenter\GuestPresenter;
+use Modules\Shared\Infrastructure\Service\AuthenticatedGuestResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -17,6 +17,7 @@ final readonly class ShowGuestAction
 {
     public function __construct(
         private GuestRepository $repository,
+        private AuthenticatedGuestResolver $guestResolver,
         private JsonResponder $responder,
     ) {}
 
@@ -34,21 +35,13 @@ final readonly class ShowGuestAction
 
     private function enforceOwnership(string $uuid): void
     {
-        $user = auth()->user();
-        if (! $user) {
+        if ($this->guestResolver->isAdminOrSuperAdmin()) {
             return;
         }
-        $user->load('roles');
-        $roleNames = $user->roles->pluck('name')->toArray();
-        if (in_array('admin', $roleNames, true) || in_array('superadmin', $roleNames, true)) {
-            return;
-        }
-        // Guest role: verify ownership
-        if ($user->subject_type === 'guest' && $user->subject_id) {
-            $ownUuid = GuestModel::where('id', $user->subject_id)->value('uuid');
-            if ($ownUuid !== $uuid) {
-                abort(403, 'Access denied.');
-            }
+
+        $ownGuestUuid = $this->guestResolver->resolveGuestUuid();
+        if ($ownGuestUuid !== null && $ownGuestUuid !== $uuid) {
+            abort(403, 'Access denied.');
         }
     }
 }

@@ -8,10 +8,8 @@ use DateTimeImmutable;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
-use Modules\IAM\Domain\Role;
 use Modules\IAM\Domain\RoleId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
-use Modules\IAM\Domain\ValueObject\RoleName;
 use Modules\IAM\Infrastructure\Persistence\ActorReflector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -40,7 +38,7 @@ final class ActorReflectorTest extends TestCase
         $actor = ActorReflector::reconstruct(
             uuid: $uuid,
             accountId: $this->accountId,
-            roles: [Role::create(uuid: $this->roleId, name: RoleName::GUEST)],
+            roleIds: [$this->roleId],
             name: 'John Doe',
             email: 'john@hotel.com',
             password: new HashedPassword('$2y$10$somehash'),
@@ -53,8 +51,8 @@ final class ActorReflectorTest extends TestCase
         $this->assertInstanceOf(Actor::class, $actor);
         $this->assertTrue($uuid->equals($actor->uuid));
         $this->assertTrue($this->accountId->equals($actor->accountId));
-        $this->assertCount(1, $actor->roles());
-        $this->assertSame(RoleName::GUEST, $actor->roles()[0]->name);
+        $this->assertCount(1, $actor->roleIds());
+        $this->assertTrue($actor->hasRoleId($this->roleId));
         $this->assertSame('John Doe', $actor->name);
         $this->assertSame('john@hotel.com', $actor->email);
         $this->assertSame('$2y$10$somehash', $actor->password->value);
@@ -70,7 +68,7 @@ final class ActorReflectorTest extends TestCase
         $actor = ActorReflector::reconstruct(
             uuid: ActorId::generate(),
             accountId: $this->accountId,
-            roles: [Role::create(uuid: $this->roleId, name: RoleName::ADMIN)],
+            roleIds: [$this->roleId],
             name: 'Hotel Manager',
             email: 'manager@hotel.com',
             password: new HashedPassword('$2y$10$hash'),
@@ -80,9 +78,8 @@ final class ActorReflectorTest extends TestCase
             updatedAt: null,
         );
 
-        $this->assertCount(1, $actor->roles());
-        $this->assertSame(RoleName::ADMIN, $actor->roles()[0]->name);
-        $this->assertTrue($actor->isAdmin());
+        $this->assertCount(1, $actor->roleIds());
+        $this->assertTrue($actor->hasRoleId($this->roleId));
     }
 
     #[Test]
@@ -91,7 +88,7 @@ final class ActorReflectorTest extends TestCase
         $actor = ActorReflector::reconstruct(
             uuid: ActorId::generate(),
             accountId: $this->accountId,
-            roles: [Role::create(uuid: $this->roleId, name: RoleName::GUEST)],
+            roleIds: [$this->roleId],
             name: 'Booking Engine',
             email: 'system@hotel.com',
             password: new HashedPassword('$2y$10$hash'),
@@ -112,7 +109,7 @@ final class ActorReflectorTest extends TestCase
         $actor = ActorReflector::reconstruct(
             uuid: ActorId::generate(),
             accountId: $this->accountId,
-            roles: [Role::create(uuid: $this->roleId, name: RoleName::GUEST)],
+            roleIds: [$this->roleId],
             name: 'Jane',
             email: 'jane@hotel.com',
             password: new HashedPassword('$2y$10$hash'),

@@ -11,10 +11,10 @@ use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Exception\ActorAlreadyExistsException;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
+use Modules\IAM\Domain\Repository\RoleRepository;
 use Modules\IAM\Domain\Service\GuestGateway;
 use Modules\IAM\Domain\Service\PasswordHasher;
 use Modules\IAM\Domain\ValueObject\RoleName;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 final readonly class RegisterActorHandler
@@ -22,6 +22,7 @@ final readonly class RegisterActorHandler
     public function __construct(
         private ActorRepository $repository,
         private AccountRepository $accountRepository,
+        private RoleRepository $roleRepository,
         private PasswordHasher $hasher,
         private GuestGateway $guestGateway,
         private TenantContext $tenantContext,
@@ -45,7 +46,7 @@ final readonly class RegisterActorHandler
         $this->accountRepository->save($account);
 
         // Set tenant context for cross-BC operations
-        $numericAccountId = (int) AccountModel::where('uuid', $accountId->value)->value('id');
+        $numericAccountId = $this->accountRepository->resolveNumericId($accountId);
         $this->tenantContext->set($numericAccountId);
 
         // Create guest via ACL
@@ -57,14 +58,14 @@ final readonly class RegisterActorHandler
         );
 
         // Get the guest role
-        $guestRole = $this->repository->findRoleByName(RoleName::GUEST);
+        $guestRole = $this->roleRepository->findByName(RoleName::GUEST);
 
         $id = $this->repository->nextIdentity();
 
         $actor = Actor::register(
             uuid: $id,
             accountId: $accountId,
-            roles: [$guestRole],
+            roleIds: [$guestRole->uuid],
             name: $command->name,
             email: $command->email,
             password: $this->hasher->hash($command->password),

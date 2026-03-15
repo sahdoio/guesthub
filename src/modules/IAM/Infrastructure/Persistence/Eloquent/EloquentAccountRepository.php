@@ -45,6 +45,37 @@ final class EloquentAccountRepository implements AccountRepository
         return AccountId::generate();
     }
 
+    public function findByNumericId(int $id): ?Account
+    {
+        $record = $this->model->newQuery()->where('id', $id)->first();
+
+        return $record ? AccountReflector::reconstruct(
+            uuid: AccountId::fromString($record->uuid),
+            name: $record->name,
+            createdAt: new DateTimeImmutable($record->created_at),
+            updatedAt: $record->updated_at ? new DateTimeImmutable($record->updated_at) : null,
+        ) : null;
+    }
+
+    public function findByName(string $name): ?Account
+    {
+        $record = $this->model->newQuery()->where('name', $name)->first();
+
+        return $record ? AccountReflector::reconstruct(
+            uuid: AccountId::fromString($record->uuid),
+            name: $record->name,
+            createdAt: new DateTimeImmutable($record->created_at),
+            updatedAt: $record->updated_at ? new DateTimeImmutable($record->updated_at) : null,
+        ) : null;
+    }
+
+    public function resolveNumericId(AccountId $uuid): ?int
+    {
+        $id = $this->model->newQuery()->where('uuid', $uuid->value)->value('id');
+
+        return $id !== null ? (int) $id : null;
+    }
+
     /** @return list<Account> */
     public function findAll(): array
     {

@@ -6,11 +6,13 @@ namespace Modules\IAM\Infrastructure\Persistence\Seeders;
 
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
-use Modules\Guest\Infrastructure\Persistence\Eloquent\GuestModel;
+use Modules\Guest\Domain\GuestId;
+use Modules\Guest\Domain\Repository\GuestRepository;
 use Modules\Guest\Infrastructure\Persistence\Seeders\GuestSeeder;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\Repository\ActorRepository;
+use Modules\IAM\Domain\Repository\RoleRepository;
 use Modules\IAM\Domain\Service\PasswordHasher;
 use Modules\IAM\Domain\ValueObject\RoleName;
 
@@ -18,6 +20,8 @@ class ActorSeeder extends Seeder
 {
     public function __construct(
         private readonly ActorRepository $repository,
+        private readonly RoleRepository $roleRepository,
+        private readonly GuestRepository $guestRepository,
         private readonly PasswordHasher $hasher,
     ) {}
 
@@ -30,7 +34,7 @@ class ActorSeeder extends Seeder
 
     private function seedSuperAdmins(): void
     {
-        $superadminRole = $this->repository->findRoleByName(RoleName::SUPERADMIN);
+        $superadminRole = $this->roleRepository->findByName(RoleName::SUPERADMIN);
 
         $superadmins = [
             ['Super Admin', 'superadmin@guesthub.com'],
@@ -44,7 +48,7 @@ class ActorSeeder extends Seeder
             $actor = Actor::register(
                 uuid: $this->repository->nextIdentity(),
                 accountId: null,
-                roles: [$superadminRole],
+                roleIds: [$superadminRole->uuid],
                 name: $name,
                 email: $email,
                 password: $this->hasher->hash('password'),
@@ -59,7 +63,7 @@ class ActorSeeder extends Seeder
 
     private function seedAdmins(): void
     {
-        $adminRole = $this->repository->findRoleByName(RoleName::ADMIN);
+        $adminRole = $this->roleRepository->findByName(RoleName::ADMIN);
         $accountId = AccountId::fromString(AccountSeeder::$defaultAccountUuid);
 
         $admins = [
@@ -75,7 +79,7 @@ class ActorSeeder extends Seeder
             $actor = Actor::register(
                 uuid: $this->repository->nextIdentity(),
                 accountId: $accountId,
-                roles: [$adminRole],
+                roleIds: [$adminRole->uuid],
                 name: $name,
                 email: $email,
                 password: $this->hasher->hash('password'),
@@ -90,7 +94,7 @@ class ActorSeeder extends Seeder
 
     private function seedGuests(): void
     {
-        $guestRole = $this->repository->findRoleByName(RoleName::GUEST);
+        $guestRole = $this->roleRepository->findByName(RoleName::GUEST);
         $accountId = AccountId::fromString(AccountSeeder::$defaultAccountUuid);
         $guestIds = GuestSeeder::$guestIds;
 
@@ -108,12 +112,12 @@ class ActorSeeder extends Seeder
             }
 
             $guestUuid = $guestIds[$email];
-            $guestId = GuestModel::where('uuid', $guestUuid)->value('id');
+            $guestId = $this->guestRepository->resolveNumericId(GuestId::fromString($guestUuid));
 
             $actor = Actor::register(
                 uuid: $this->repository->nextIdentity(),
                 accountId: $accountId,
-                roles: [$guestRole],
+                roleIds: [$guestRole->uuid],
                 name: $name,
                 email: $email,
                 password: $this->hasher->hash('password'),

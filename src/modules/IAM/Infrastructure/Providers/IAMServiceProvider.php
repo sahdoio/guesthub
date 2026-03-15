@@ -8,12 +8,14 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
+use Modules\IAM\Domain\Repository\RoleRepository;
 use Modules\IAM\Domain\Service\GuestGateway;
 use Modules\IAM\Domain\Service\PasswordHasher;
 use Modules\IAM\Domain\Service\TokenManager;
 use Modules\IAM\Infrastructure\Integration\GuestGatewayAdapter;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentAccountRepository;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentActorRepository;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentRoleRepository;
 use Modules\IAM\Infrastructure\Services\BcryptPasswordHasher;
 use Modules\IAM\Infrastructure\Services\SanctumTokenManager;
 
@@ -22,6 +24,7 @@ final class IAMServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(ActorRepository::class, EloquentActorRepository::class);
+        $this->app->bind(RoleRepository::class, EloquentRoleRepository::class);
         $this->app->bind(AccountRepository::class, EloquentAccountRepository::class);
         $this->app->bind(TokenManager::class, SanctumTokenManager::class);
         $this->app->bind(PasswordHasher::class, BcryptPasswordHasher::class);

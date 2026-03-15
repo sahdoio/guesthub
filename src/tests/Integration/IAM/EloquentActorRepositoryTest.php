@@ -16,6 +16,7 @@ use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
+use Modules\IAM\Domain\Repository\RoleRepository;
 use Modules\IAM\Domain\Role;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
 use Modules\IAM\Domain\ValueObject\RoleName;
@@ -33,6 +34,8 @@ final class EloquentActorRepositoryTest extends TestCase
 
     private ActorRepository $repository;
 
+    private RoleRepository $roleRepository;
+
     private AccountId $accountId;
 
     private Role $guestRole;
@@ -45,13 +48,14 @@ final class EloquentActorRepositoryTest extends TestCase
     {
         parent::setUp();
         $this->repository = $this->app->make(ActorRepository::class);
+        $this->roleRepository = $this->app->make(RoleRepository::class);
 
-        // Seed roles
-        $this->guestRole = Role::create(uuid: $this->repository->nextRoleIdentity(), name: RoleName::GUEST);
-        $this->repository->saveRole($this->guestRole);
+        // Seed roles via RoleRepository
+        $this->guestRole = Role::create(uuid: $this->roleRepository->nextIdentity(), name: RoleName::GUEST);
+        $this->roleRepository->save($this->guestRole);
 
-        $this->adminRole = Role::create(uuid: $this->repository->nextRoleIdentity(), name: RoleName::ADMIN);
-        $this->repository->saveRole($this->adminRole);
+        $this->adminRole = Role::create(uuid: $this->roleRepository->nextIdentity(), name: RoleName::ADMIN);
+        $this->roleRepository->save($this->adminRole);
 
         // Seed account
         $accountRepository = $this->app->make(AccountRepository::class);
@@ -88,7 +92,7 @@ final class EloquentActorRepositoryTest extends TestCase
         return Actor::register(
             uuid: $overrides['uuid'] ?? $this->repository->nextIdentity(),
             accountId: array_key_exists('accountId', $overrides) ? $overrides['accountId'] : $this->accountId,
-            roles: $overrides['roles'] ?? [$this->guestRole],
+            roleIds: $overrides['roleIds'] ?? [$this->guestRole->uuid],
             name: $overrides['name'] ?? 'John Doe',
             email: $overrides['email'] ?? 'john@hotel.com',
             password: $overrides['password'] ?? new HashedPassword('$2y$10$somehash'),
@@ -110,7 +114,7 @@ final class EloquentActorRepositoryTest extends TestCase
         $this->assertTrue($actor->uuid->equals($found->uuid));
         $this->assertSame('John Doe', $found->name);
         $this->assertSame('john@hotel.com', $found->email);
-        $this->assertTrue($found->hasRole(RoleName::GUEST));
+        $this->assertTrue($found->hasRoleId($this->guestRole->uuid));
         $this->assertSame('guest', $found->subjectType);
         $this->assertSame($this->guestId, $found->subjectId);
     }
@@ -157,7 +161,7 @@ final class EloquentActorRepositoryTest extends TestCase
     public function it_saves_actor_with_null_subject(): void
     {
         $actor = $this->registerActor([
-            'roles' => [$this->adminRole],
+            'roleIds' => [$this->adminRole->uuid],
             'subjectType' => null,
             'subjectId' => null,
         ]);
@@ -165,7 +169,7 @@ final class EloquentActorRepositoryTest extends TestCase
 
         $found = $this->repository->findByUuid($actor->uuid);
 
-        $this->assertTrue($found->hasRole(RoleName::ADMIN));
+        $this->assertTrue($found->hasRoleId($this->adminRole->uuid));
         $this->assertNull($found->subjectType);
         $this->assertNull($found->subjectId);
     }
@@ -182,13 +186,13 @@ final class EloquentActorRepositoryTest extends TestCase
     #[Test]
     public function it_saves_super_admin_with_null_account(): void
     {
-        $superadminRole = Role::create(uuid: $this->repository->nextRoleIdentity(), name: RoleName::SUPERADMIN);
-        $this->repository->saveRole($superadminRole);
+        $superadminRole = Role::create(uuid: $this->roleRepository->nextIdentity(), name: RoleName::SUPERADMIN);
+        $this->roleRepository->save($superadminRole);
 
         $actor = Actor::register(
             uuid: $this->repository->nextIdentity(),
             accountId: null,
-            roles: [$superadminRole],
+            roleIds: [$superadminRole->uuid],
             name: 'Super Admin',
             email: 'super@guesthub.com',
             password: new HashedPassword('$2y$10$somehash'),
@@ -202,21 +206,21 @@ final class EloquentActorRepositoryTest extends TestCase
 
         $this->assertNotNull($found);
         $this->assertNull($found->accountId);
-        $this->assertTrue($found->isSuperAdmin());
+        $this->assertTrue($found->hasRoleId($superadminRole->uuid));
     }
 
     #[Test]
     public function it_persists_multiple_roles(): void
     {
         $actor = $this->registerActor([
-            'roles' => [$this->guestRole, $this->adminRole],
+            'roleIds' => [$this->guestRole->uuid, $this->adminRole->uuid],
         ]);
         $this->repository->save($actor);
 
         $found = $this->repository->findByUuid($actor->uuid);
 
-        $this->assertCount(2, $found->roles());
-        $this->assertTrue($found->hasRole(RoleName::GUEST));
-        $this->assertTrue($found->hasRole(RoleName::ADMIN));
+        $this->assertCount(2, $found->roleIds());
+        $this->assertTrue($found->hasRoleId($this->guestRole->uuid));
+        $this->assertTrue($found->hasRoleId($this->adminRole->uuid));
     }
 }

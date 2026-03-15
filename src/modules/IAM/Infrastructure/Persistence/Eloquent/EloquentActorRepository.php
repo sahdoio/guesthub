@@ -10,10 +10,8 @@ use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Repository\ActorRepository;
-use Modules\IAM\Domain\Role;
 use Modules\IAM\Domain\RoleId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
-use Modules\IAM\Domain\ValueObject\RoleName;
 use Modules\IAM\Infrastructure\Persistence\ActorReflector;
 
 final class EloquentActorRepository implements ActorRepository
@@ -34,11 +32,11 @@ final class EloquentActorRepository implements ActorRepository
 
         DB::table('actor_roles')->where('actor_id', $actorId)->delete();
 
-        foreach ($actor->roles() as $role) {
-            $roleId = RoleModel::where('uuid', $role->uuid->value)->value('id');
+        foreach ($actor->roleIds() as $roleId) {
+            $dbRoleId = RoleModel::where('uuid', $roleId->value)->value('id');
             DB::table('actor_roles')->insert([
                 'actor_id' => $actorId,
-                'role_id' => $roleId,
+                'role_id' => $dbRoleId,
             ]);
         }
     }
@@ -53,9 +51,9 @@ final class EloquentActorRepository implements ActorRepository
             return null;
         }
 
-        $roles = $this->loadRoles($record->id);
+        $roleIds = $this->loadRoleIds($record->id);
 
-        return $this->toEntity($record, $roles);
+        return $this->toEntity($record, $roleIds);
     }
 
     public function findByEmail(string $email): ?Actor
@@ -68,9 +66,9 @@ final class EloquentActorRepository implements ActorRepository
             return null;
         }
 
-        $roles = $this->loadRoles($record->id);
+        $roleIds = $this->loadRoleIds($record->id);
 
-        return $this->toEntity($record, $roles);
+        return $this->toEntity($record, $roleIds);
     }
 
     public function nextIdentity(): ActorId
@@ -78,46 +76,15 @@ final class EloquentActorRepository implements ActorRepository
         return ActorId::generate();
     }
 
-    public function saveRole(Role $role): void
+    /** @return list<RoleId> */
+    private function loadRoleIds(int $actorId): array
     {
-        RoleModel::query()->updateOrInsert(
-            ['uuid' => $role->uuid->value],
-            ['name' => $role->name->value],
-        );
-    }
-
-    public function findRoleByName(RoleName $name): ?Role
-    {
-        $record = RoleModel::where('name', $name->value)->first();
-
-        if (! $record) {
-            return null;
-        }
-
-        return Role::create(
-            uuid: RoleId::fromString($record->uuid),
-            name: RoleName::from($record->name),
-        );
-    }
-
-    public function nextRoleIdentity(): RoleId
-    {
-        return RoleId::generate();
-    }
-
-    /** @return list<Role> */
-    private function loadRoles(int $actorId): array
-    {
-        $roleRecords = DB::table('actor_roles')
+        return DB::table('actor_roles')
             ->join('roles', 'roles.id', '=', 'actor_roles.role_id')
             ->where('actor_roles.actor_id', $actorId)
-            ->select('roles.uuid', 'roles.name')
-            ->get();
-
-        return $roleRecords->map(fn ($r) => Role::create(
-            uuid: RoleId::fromString($r->uuid),
-            name: RoleName::from($r->name),
-        ))->all();
+            ->pluck('roles.uuid')
+            ->map(fn (string $uuid) => RoleId::fromString($uuid))
+            ->all();
     }
 
     private function toRecord(Actor $actor): array
@@ -139,8 +106,8 @@ final class EloquentActorRepository implements ActorRepository
         ];
     }
 
-    /** @param list<Role> $roles */
-    private function toEntity(object $record, array $roles): Actor
+    /** @param list<RoleId> $roleIds */
+    private function toEntity(object $record, array $roleIds): Actor
     {
         $accountId = $record->account_id !== null
             ? AccountId::fromString(
@@ -151,7 +118,7 @@ final class EloquentActorRepository implements ActorRepository
         return ActorReflector::reconstruct(
             uuid: ActorId::fromString($record->uuid),
             accountId: $accountId,
-            roles: $roles,
+            roleIds: $roleIds,
             name: $record->name,
             email: $record->email,
             password: new HashedPassword($record->password),

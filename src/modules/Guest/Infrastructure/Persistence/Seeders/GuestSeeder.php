@@ -9,7 +9,8 @@ use Illuminate\Database\Seeder;
 use Modules\Guest\Domain\Guest;
 use Modules\Guest\Domain\Repository\GuestRepository;
 use Modules\Guest\Domain\ValueObject\LoyaltyTier;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
+use Modules\IAM\Domain\AccountId;
+use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Infrastructure\Persistence\Seeders\AccountSeeder;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
@@ -20,12 +21,13 @@ class GuestSeeder extends Seeder
 
     public function __construct(
         private readonly GuestRepository $repository,
+        private readonly AccountRepository $accountRepository,
         private readonly TenantContext $tenantContext,
     ) {}
 
     public function run(): void
     {
-        $accountId = (int) AccountModel::where('uuid', AccountSeeder::$defaultAccountUuid)->value('id');
+        $accountId = $this->accountRepository->resolveNumericId(AccountId::fromString(AccountSeeder::$defaultAccountUuid));
         $this->tenantContext->set($accountId);
 
         $guests = [

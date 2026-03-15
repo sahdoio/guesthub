@@ -15,6 +15,12 @@ interface AccountRepository
 
     public function nextIdentity(): AccountId;
 
+    public function findByNumericId(int $id): ?Account;
+
+    public function findByName(string $name): ?Account;
+
+    public function resolveNumericId(AccountId $uuid): ?int;
+
     /** @return list<Account> */
     public function findAll(): array;
 }

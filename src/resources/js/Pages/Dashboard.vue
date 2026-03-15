@@ -19,9 +19,9 @@ const statusLabels = {
 };
 
 const statusColors = {
-    pending: 'bg-yellow-400',
+    pending: 'bg-amber-400',
     confirmed: 'bg-blue-400',
-    checked_in: 'bg-green-400',
+    checked_in: 'bg-emerald-400',
     checked_out: 'bg-gray-400',
     cancelled: 'bg-red-400',
 };
@@ -36,8 +36,8 @@ const tierLabels = {
 const tierColors = {
     bronze: 'bg-orange-400',
     silver: 'bg-gray-400',
-    gold: 'bg-yellow-400',
-    platinum: 'bg-purple-400',
+    gold: 'bg-amber-400',
+    platinum: 'bg-violet-400',
 };
 
 const roomTypeColors = {
@@ -90,9 +90,9 @@ const roomStatusLabels = {
 };
 
 const roomStatusColors = {
-    available: 'bg-green-400',
+    available: 'bg-emerald-400',
     occupied: 'bg-blue-400',
-    maintenance: 'bg-yellow-400',
+    maintenance: 'bg-amber-400',
     out_of_order: 'bg-red-400',
 };
 
@@ -111,32 +111,32 @@ const roomStatusMax = computed(() => Math.max(1, ...roomStatusEntries.value.map(
 
 <template>
     <div>
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h1>
+        <h1 class="text-2xl font-bold text-gray-900 mb-8">Dashboard</h1>
 
         <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Reservations</h2>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-5 mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Reservations</h2>
                 <p class="mt-2 text-3xl font-bold text-gray-900">{{ reservationStats.total }}</p>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Guests</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Guests</h2>
                 <p class="mt-2 text-3xl font-bold text-gray-900">{{ guestStats.total }}</p>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Check-ins Today</h2>
-                <p class="mt-2 text-3xl font-bold text-green-600">{{ reservationStats.today_check_ins }}</p>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Check-ins Today</h2>
+                <p class="mt-2 text-3xl font-bold text-emerald-600">{{ reservationStats.today_check_ins }}</p>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Check-outs Today</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Check-outs Today</h2>
                 <p class="mt-2 text-3xl font-bold text-gray-600">{{ reservationStats.today_check_outs }}</p>
             </div>
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Rooms</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Rooms</h2>
                 <p class="mt-2 text-3xl font-bold text-gray-900">{{ roomStats.total }}</p>
             </div>
         </div>
@@ -144,68 +144,68 @@ const roomStatusMax = computed(() => Math.max(1, ...roomStatusEntries.value.map(
         <!-- Charts -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Reservations by Status -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Reservations by Status</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Reservations by Status</h2>
                 <div class="space-y-3">
                     <div v-for="entry in statusEntries" :key="entry.key" class="flex items-center gap-3">
                         <span class="text-sm text-gray-600 w-24 shrink-0">{{ entry.label }}</span>
-                        <div class="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+                        <div class="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
                             <div
                                 class="h-full rounded-full transition-all duration-500"
                                 :class="entry.color"
-                                :style="{ width: (entry.count / statusMax * 100) + '%', minWidth: entry.count > 0 ? '1.5rem' : '0' }"
+                                :style="{ width: (entry.count / statusMax * 100) + '%', minWidth: entry.count > 0 ? '1.25rem' : '0' }"
                             ></div>
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 w-8 text-right">{{ entry.count }}</span>
+                        <span class="text-sm font-semibold text-gray-700 w-8 text-right tabular-nums">{{ entry.count }}</span>
                     </div>
                 </div>
             </div>
 
             <!-- Guests by Loyalty Tier -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Guests by Loyalty Tier</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Guests by Loyalty Tier</h2>
                 <div class="space-y-3">
                     <div v-for="entry in tierEntries" :key="entry.key" class="flex items-center gap-3">
                         <span class="text-sm text-gray-600 w-24 shrink-0">{{ entry.label }}</span>
-                        <div class="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+                        <div class="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
                             <div
                                 class="h-full rounded-full transition-all duration-500"
                                 :class="entry.color"
-                                :style="{ width: (entry.count / tierMax * 100) + '%', minWidth: entry.count > 0 ? '1.5rem' : '0' }"
+                                :style="{ width: (entry.count / tierMax * 100) + '%', minWidth: entry.count > 0 ? '1.25rem' : '0' }"
                             ></div>
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 w-8 text-right">{{ entry.count }}</span>
+                        <span class="text-sm font-semibold text-gray-700 w-8 text-right tabular-nums">{{ entry.count }}</span>
                     </div>
                 </div>
             </div>
 
             <!-- Room Inventory by Status -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Room Inventory</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Room Inventory</h2>
                 <div class="space-y-3">
                     <div v-for="entry in roomStatusEntries" :key="entry.key" class="flex items-center gap-3">
                         <span class="text-sm text-gray-600 w-24 shrink-0">{{ entry.label }}</span>
-                        <div class="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+                        <div class="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
                             <div
                                 class="h-full rounded-full transition-all duration-500"
                                 :class="entry.color"
-                                :style="{ width: (entry.count / roomStatusMax * 100) + '%', minWidth: entry.count > 0 ? '1.5rem' : '0' }"
+                                :style="{ width: (entry.count / roomStatusMax * 100) + '%', minWidth: entry.count > 0 ? '1.25rem' : '0' }"
                             ></div>
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 w-8 text-right">{{ entry.count }}</span>
+                        <span class="text-sm font-semibold text-gray-700 w-8 text-right tabular-nums">{{ entry.count }}</span>
                     </div>
                 </div>
             </div>
 
             <!-- Reservations by Room Type -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Reservations by Room Type</h2>
-                <div class="flex items-end justify-center gap-8 h-48">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Reservations by Room Type</h2>
+                <div class="flex items-end justify-center gap-10 h-48">
                     <div v-for="entry in roomEntries" :key="entry.key" class="flex flex-col items-center gap-2">
-                        <span class="text-sm font-semibold text-gray-700">{{ entry.count }}</span>
-                        <div class="w-16 bg-gray-100 rounded-t-md overflow-hidden flex items-end" style="height: 120px;">
+                        <span class="text-sm font-bold text-gray-700 tabular-nums">{{ entry.count }}</span>
+                        <div class="w-16 bg-gray-100 rounded-t-lg overflow-hidden flex items-end" style="height: 120px;">
                             <div
-                                class="w-full rounded-t-md transition-all duration-500"
+                                class="w-full rounded-t-lg transition-all duration-500"
                                 :class="entry.color"
                                 :style="{ height: (entry.count / roomTotal * 100) + '%', minHeight: entry.count > 0 ? '0.5rem' : '0' }"
                             ></div>

@@ -198,7 +198,7 @@ final class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function guest_role_cannot_login_via_web(): void
+    public function guest_role_redirects_to_portal_on_web_login(): void
     {
         $this->createGuestActor([
             'email' => 'guest@hotel.com',
@@ -207,11 +207,11 @@ final class AuthenticationTest extends TestCase
         $this->post('/login', [
             'email' => 'guest@hotel.com',
             'password' => 'password',
-        ])->assertSessionHasErrors('email');
+        ])->assertRedirect('/portal');
     }
 
     #[Test]
-    public function guest_role_cannot_access_web_routes(): void
+    public function guest_role_cannot_access_admin_web_routes(): void
     {
         $guest = $this->createGuestActor([
             'email' => 'guest@hotel.com',

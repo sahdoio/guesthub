@@ -7,19 +7,23 @@ namespace Modules\IAM\Infrastructure\Services;
 use Modules\IAM\Domain\Service\TokenManager;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 
-final class SanctumTokenManager implements TokenManager
+final readonly class SanctumTokenManager implements TokenManager
 {
+    public function __construct(
+        private ActorModel $model,
+    ) {}
+
     public function createToken(string $email, string $tokenName = 'api'): string
     {
-        $model = ActorModel::where('email', $email)->firstOrFail();
+        $actor = $this->model->newQuery()->where('email', $email)->firstOrFail();
 
-        return $model->createToken($tokenName)->plainTextToken;
+        return $actor->createToken($tokenName)->plainTextToken;
     }
 
     public function revokeAllTokens(string $email): void
     {
-        $model = ActorModel::where('email', $email)->firstOrFail();
+        $actor = $this->model->newQuery()->where('email', $email)->firstOrFail();
 
-        $model->tokens()->delete();
+        $actor->tokens()->delete();
     }
 }

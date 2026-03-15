@@ -8,8 +8,8 @@ use Modules\Guest\Application\Command\UpdateGuest;
 use Modules\Guest\Application\Command\UpdateGuestHandler;
 use Modules\Guest\Domain\GuestId;
 use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Infrastructure\Persistence\Eloquent\GuestModel;
 use Modules\Guest\Presentation\Http\Presenter\GuestPresenter;
+use Modules\Shared\Infrastructure\Service\AuthenticatedGuestResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;
 use Modules\Shared\Presentation\Validation\InputValidator;
 use Psr\Http\Message\ResponseInterface;
@@ -20,6 +20,7 @@ final readonly class UpdateGuestAction
     public function __construct(
         private UpdateGuestHandler $handler,
         private GuestRepository $repository,
+        private AuthenticatedGuestResolver $guestResolver,
         private InputValidator $validator,
         private JsonResponder $responder,
     ) {}
@@ -57,21 +58,13 @@ final readonly class UpdateGuestAction
 
     private function enforceOwnership(string $uuid): void
     {
-        $user = auth()->user();
-        if (! $user) {
+        if ($this->guestResolver->isAdminOrSuperAdmin()) {
             return;
         }
-        $user->load('roles');
-        $roleNames = $user->roles->pluck('name')->toArray();
-        if (in_array('admin', $roleNames, true) || in_array('superadmin', $roleNames, true)) {
-            return;
-        }
-        // Guest role: verify ownership
-        if ($user->subject_type === 'guest' && $user->subject_id) {
-            $ownUuid = GuestModel::where('id', $user->subject_id)->value('uuid');
-            if ($ownUuid !== $uuid) {
-                abort(403, 'Access denied.');
-            }
+
+        $ownGuestUuid = $this->guestResolver->resolveGuestUuid();
+        if ($ownGuestUuid !== null && $ownGuestUuid !== $uuid) {
+            abort(403, 'Access denied.');
         }
     }
 }

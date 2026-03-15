@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use Illuminate\Database\Seeder;
 use Modules\IAM\Domain\Account;
 use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 
 class AccountSeeder extends Seeder
 {
@@ -27,11 +26,11 @@ class AccountSeeder extends Seeder
     public function run(): void
     {
         foreach (self::ACCOUNTS as $name) {
-            $existing = AccountModel::where('name', $name)->first();
+            $existing = $this->repository->findByName($name);
 
             if ($existing !== null) {
                 if (self::$defaultAccountUuid === null) {
-                    self::$defaultAccountUuid = $existing->uuid;
+                    self::$defaultAccountUuid = (string) $existing->uuid;
                 }
 
                 continue;

@@ -86,6 +86,26 @@ final class EloquentGuestRepository implements GuestRepository
         return GuestId::generate();
     }
 
+    public function findByNumericId(int $id): ?Guest
+    {
+        $record = $this->model->newQuery()
+            ->withoutGlobalScopes()
+            ->where('id', $id)
+            ->first();
+
+        return $record ? $this->toEntity($record) : null;
+    }
+
+    public function resolveNumericId(GuestId $uuid): ?int
+    {
+        $id = $this->model->newQuery()
+            ->withoutGlobalScopes()
+            ->where('uuid', $uuid->value)
+            ->value('id');
+
+        return $id !== null ? (int) $id : null;
+    }
+
     public function count(): int
     {
         return (int) $this->model->newQuery()->count();

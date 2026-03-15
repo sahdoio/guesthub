@@ -6,11 +6,17 @@ namespace Modules\Shared\Infrastructure\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
+use Modules\Guest\Domain\Repository\GuestRepository;
+use Modules\IAM\Domain\Repository\AccountRepository;
 
 final class HandleInertiaRequests extends Middleware
 {
     protected $rootView = 'app';
+
+    public function __construct(
+        private readonly AccountRepository $accountRepository,
+        private readonly GuestRepository $guestRepository,
+    ) {}
 
     public function share(Request $request): array
     {
@@ -25,16 +31,32 @@ final class HandleInertiaRequests extends Middleware
 
         $tenantData = [];
         if ($user && $isSuperAdmin) {
-            $accounts = AccountModel::orderBy('name')->get(['id', 'uuid', 'name'])->toArray();
+            $accounts = array_map(fn ($account) => [
+                'uuid' => (string) $account->uuid,
+                'name' => $account->name,
+            ], $this->accountRepository->findAll());
+
             $currentAccountId = $request->session()->get('tenant_account_id');
-            $currentAccount = $currentAccountId
-                ? AccountModel::where('id', $currentAccountId)->first(['id', 'uuid', 'name'])?->toArray()
-                : null;
+            $currentAccount = null;
+            if ($currentAccountId) {
+                $account = $this->accountRepository->findByNumericId((int) $currentAccountId);
+                $currentAccount = $account ? [
+                    'uuid' => (string) $account->uuid,
+                    'name' => $account->name,
+                ] : null;
+            }
 
             $tenantData = [
                 'accounts' => $accounts,
                 'currentAccount' => $currentAccount,
             ];
+        }
+
+        $guestUuid = null;
+        if ($user && in_array('guest', $roleNames, true)
+            && $user->subject_type === 'guest' && $user->subject_id !== null) {
+            $guest = $this->guestRepository->findByNumericId((int) $user->subject_id);
+            $guestUuid = $guest ? (string) $guest->uuid : null;
         }
 
         return array_merge(parent::share($request), [
@@ -44,6 +66,7 @@ final class HandleInertiaRequests extends Middleware
                     'name' => $user->name,
                     'email' => $user->email,
                     'roles' => $roleNames,
+                    'guest_uuid' => $guestUuid,
                 ] : null,
                 ...$tenantData,
             ],

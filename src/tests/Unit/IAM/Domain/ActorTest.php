@@ -8,10 +8,8 @@ use DateTimeImmutable;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
-use Modules\IAM\Domain\Role;
 use Modules\IAM\Domain\RoleId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
-use Modules\IAM\Domain\ValueObject\RoleName;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,7 +35,7 @@ final class ActorTest extends TestCase
         $actor = Actor::register(
             uuid: $id,
             accountId: $this->accountId,
-            roles: [Role::create(uuid: $this->roleId, name: RoleName::GUEST)],
+            roleIds: [$this->roleId],
             name: 'John Doe',
             email: 'john@hotel.com',
             password: new HashedPassword('$2y$10$somehash'),
@@ -48,14 +46,13 @@ final class ActorTest extends TestCase
 
         $this->assertSame($id, $actor->uuid);
         $this->assertTrue($this->accountId->equals($actor->accountId));
-        $this->assertCount(1, $actor->roles());
-        $this->assertSame(RoleName::GUEST, $actor->roles()[0]->name);
+        $this->assertCount(1, $actor->roleIds());
+        $this->assertTrue($actor->hasRoleId($this->roleId));
         $this->assertSame('John Doe', $actor->name);
         $this->assertSame('john@hotel.com', $actor->email);
         $this->assertSame('guest', $actor->subjectType);
         $this->assertSame(1, $actor->subjectId);
         $this->assertNull($actor->updatedAt);
-        $this->assertFalse($actor->isAdmin());
     }
 
     #[Test]
@@ -64,7 +61,7 @@ final class ActorTest extends TestCase
         $actor = Actor::register(
             uuid: ActorId::generate(),
             accountId: $this->accountId,
-            roles: [Role::create(uuid: $this->roleId, name: RoleName::ADMIN)],
+            roleIds: [$this->roleId],
             name: 'Hotel Manager',
             email: 'manager@hotel.com',
             password: new HashedPassword('$2y$10$somehash'),
@@ -73,9 +70,8 @@ final class ActorTest extends TestCase
             createdAt: new DateTimeImmutable,
         );
 
-        $this->assertCount(1, $actor->roles());
-        $this->assertSame(RoleName::ADMIN, $actor->roles()[0]->name);
-        $this->assertTrue($actor->isAdmin());
+        $this->assertCount(1, $actor->roleIds());
+        $this->assertTrue($actor->hasRoleId($this->roleId));
     }
 
     #[Test]
@@ -84,7 +80,7 @@ final class ActorTest extends TestCase
         $actor = Actor::register(
             uuid: ActorId::generate(),
             accountId: $this->accountId,
-            roles: [Role::create(uuid: $this->roleId, name: RoleName::GUEST)],
+            roleIds: [$this->roleId],
             name: 'Booking Engine',
             email: 'system@hotel.com',
             password: new HashedPassword('$2y$10$somehash'),
@@ -103,7 +99,7 @@ final class ActorTest extends TestCase
         $actor = Actor::register(
             uuid: ActorId::generate(),
             accountId: $this->accountId,
-            roles: [Role::create(uuid: $this->roleId, name: RoleName::GUEST)],
+            roleIds: [$this->roleId],
             name: 'Jane Doe',
             email: 'jane@hotel.com',
             password: new HashedPassword('$2y$10$oldhash'),
@@ -122,9 +118,9 @@ final class ActorTest extends TestCase
     #[Test]
     public function it_validates_role_name(): void
     {
-        $this->assertSame('admin', RoleName::ADMIN->value);
-        $this->assertSame('guest', RoleName::GUEST->value);
-        $this->assertSame('superadmin', RoleName::SUPERADMIN->value);
+        $this->assertSame('admin', \Modules\IAM\Domain\ValueObject\RoleName::ADMIN->value);
+        $this->assertSame('guest', \Modules\IAM\Domain\ValueObject\RoleName::GUEST->value);
+        $this->assertSame('superadmin', \Modules\IAM\Domain\ValueObject\RoleName::SUPERADMIN->value);
     }
 
     #[Test]
@@ -135,12 +131,12 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function it_identifies_super_admin(): void
+    public function it_creates_super_admin_without_account(): void
     {
         $actor = Actor::register(
             uuid: ActorId::generate(),
             accountId: null,
-            roles: [Role::create(uuid: $this->roleId, name: RoleName::SUPERADMIN)],
+            roleIds: [$this->roleId],
             name: 'Super Admin',
             email: 'super@guesthub.com',
             password: new HashedPassword('$2y$10$somehash'),
@@ -149,20 +145,20 @@ final class ActorTest extends TestCase
             createdAt: new DateTimeImmutable,
         );
 
-        $this->assertTrue($actor->isSuperAdmin());
+        $this->assertTrue($actor->hasRoleId($this->roleId));
         $this->assertNull($actor->accountId);
     }
 
     #[Test]
-    public function it_checks_has_role(): void
+    public function it_checks_has_role_id(): void
     {
+        $roleId1 = RoleId::generate();
+        $roleId2 = RoleId::generate();
+
         $actor = Actor::register(
             uuid: ActorId::generate(),
             accountId: $this->accountId,
-            roles: [
-                Role::create(uuid: RoleId::generate(), name: RoleName::ADMIN),
-                Role::create(uuid: RoleId::generate(), name: RoleName::GUEST),
-            ],
+            roleIds: [$roleId1, $roleId2],
             name: 'Multi Role',
             email: 'multi@hotel.com',
             password: new HashedPassword('$2y$10$somehash'),
@@ -171,8 +167,51 @@ final class ActorTest extends TestCase
             createdAt: new DateTimeImmutable,
         );
 
-        $this->assertTrue($actor->hasRole(RoleName::ADMIN));
-        $this->assertTrue($actor->hasRole(RoleName::GUEST));
-        $this->assertFalse($actor->hasRole(RoleName::SUPERADMIN));
+        $this->assertTrue($actor->hasRoleId($roleId1));
+        $this->assertTrue($actor->hasRoleId($roleId2));
+        $this->assertFalse($actor->hasRoleId(RoleId::generate()));
+    }
+
+    #[Test]
+    public function it_assigns_a_role(): void
+    {
+        $actor = Actor::register(
+            uuid: ActorId::generate(),
+            accountId: $this->accountId,
+            roleIds: [$this->roleId],
+            name: 'Test Actor',
+            email: 'test@hotel.com',
+            password: new HashedPassword('$2y$10$somehash'),
+            subjectType: null,
+            subjectId: null,
+            createdAt: new DateTimeImmutable,
+        );
+
+        $newRoleId = RoleId::generate();
+        $actor->assignRole($newRoleId);
+
+        $this->assertCount(2, $actor->roleIds());
+        $this->assertTrue($actor->hasRoleId($newRoleId));
+        $this->assertNotNull($actor->updatedAt);
+    }
+
+    #[Test]
+    public function it_does_not_duplicate_role_on_assign(): void
+    {
+        $actor = Actor::register(
+            uuid: ActorId::generate(),
+            accountId: $this->accountId,
+            roleIds: [$this->roleId],
+            name: 'Test Actor',
+            email: 'test@hotel.com',
+            password: new HashedPassword('$2y$10$somehash'),
+            subjectType: null,
+            subjectId: null,
+            createdAt: new DateTimeImmutable,
+        );
+
+        $actor->assignRole($this->roleId);
+
+        $this->assertCount(1, $actor->roleIds());
     }
 }

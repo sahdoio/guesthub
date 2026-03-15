@@ -7,7 +7,6 @@ namespace Modules\IAM\Domain;
 use DateTimeImmutable;
 use Modules\IAM\Domain\Event\ActorRegistered;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
-use Modules\IAM\Domain\ValueObject\RoleName;
 use Modules\Shared\Domain\AggregateRoot;
 use Modules\Shared\Domain\Identity;
 
@@ -16,8 +15,8 @@ final class Actor extends AggregateRoot
     private function __construct(
         public readonly ActorId $uuid,
         public readonly ?AccountId $accountId,
-        /** @var list<Role> */
-        public private(set) array $roles,
+        /** @var list<RoleId> */
+        public private(set) array $roleIds,
         public readonly string $name,
         public readonly string $email,
         public private(set) HashedPassword $password,
@@ -28,12 +27,12 @@ final class Actor extends AggregateRoot
     ) {}
 
     /**
-     * @param  list<Role>  $roles
+     * @param  list<RoleId>  $roleIds
      */
     public static function register(
         ActorId $uuid,
         ?AccountId $accountId,
-        array $roles,
+        array $roleIds,
         string $name,
         string $email,
         HashedPassword $password,
@@ -44,7 +43,7 @@ final class Actor extends AggregateRoot
         $actor = new self(
             uuid: $uuid,
             accountId: $accountId,
-            roles: $roles,
+            roleIds: $roleIds,
             name: $name,
             email: $email,
             password: $password,
@@ -58,20 +57,10 @@ final class Actor extends AggregateRoot
         return $actor;
     }
 
-    public function isAdmin(): bool
+    public function hasRoleId(RoleId $roleId): bool
     {
-        return $this->hasRole(RoleName::ADMIN);
-    }
-
-    public function isSuperAdmin(): bool
-    {
-        return $this->hasRole(RoleName::SUPERADMIN);
-    }
-
-    public function hasRole(RoleName $role): bool
-    {
-        foreach ($this->roles as $r) {
-            if ($r->name === $role) {
+        foreach ($this->roleIds as $id) {
+            if ($id->equals($roleId)) {
                 return true;
             }
         }
@@ -79,10 +68,18 @@ final class Actor extends AggregateRoot
         return false;
     }
 
-    /** @return list<Role> */
-    public function roles(): array
+    public function assignRole(RoleId $roleId): void
     {
-        return $this->roles;
+        if (! $this->hasRoleId($roleId)) {
+            $this->roleIds[] = $roleId;
+            $this->updatedAt = new DateTimeImmutable;
+        }
+    }
+
+    /** @return list<RoleId> */
+    public function roleIds(): array
+    {
+        return $this->roleIds;
     }
 
     public function id(): Identity

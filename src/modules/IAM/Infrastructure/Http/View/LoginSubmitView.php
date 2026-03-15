@@ -28,18 +28,12 @@ final class LoginSubmitView
         $user->load('roles');
         $roleNames = $user->roles->pluck('name')->toArray();
 
-        if (! in_array('admin', $roleNames, true) && ! in_array('superadmin', $roleNames, true)) {
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            throw ValidationException::withMessages([
-                'email' => 'Access restricted to administrators.',
-            ]);
-        }
-
         $request->session()->regenerate();
 
-        return redirect()->intended('/dashboard');
+        if (in_array('admin', $roleNames, true) || in_array('superadmin', $roleNames, true)) {
+            return redirect()->intended('/dashboard');
+        }
+
+        return redirect()->intended('/portal');
     }
 }

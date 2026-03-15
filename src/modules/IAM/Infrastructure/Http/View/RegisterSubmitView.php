@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Modules\IAM\Application\Command\RegisterActor;
 use Modules\IAM\Application\Command\RegisterActorHandler;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 
 final class RegisterSubmitView
 {
@@ -37,10 +36,9 @@ final class RegisterSubmitView
         ));
 
         // Log the user in after registration
-        $actorModel = ActorModel::where('email', $data['email'])->first();
-        Auth::login($actorModel);
+        Auth::attempt(['email' => $data['email'], 'password' => $data['password']]);
         $request->session()->regenerate();
 
-        return redirect('/dashboard');
+        return redirect('/portal');
     }
 }

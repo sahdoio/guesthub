@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Modules\Reservation\Presentation\Http\Action;
 
 use DomainException;
-use Modules\Guest\Infrastructure\Persistence\Eloquent\GuestModel;
 use Modules\Reservation\Application\Command\CheckInGuest;
 use Modules\Reservation\Application\Command\CheckInGuestHandler;
+use Modules\Reservation\Domain\Repository\ReservationRepository;
+use Modules\Reservation\Domain\ReservationId;
 use Modules\Reservation\Domain\Service\InventoryGateway;
-use Modules\Reservation\Infrastructure\Persistence\Eloquent\ReservationModel;
+use Modules\Shared\Infrastructure\Service\AuthenticatedGuestResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;
 use Modules\Shared\Presentation\Validation\InputValidator;
 use Psr\Http\Message\ResponseInterface;
@@ -20,6 +21,8 @@ final readonly class CheckInAction
     public function __construct(
         private CheckInGuestHandler $handler,
         private InventoryGateway $inventoryGateway,
+        private ReservationRepository $reservationRepository,
+        private AuthenticatedGuestResolver $guestResolver,
         private InputValidator $validator,
         private JsonResponder $responder,
     ) {}
@@ -50,19 +53,14 @@ final readonly class CheckInAction
 
     private function enforceReservationOwnership(string $reservationUuid): void
     {
-        $user = auth()->user();
-        if (! $user) {
+        if ($this->guestResolver->isAdminOrSuperAdmin()) {
             return;
         }
-        $user->load('roles');
-        $roleNames = $user->roles->pluck('name')->toArray();
-        if (in_array('admin', $roleNames, true) || in_array('superadmin', $roleNames, true)) {
-            return;
-        }
-        if ($user->subject_type === 'guest' && $user->subject_id) {
-            $ownGuestUuid = GuestModel::where('id', $user->subject_id)->value('uuid');
-            $reservationGuestId = ReservationModel::where('uuid', $reservationUuid)->value('guest_id');
-            if ($ownGuestUuid !== $reservationGuestId) {
+
+        $ownGuestUuid = $this->guestResolver->resolveGuestUuid();
+        if ($ownGuestUuid !== null) {
+            $reservation = $this->reservationRepository->findByUuid(ReservationId::fromString($reservationUuid));
+            if ($reservation === null || $ownGuestUuid !== $reservation->guestId) {
                 abort(403, 'Access denied.');
             }
         }

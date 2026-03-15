@@ -9,7 +9,6 @@ use Modules\Guest\Application\Command\CreateGuestHandler;
 use Modules\Guest\Domain\GuestId;
 use Modules\Guest\Domain\Repository\GuestRepository;
 use Modules\Guest\Infrastructure\Integration\Dto\GuestData;
-use Modules\Guest\Infrastructure\Persistence\Eloquent\GuestModel;
 
 final readonly class GuestApi
 {
@@ -27,7 +26,7 @@ final readonly class GuestApi
             document: $document,
         ));
 
-        return GuestModel::where('uuid', (string) $id)->value('id');
+        return $this->repository->resolveNumericId($id);
     }
 
     public function findByUuid(string $uuid): ?GuestData

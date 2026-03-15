@@ -24,6 +24,10 @@ interface GuestRepository
 
     public function nextIdentity(): GuestId;
 
+    public function findByNumericId(int $id): ?Guest;
+
+    public function resolveNumericId(GuestId $uuid): ?int;
+
     public function count(): int;
 
     public function countByLoyaltyTier(): array;

@@ -8,19 +8,19 @@ use DateTimeImmutable;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
-use Modules\IAM\Domain\Role;
+use Modules\IAM\Domain\RoleId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
 use ReflectionClass;
 
 final class ActorReflector
 {
     /**
-     * @param  list<Role>  $roles
+     * @param  list<RoleId>  $roleIds
      */
     public static function reconstruct(
         ActorId $uuid,
         ?AccountId $accountId,
-        array $roles,
+        array $roleIds,
         string $name,
         string $email,
         HashedPassword $password,
@@ -34,7 +34,7 @@ final class ActorReflector
 
         self::set($ref, $actor, 'uuid', $uuid);
         self::set($ref, $actor, 'accountId', $accountId);
-        self::set($ref, $actor, 'roles', $roles);
+        self::set($ref, $actor, 'roleIds', $roleIds);
         self::set($ref, $actor, 'name', $name);
         self::set($ref, $actor, 'email', $email);
         self::set($ref, $actor, 'password', $password);
