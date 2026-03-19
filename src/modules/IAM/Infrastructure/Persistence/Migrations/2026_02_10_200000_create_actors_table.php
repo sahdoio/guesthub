@@ -15,28 +15,27 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
-            $table->string('subject_type')->nullable();
-            $table->unsignedBigInteger('subject_id')->nullable();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('created_at');
             $table->timestamp('updated_at')->nullable();
 
             $table->index('account_id');
-            $table->index(['subject_type', 'subject_id']);
+            $table->index('user_id');
         });
 
-        Schema::create('actor_roles', function (Blueprint $table) {
+        Schema::create('actor_types', function (Blueprint $table) {
             $table->id();
             $table->foreignId('actor_id')->constrained('actors')->cascadeOnDelete();
-            $table->foreignId('role_id')->constrained('roles')->cascadeOnDelete();
+            $table->foreignId('type_id')->constrained('types')->cascadeOnDelete();
 
-            $table->unique(['actor_id', 'role_id']);
-            $table->index('role_id');
+            $table->unique(['actor_id', 'type_id']);
+            $table->index('type_id');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('actor_roles');
+        Schema::dropIfExists('actor_types');
         Schema::dropIfExists('actors');
     }
 };

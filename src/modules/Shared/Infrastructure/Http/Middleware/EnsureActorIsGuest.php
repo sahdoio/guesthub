@@ -6,15 +6,13 @@ namespace Modules\Shared\Infrastructure\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
+use Modules\User\Domain\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\Response;
 
 final class EnsureActorIsGuest
 {
     public function __construct(
-        private readonly TenantContext $tenantContext,
-        private readonly GuestRepository $guestRepository,
+        private readonly UserRepository $userRepository,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -25,24 +23,19 @@ final class EnsureActorIsGuest
             return redirect('/login');
         }
 
-        $user->load('roles');
-        $roleNames = $user->roles->pluck('name')->toArray();
+        $user->load('types');
+        $typeNames = $user->types->pluck('name')->toArray();
 
-        if (! in_array('guest', $roleNames, true)) {
+        if (! in_array('guest', $typeNames, true)) {
             abort(403, 'Access denied.');
         }
 
-        // Set tenant context from account
-        if ($user->account_id) {
-            $this->tenantContext->set((int) $user->account_id);
-        }
+        // Resolve user UUID from user_id linkage
+        if ($user->user_id !== null) {
+            $userProfile = $this->userRepository->findByNumericId((int) $user->user_id);
+            $userUuid = $userProfile ? (string) $userProfile->uuid : null;
 
-        // Resolve guest UUID from subject linkage
-        if ($user->subject_type === 'guest' && $user->subject_id !== null) {
-            $guest = $this->guestRepository->findByNumericId((int) $user->subject_id);
-            $guestUuid = $guest ? (string) $guest->uuid : null;
-
-            $request->attributes->set('guest_uuid', $guestUuid);
+            $request->attributes->set('guest_uuid', $userUuid);
         }
 
         return $next($request);

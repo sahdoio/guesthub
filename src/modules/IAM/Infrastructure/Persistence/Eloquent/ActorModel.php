@@ -16,8 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $name
  * @property string $email
  * @property string $password
- * @property string|null $subject_type
- * @property int|null $subject_id
+ * @property int|null $user_id
  * @property string $created_at
  * @property string|null $updated_at
  */
@@ -35,8 +34,7 @@ final class ActorModel extends Authenticatable
         'name',
         'email',
         'password',
-        'subject_type',
-        'subject_id',
+        'user_id',
         'created_at',
         'updated_at',
     ];
@@ -50,8 +48,8 @@ final class ActorModel extends Authenticatable
         return $this->belongsTo(AccountModel::class, 'account_id');
     }
 
-    public function roles(): BelongsToMany
+    public function types(): BelongsToMany
     {
-        return $this->belongsToMany(RoleModel::class, 'actor_roles', 'actor_id', 'role_id');
+        return $this->belongsToMany(TypeModel::class, 'actor_types', 'actor_id', 'type_id');
     }
 }

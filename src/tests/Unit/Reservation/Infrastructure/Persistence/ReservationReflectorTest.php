@@ -30,6 +30,8 @@ final class ReservationReflectorTest extends TestCase
         $reservation = ReservationReflector::reconstruct(
             uuid: $uuid,
             guestId: 'guest-uuid-123',
+            accountId: 'account-uuid-123',
+            hotelId: 'hotel-uuid-123',
             period: $period,
             roomType: 'DOUBLE',
             status: ReservationStatus::PENDING,
@@ -63,6 +65,8 @@ final class ReservationReflectorTest extends TestCase
         $reservation = ReservationReflector::reconstruct(
             uuid: ReservationId::generate(),
             guestId: 'guest-uuid-456',
+            accountId: 'account-uuid-456',
+            hotelId: 'hotel-uuid-456',
             period: new ReservationPeriod(
                 new DateTimeImmutable('+1 day'),
                 new DateTimeImmutable('+5 days'),
@@ -93,6 +97,8 @@ final class ReservationReflectorTest extends TestCase
         $reservation = ReservationReflector::reconstruct(
             uuid: ReservationId::generate(),
             guestId: 'guest-uuid-789',
+            accountId: 'account-uuid-789',
+            hotelId: 'hotel-uuid-789',
             period: new ReservationPeriod(
                 new DateTimeImmutable('+5 days'),
                 new DateTimeImmutable('+8 days'),
@@ -120,6 +126,8 @@ final class ReservationReflectorTest extends TestCase
         $reservation = ReservationReflector::reconstruct(
             uuid: ReservationId::generate(),
             guestId: 'guest-uuid',
+            accountId: 'account-uuid',
+            hotelId: 'hotel-uuid',
             period: new ReservationPeriod(
                 new DateTimeImmutable('+1 day'),
                 new DateTimeImmutable('+3 days'),

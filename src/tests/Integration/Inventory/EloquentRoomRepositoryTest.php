@@ -7,6 +7,7 @@ namespace Tests\Integration\Inventory;
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\HotelModel;
 use Modules\Inventory\Domain\Repository\RoomRepository;
 use Modules\Inventory\Domain\Room;
 use Modules\Inventory\Domain\ValueObject\RoomType;
@@ -27,10 +28,21 @@ final class EloquentRoomRepositoryTest extends TestCase
 
         $account = AccountModel::create([
             'uuid' => Uuid::uuid7()->toString(),
-            'name' => 'Test Hotel',
+            'name' => 'Test Organization',
+            'slug' => 'test-org',
+            'status' => 'active',
             'created_at' => now(),
         ]);
         $this->app->make(TenantContext::class)->set($account->id);
+
+        HotelModel::withoutGlobalScopes()->create([
+            'uuid' => Uuid::uuid7()->toString(),
+            'account_id' => $account->id,
+            'name' => 'Test Hotel',
+            'slug' => 'test-hotel',
+            'status' => 'active',
+            'created_at' => now(),
+        ]);
 
         $this->repository = $this->app->make(RoomRepository::class);
     }

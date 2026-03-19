@@ -8,7 +8,7 @@ use Modules\Reservation\Application\Query\GetReservation;
 use Modules\Reservation\Application\Query\GetReservationHandler;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\ReservationId;
-use Modules\Shared\Infrastructure\Service\AuthenticatedGuestResolver;
+use Modules\Shared\Infrastructure\Service\AuthenticatedUserResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -18,7 +18,7 @@ final readonly class ShowReservationAction
     public function __construct(
         private GetReservationHandler $handler,
         private ReservationRepository $reservationRepository,
-        private AuthenticatedGuestResolver $guestResolver,
+        private AuthenticatedUserResolver $userResolver,
         private JsonResponder $responder,
     ) {}
 
@@ -37,11 +37,11 @@ final readonly class ShowReservationAction
 
     private function enforceReservationOwnership(string $reservationUuid): void
     {
-        if ($this->guestResolver->isAdminOrSuperAdmin()) {
+        if ($this->userResolver->isOwnerOrSuperAdmin()) {
             return;
         }
 
-        $ownGuestUuid = $this->guestResolver->resolveGuestUuid();
+        $ownGuestUuid = $this->userResolver->resolveUserUuid();
         if ($ownGuestUuid !== null) {
             $reservation = $this->reservationRepository->findByUuid(ReservationId::fromString($reservationUuid));
             if ($reservation === null || $ownGuestUuid !== $reservation->guestId) {

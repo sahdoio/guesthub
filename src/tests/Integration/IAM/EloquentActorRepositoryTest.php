@@ -6,20 +6,21 @@ namespace Tests\Integration\IAM;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Guest\Domain\Guest;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Domain\ValueObject\LoyaltyTier;
-use Modules\Guest\Infrastructure\Persistence\Eloquent\GuestModel;
+use Modules\User\Domain\User;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\User\Domain\ValueObject\LoyaltyTier;
+use Modules\User\Infrastructure\Persistence\Eloquent\UserModel;
 use Modules\IAM\Domain\Account;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
-use Modules\IAM\Domain\Repository\RoleRepository;
-use Modules\IAM\Domain\Role;
+use Modules\IAM\Domain\Repository\TypeRepository;
+use Modules\IAM\Domain\Type;
+use Modules\IAM\Domain\Service\EmailUniquenessChecker;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
-use Modules\IAM\Domain\ValueObject\RoleName;
+use Modules\IAM\Domain\ValueObject\TypeName;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentActorRepository;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
@@ -34,34 +35,37 @@ final class EloquentActorRepositoryTest extends TestCase
 
     private ActorRepository $repository;
 
-    private RoleRepository $roleRepository;
+    private TypeRepository $typeRepository;
 
     private AccountId $accountId;
 
-    private Role $guestRole;
+    private Type $guestType;
 
-    private Role $adminRole;
+    private Type $ownerType;
 
     private int $guestId;
+
+    private EmailUniquenessChecker $emailChecker;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->repository = $this->app->make(ActorRepository::class);
-        $this->roleRepository = $this->app->make(RoleRepository::class);
+        $this->typeRepository = $this->app->make(TypeRepository::class);
 
-        // Seed roles via RoleRepository
-        $this->guestRole = Role::create(uuid: $this->roleRepository->nextIdentity(), name: RoleName::GUEST);
-        $this->roleRepository->save($this->guestRole);
+        // Seed types via TypeRepository
+        $this->guestType = Type::create(uuid: $this->typeRepository->nextIdentity(), name: TypeName::GUEST);
+        $this->typeRepository->save($this->guestType);
 
-        $this->adminRole = Role::create(uuid: $this->roleRepository->nextIdentity(), name: RoleName::ADMIN);
-        $this->roleRepository->save($this->adminRole);
+        $this->ownerType = Type::create(uuid: $this->typeRepository->nextIdentity(), name: TypeName::OWNER);
+        $this->typeRepository->save($this->ownerType);
 
         // Seed account
         $accountRepository = $this->app->make(AccountRepository::class);
         $account = Account::create(
             uuid: $accountRepository->nextIdentity(),
             name: 'Test Hotel',
+            slug: 'test-hotel',
             createdAt: new DateTimeImmutable,
         );
         $accountRepository->save($account);
@@ -71,20 +75,23 @@ final class EloquentActorRepositoryTest extends TestCase
         $numericAccountId = (int) AccountModel::where('uuid', $account->uuid->value)->value('id');
         $this->app->make(TenantContext::class)->set($numericAccountId);
 
-        // Seed a guest for FK reference
-        $guestRepo = $this->app->make(GuestRepository::class);
-        $guest = Guest::create(
-            uuid: $guestRepo->nextIdentity(),
+        // Seed a user for FK reference
+        $userRepo = $this->app->make(UserRepository::class);
+        $user = User::create(
+            uuid: $userRepo->nextIdentity(),
             fullName: 'John Doe',
             email: 'john@hotel.com',
-            phone: '+5511999999999',
+            phone: '5511999999999',
             document: 'DOC123',
             loyaltyTier: LoyaltyTier::BRONZE,
             preferences: [],
             createdAt: new DateTimeImmutable,
         );
-        $guestRepo->save($guest);
-        $this->guestId = GuestModel::where('uuid', (string) $guest->uuid)->value('id');
+        $userRepo->save($user);
+        $this->guestId = UserModel::where('uuid', (string) $user->uuid)->value('id');
+
+        $this->emailChecker = $this->createStub(EmailUniquenessChecker::class);
+        $this->emailChecker->method('isEmailTaken')->willReturn(false);
     }
 
     private function registerActor(array $overrides = []): Actor
@@ -92,13 +99,13 @@ final class EloquentActorRepositoryTest extends TestCase
         return Actor::register(
             uuid: $overrides['uuid'] ?? $this->repository->nextIdentity(),
             accountId: array_key_exists('accountId', $overrides) ? $overrides['accountId'] : $this->accountId,
-            roleIds: $overrides['roleIds'] ?? [$this->guestRole->uuid],
+            typeIds: $overrides['typeIds'] ?? [$this->guestType->uuid],
             name: $overrides['name'] ?? 'John Doe',
             email: $overrides['email'] ?? 'john@hotel.com',
             password: $overrides['password'] ?? new HashedPassword('$2y$10$somehash'),
-            subjectType: array_key_exists('subjectType', $overrides) ? $overrides['subjectType'] : 'guest',
-            subjectId: array_key_exists('subjectId', $overrides) ? $overrides['subjectId'] : $this->guestId,
+            userId: array_key_exists('userId', $overrides) ? $overrides['userId'] : $this->guestId,
             createdAt: $overrides['createdAt'] ?? new DateTimeImmutable,
+            emailUniquenessChecker: $this->emailChecker,
         );
     }
 
@@ -114,9 +121,8 @@ final class EloquentActorRepositoryTest extends TestCase
         $this->assertTrue($actor->uuid->equals($found->uuid));
         $this->assertSame('John Doe', $found->name);
         $this->assertSame('john@hotel.com', $found->email);
-        $this->assertTrue($found->hasRoleId($this->guestRole->uuid));
-        $this->assertSame('guest', $found->subjectType);
-        $this->assertSame($this->guestId, $found->subjectId);
+        $this->assertTrue($found->hasTypeId($this->guestType->uuid));
+        $this->assertSame($this->guestId, $found->userId);
     }
 
     #[Test]
@@ -158,20 +164,18 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_saves_actor_with_null_subject(): void
+    public function it_saves_actor_with_null_user(): void
     {
         $actor = $this->registerActor([
-            'roleIds' => [$this->adminRole->uuid],
-            'subjectType' => null,
-            'subjectId' => null,
+            'typeIds' => [$this->ownerType->uuid],
+            'userId' => null,
         ]);
         $this->repository->save($actor);
 
         $found = $this->repository->findByUuid($actor->uuid);
 
-        $this->assertTrue($found->hasRoleId($this->adminRole->uuid));
-        $this->assertNull($found->subjectType);
-        $this->assertNull($found->subjectId);
+        $this->assertTrue($found->hasTypeId($this->ownerType->uuid));
+        $this->assertNull($found->userId);
     }
 
     #[Test]
@@ -186,19 +190,19 @@ final class EloquentActorRepositoryTest extends TestCase
     #[Test]
     public function it_saves_super_admin_with_null_account(): void
     {
-        $superadminRole = Role::create(uuid: $this->roleRepository->nextIdentity(), name: RoleName::SUPERADMIN);
-        $this->roleRepository->save($superadminRole);
+        $superadminType = Type::create(uuid: $this->typeRepository->nextIdentity(), name: TypeName::SUPERADMIN);
+        $this->typeRepository->save($superadminType);
 
         $actor = Actor::register(
             uuid: $this->repository->nextIdentity(),
             accountId: null,
-            roleIds: [$superadminRole->uuid],
+            typeIds: [$superadminType->uuid],
             name: 'Super Admin',
             email: 'super@guesthub.com',
             password: new HashedPassword('$2y$10$somehash'),
-            subjectType: null,
-            subjectId: null,
+            userId: null,
             createdAt: new DateTimeImmutable,
+            emailUniquenessChecker: $this->emailChecker,
         );
         $this->repository->save($actor);
 
@@ -206,21 +210,21 @@ final class EloquentActorRepositoryTest extends TestCase
 
         $this->assertNotNull($found);
         $this->assertNull($found->accountId);
-        $this->assertTrue($found->hasRoleId($superadminRole->uuid));
+        $this->assertTrue($found->hasTypeId($superadminType->uuid));
     }
 
     #[Test]
-    public function it_persists_multiple_roles(): void
+    public function it_persists_multiple_types(): void
     {
         $actor = $this->registerActor([
-            'roleIds' => [$this->guestRole->uuid, $this->adminRole->uuid],
+            'typeIds' => [$this->guestType->uuid, $this->ownerType->uuid],
         ]);
         $this->repository->save($actor);
 
         $found = $this->repository->findByUuid($actor->uuid);
 
-        $this->assertCount(2, $found->roleIds());
-        $this->assertTrue($found->hasRoleId($this->guestRole->uuid));
-        $this->assertTrue($found->hasRoleId($this->adminRole->uuid));
+        $this->assertCount(2, $found->typeIds());
+        $this->assertTrue($found->hasTypeId($this->guestType->uuid));
+        $this->assertTrue($found->hasTypeId($this->ownerType->uuid));
     }
 }

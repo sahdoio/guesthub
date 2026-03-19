@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('account_id')->constrained('accounts')->cascadeOnDelete();
+            $table->foreignId('hotel_id')->constrained('hotels')->cascadeOnDelete();
             $table->string('number');
             $table->string('type');
             $table->integer('floor');
@@ -23,7 +24,8 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
 
             $table->index('account_id');
-            $table->unique(['account_id', 'number']);
+            $table->index('hotel_id');
+            $table->unique(['hotel_id', 'number']);
             $table->index('status');
             $table->index('type');
             $table->index('floor');

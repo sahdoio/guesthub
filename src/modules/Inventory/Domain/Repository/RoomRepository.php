@@ -10,6 +10,8 @@ use Modules\Shared\Domain\PaginatedResult;
 
 interface RoomRepository
 {
+    public function setHotelId(int $hotelId): void;
+
     public function save(Room $room): void;
 
     public function findByUuid(RoomId $uuid): ?Room;
@@ -23,6 +25,7 @@ interface RoomRepository
         ?string $status = null,
         ?string $type = null,
         ?int $floor = null,
+        ?int $hotelId = null,
     ): PaginatedResult;
 
     public function remove(Room $room): void;
@@ -38,4 +41,7 @@ interface RoomRepository
     public function countByType(): array;
 
     public function countAvailableByType(string $type): int;
+
+    /** @return array<int, array{type: string, available: int, min_price: float}> */
+    public function getAvailableRoomTypes(): array;
 }

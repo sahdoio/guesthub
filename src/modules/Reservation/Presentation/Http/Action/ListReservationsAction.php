@@ -7,7 +7,7 @@ namespace Modules\Reservation\Presentation\Http\Action;
 use Modules\Reservation\Application\Query\ListReservations;
 use Modules\Reservation\Application\Query\ListReservationsHandler;
 use Modules\Shared\Application\Query\Pagination;
-use Modules\Shared\Infrastructure\Service\AuthenticatedGuestResolver;
+use Modules\Shared\Infrastructure\Service\AuthenticatedUserResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -16,7 +16,7 @@ final readonly class ListReservationsAction
 {
     public function __construct(
         private ListReservationsHandler $handler,
-        private AuthenticatedGuestResolver $guestResolver,
+        private AuthenticatedUserResolver $userResolver,
         private JsonResponder $responder,
     ) {}
 
@@ -28,8 +28,8 @@ final readonly class ListReservationsAction
         $perPage = min(100, max(1, (int) ($query['per_page'] ?? 15)));
 
         $guestId = null;
-        if (! $this->guestResolver->isAdminOrSuperAdmin()) {
-            $guestId = $this->guestResolver->resolveGuestUuid();
+        if (! $this->userResolver->isOwnerOrSuperAdmin()) {
+            $guestId = $this->userResolver->resolveUserUuid();
         }
 
         $result = $this->handler->handle(

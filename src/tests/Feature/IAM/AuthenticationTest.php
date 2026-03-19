@@ -27,7 +27,7 @@ final class AuthenticationTest extends TestCase
             'name' => 'John Doe',
             'email' => 'john@hotel.com',
             'password' => 'password123',
-            'phone' => '+5511999999999',
+            'phone' => '5511999999999',
             'document' => 'ABC123456',
         ]);
 
@@ -40,22 +40,27 @@ final class AuthenticationTest extends TestCase
             'email' => 'john@hotel.com',
         ]);
 
+        // Guest should have their own personal account
+        $actorAccountId = \Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel::where('email', 'john@hotel.com')->value('account_id');
+        $this->assertNotNull($actorAccountId);
+        $this->assertDatabaseHas('accounts', ['id' => $actorAccountId]);
+
         $guestUuid = $response->json('data.guest_id');
         $this->assertNotNull($guestUuid);
 
-        $this->assertDatabaseHas('guests', [
+        $this->assertDatabaseHas('users', [
             'uuid' => $guestUuid,
             'full_name' => 'John Doe',
             'email' => 'john@hotel.com',
-            'phone' => '+5511999999999',
+            'phone' => '5511999999999',
             'document' => 'ABC123456',
         ]);
 
-        // subject_id in actors is a numeric FK, verify via the guests table
-        $guestNumericId = \Modules\Guest\Infrastructure\Persistence\Eloquent\GuestModel::where('uuid', $guestUuid)->value('id');
+        // user_id in actors is a numeric FK, verify via the users table
+        $userNumericId = \Modules\User\Infrastructure\Persistence\Eloquent\UserModel::where('uuid', $guestUuid)->value('id');
         $this->assertDatabaseHas('actors', [
             'email' => 'john@hotel.com',
-            'subject_id' => $guestNumericId,
+            'user_id' => $userNumericId,
         ]);
     }
 
@@ -66,7 +71,7 @@ final class AuthenticationTest extends TestCase
             'name' => 'John Doe',
             'email' => 'john@hotel.com',
             'password' => 'password123',
-            'phone' => '+5511999999999',
+            'phone' => '5511999999999',
             'document' => 'ABC123456',
         ])->assertStatus(201);
 
@@ -74,7 +79,7 @@ final class AuthenticationTest extends TestCase
             'name' => 'Jane Doe',
             'email' => 'john@hotel.com',
             'password' => 'password456',
-            'phone' => '+5511888888888',
+            'phone' => '5511888888888',
             'document' => 'DEF789012',
         ])->assertStatus(500);
     }
@@ -95,7 +100,7 @@ final class AuthenticationTest extends TestCase
             'name' => 'John',
             'email' => 'john@hotel.com',
             'password' => 'short',
-            'phone' => '+5511999999999',
+            'phone' => '5511999999999',
             'document' => 'ABC123456',
         ]);
 
@@ -110,7 +115,7 @@ final class AuthenticationTest extends TestCase
             'name' => 'John Doe',
             'email' => 'john@hotel.com',
             'password' => 'password123',
-            'phone' => '+5511999999999',
+            'phone' => '5511999999999',
             'document' => 'ABC123456',
         ])->assertStatus(201);
 
@@ -132,7 +137,7 @@ final class AuthenticationTest extends TestCase
             'name' => 'John Doe',
             'email' => 'john@hotel.com',
             'password' => 'password123',
-            'phone' => '+5511999999999',
+            'phone' => '5511999999999',
             'document' => 'ABC123456',
         ]);
 
@@ -151,7 +156,7 @@ final class AuthenticationTest extends TestCase
             'name' => 'John Doe',
             'email' => 'john@hotel.com',
             'password' => 'password123',
-            'phone' => '+5511999999999',
+            'phone' => '5511999999999',
             'document' => 'ABC123456',
         ]);
 
@@ -182,19 +187,32 @@ final class AuthenticationTest extends TestCase
         $this->getJson('/api/guests')->assertStatus(401);
     }
 
-    // --- Web Login (Admin Access) ---
+    // --- Web Login ---
 
     #[Test]
-    public function admin_can_login_via_web(): void
+    public function owner_can_login_via_web(): void
     {
-        $this->createAdminActor([
-            'email' => 'admin@guesthub.com',
+        $this->createOwnerActor([
+            'email' => 'owner@guesthub.com',
         ]);
 
         $this->post('/login', [
-            'email' => 'admin@guesthub.com',
+            'email' => 'owner@guesthub.com',
             'password' => 'password',
         ])->assertRedirect('/dashboard');
+    }
+
+    #[Test]
+    public function superadmin_login_redirects_to_superadmin_home(): void
+    {
+        $this->createSuperAdminActor([
+            'email' => 'super@guesthub.com',
+        ]);
+
+        $this->post('/login', [
+            'email' => 'super@guesthub.com',
+            'password' => 'password',
+        ])->assertRedirect('/superadmin');
     }
 
     #[Test]
@@ -211,7 +229,7 @@ final class AuthenticationTest extends TestCase
     }
 
     #[Test]
-    public function guest_role_cannot_access_admin_web_routes(): void
+    public function guest_role_cannot_access_owner_web_routes(): void
     {
         $guest = $this->createGuestActor([
             'email' => 'guest@hotel.com',
@@ -220,6 +238,6 @@ final class AuthenticationTest extends TestCase
         $this->actingAs($guest)->get('/dashboard')->assertRedirect('/login');
         $this->actingAs($guest)->get('/reservations')->assertRedirect('/login');
         $this->actingAs($guest)->get('/guests')->assertRedirect('/login');
-        $this->actingAs($guest)->get('/rooms')->assertRedirect('/login');
+        $this->actingAs($guest)->get('/hotels')->assertRedirect('/login');
     }
 }

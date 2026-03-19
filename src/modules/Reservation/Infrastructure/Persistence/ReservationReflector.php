@@ -22,6 +22,8 @@ final class ReservationReflector
     public static function reconstruct(
         ReservationId $uuid,
         string $guestId,
+        string $accountId,
+        string $hotelId,
         ReservationPeriod $period,
         string $roomType,
         ReservationStatus $status,
@@ -39,6 +41,8 @@ final class ReservationReflector
 
         self::set($ref, $reservation, 'uuid', $uuid);
         self::set($ref, $reservation, 'guestId', $guestId);
+        self::set($ref, $reservation, 'accountId', $accountId);
+        self::set($ref, $reservation, 'hotelId', $hotelId);
         self::set($ref, $reservation, 'period', $period);
         self::set($ref, $reservation, 'roomType', $roomType);
         self::set($ref, $reservation, 'status', $status);

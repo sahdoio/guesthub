@@ -10,7 +10,7 @@ use Modules\Inventory\Infrastructure\Http\View\RoomStatusView;
 use Modules\Inventory\Infrastructure\Http\View\RoomStoreView;
 use Modules\Inventory\Infrastructure\Http\View\RoomUpdateView;
 
-Route::middleware(['auth', 'admin'])->prefix('rooms')->group(function () {
+Route::middleware(['auth', 'owner'])->prefix('hotels/{slug}/rooms')->group(function () {
     Route::get('/', RoomListView::class)->name('rooms.index');
     Route::get('/create', RoomCreateView::class)->name('rooms.create');
     Route::post('/', RoomStoreView::class)->name('rooms.store');

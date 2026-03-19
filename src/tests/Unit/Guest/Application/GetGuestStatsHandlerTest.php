@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Guest\Application;
 
-use Modules\Guest\Application\Query\GetGuestStats;
-use Modules\Guest\Application\Query\GetGuestStatsHandler;
-use Modules\Guest\Application\Query\GuestStatsResult;
-use Modules\Guest\Domain\Repository\GuestRepository;
+use Modules\User\Application\Query\GetUserStats;
+use Modules\User\Application\Query\GetUserStatsHandler;
+use Modules\User\Application\Query\UserStatsResult;
+use Modules\User\Domain\Repository\UserRepository;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(GetGuestStatsHandler::class)]
+#[CoversClass(GetUserStatsHandler::class)]
 final class GetGuestStatsHandlerTest extends TestCase
 {
     #[Test]
     public function it_returns_guest_stats_dto(): void
     {
-        $repository = $this->createMock(GuestRepository::class);
+        $repository = $this->createMock(UserRepository::class);
 
         $repository->method('count')->willReturn(42);
         $repository->method('countByLoyaltyTier')->willReturn([
@@ -28,10 +28,10 @@ final class GetGuestStatsHandlerTest extends TestCase
             'platinum' => 3,
         ]);
 
-        $handler = new GetGuestStatsHandler($repository);
-        $result = $handler->handle(new GetGuestStats);
+        $handler = new GetUserStatsHandler($repository);
+        $result = $handler->handle(new GetUserStats);
 
-        $this->assertInstanceOf(GuestStatsResult::class, $result);
+        $this->assertInstanceOf(UserStatsResult::class, $result);
         $this->assertSame(42, $result->total);
         $this->assertSame(20, $result->byLoyaltyTier['bronze']);
         $this->assertSame(12, $result->byLoyaltyTier['silver']);
@@ -42,13 +42,13 @@ final class GetGuestStatsHandlerTest extends TestCase
     #[Test]
     public function it_returns_empty_stats_when_no_guests(): void
     {
-        $repository = $this->createMock(GuestRepository::class);
+        $repository = $this->createMock(UserRepository::class);
 
         $repository->method('count')->willReturn(0);
         $repository->method('countByLoyaltyTier')->willReturn([]);
 
-        $handler = new GetGuestStatsHandler($repository);
-        $result = $handler->handle(new GetGuestStats);
+        $handler = new GetUserStatsHandler($repository);
+        $result = $handler->handle(new GetUserStats);
 
         $this->assertSame(0, $result->total);
         $this->assertEmpty($result->byLoyaltyTier);
@@ -57,13 +57,13 @@ final class GetGuestStatsHandlerTest extends TestCase
     #[Test]
     public function to_array_returns_correct_structure(): void
     {
-        $repository = $this->createMock(GuestRepository::class);
+        $repository = $this->createMock(UserRepository::class);
 
         $repository->method('count')->willReturn(5);
         $repository->method('countByLoyaltyTier')->willReturn(['gold' => 5]);
 
-        $handler = new GetGuestStatsHandler($repository);
-        $result = $handler->handle(new GetGuestStats);
+        $handler = new GetUserStatsHandler($repository);
+        $result = $handler->handle(new GetUserStats);
 
         $array = $result->toArray();
 

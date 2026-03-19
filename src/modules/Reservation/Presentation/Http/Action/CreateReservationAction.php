@@ -6,11 +6,14 @@ namespace Modules\Reservation\Presentation\Http\Action;
 
 use DateMalformedStringException;
 use DateTimeImmutable;
+use Modules\IAM\Domain\Repository\AccountRepository;
+use Modules\IAM\Domain\Repository\HotelRepository;
 use Modules\Reservation\Application\Command\CreateReservation;
 use Modules\Reservation\Application\Command\CreateReservationHandler;
 use Modules\Reservation\Application\Query\GetReservation;
 use Modules\Reservation\Application\Query\GetReservationHandler;
-use Modules\Shared\Infrastructure\Service\AuthenticatedGuestResolver;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
+use Modules\Shared\Infrastructure\Service\AuthenticatedUserResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;
 use Modules\Shared\Presentation\Validation\InputValidator;
 use Psr\Http\Message\ResponseInterface;
@@ -21,9 +24,12 @@ final readonly class CreateReservationAction
     public function __construct(
         private CreateReservationHandler $handler,
         private GetReservationHandler $queryHandler,
-        private AuthenticatedGuestResolver $guestResolver,
+        private AuthenticatedUserResolver $userResolver,
         private InputValidator $validator,
         private JsonResponder $responder,
+        private TenantContext $tenantContext,
+        private AccountRepository $accountRepository,
+        private HotelRepository $hotelRepository,
     ) {}
 
     /**
@@ -40,8 +46,14 @@ final readonly class CreateReservationAction
 
         $this->enforceGuestOwnership($data['guest_id']);
 
+        $account = $this->accountRepository->findByNumericId($this->tenantContext->id());
+        $hotels = $this->hotelRepository->findByAccountId($account->uuid);
+        $hotel = $hotels[0] ?? throw new \DomainException('No hotel found for this account.');
+
         $id = $this->handler->handle(new CreateReservation(
             guestId: $data['guest_id'],
+            accountId: (string) $account->uuid,
+            hotelId: (string) $hotel->uuid,
             checkIn: new DateTimeImmutable($data['check_in']),
             checkOut: new DateTimeImmutable($data['check_out']),
             roomType: $data['room_type'],
@@ -54,11 +66,11 @@ final readonly class CreateReservationAction
 
     private function enforceGuestOwnership(string $guestUuid): void
     {
-        if ($this->guestResolver->isAdminOrSuperAdmin()) {
+        if ($this->userResolver->isOwnerOrSuperAdmin()) {
             return;
         }
 
-        $ownGuestUuid = $this->guestResolver->resolveGuestUuid();
+        $ownGuestUuid = $this->userResolver->resolveUserUuid();
         if ($ownGuestUuid !== null && $ownGuestUuid !== $guestUuid) {
             abort(403, 'Access denied.');
         }

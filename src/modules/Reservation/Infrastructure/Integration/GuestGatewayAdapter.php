@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Modules\Reservation\Infrastructure\Integration;
 
-use Modules\Guest\Infrastructure\Integration\GuestApi;
+use Modules\User\Infrastructure\Integration\UserApi;
 use Modules\Reservation\Domain\Dto\GuestInfo;
 use Modules\Reservation\Domain\Service\GuestGateway;
 
 final class GuestGatewayAdapter implements GuestGateway
 {
     public function __construct(
-        private readonly GuestApi $guestApi,
+        private readonly UserApi $userApi,
     ) {}
 
     public function findByUuid(string $guestId): ?GuestInfo
     {
-        $data = $this->guestApi->findByUuid($guestId);
+        $data = $this->userApi->findByUuid($guestId);
 
         if ($data === null) {
             return null;

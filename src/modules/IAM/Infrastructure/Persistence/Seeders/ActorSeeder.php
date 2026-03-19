@@ -6,35 +6,41 @@ namespace Modules\IAM\Infrastructure\Persistence\Seeders;
 
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
-use Modules\Guest\Domain\GuestId;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Infrastructure\Persistence\Seeders\GuestSeeder;
+use Illuminate\Support\Str;
+use Modules\User\Domain\UserId;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\User\Infrastructure\Persistence\Seeders\UserSeeder;
+use Modules\IAM\Domain\Account;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
+use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
-use Modules\IAM\Domain\Repository\RoleRepository;
+use Modules\IAM\Domain\Repository\TypeRepository;
+use Modules\IAM\Domain\Service\EmailUniquenessChecker;
 use Modules\IAM\Domain\Service\PasswordHasher;
-use Modules\IAM\Domain\ValueObject\RoleName;
+use Modules\IAM\Domain\ValueObject\TypeName;
 
 class ActorSeeder extends Seeder
 {
     public function __construct(
         private readonly ActorRepository $repository,
-        private readonly RoleRepository $roleRepository,
-        private readonly GuestRepository $guestRepository,
+        private readonly AccountRepository $accountRepository,
+        private readonly TypeRepository $typeRepository,
+        private readonly UserRepository $userRepository,
         private readonly PasswordHasher $hasher,
+        private readonly EmailUniquenessChecker $emailChecker,
     ) {}
 
     public function run(): void
     {
         $this->seedSuperAdmins();
-        $this->seedAdmins();
+        $this->seedOwners();
         $this->seedGuests();
     }
 
     private function seedSuperAdmins(): void
     {
-        $superadminRole = $this->roleRepository->findByName(RoleName::SUPERADMIN);
+        $superadminType = $this->typeRepository->findByName(TypeName::SUPERADMIN);
 
         $superadmins = [
             ['Super Admin', 'superadmin@guesthub.com'],
@@ -48,44 +54,47 @@ class ActorSeeder extends Seeder
             $actor = Actor::register(
                 uuid: $this->repository->nextIdentity(),
                 accountId: null,
-                roleIds: [$superadminRole->uuid],
+                typeIds: [$superadminType->uuid],
                 name: $name,
                 email: $email,
                 password: $this->hasher->hash('password'),
-                subjectType: null,
-                subjectId: null,
+                userId: null,
                 createdAt: new DateTimeImmutable,
+                emailUniquenessChecker: $this->emailChecker,
             );
 
             $this->repository->save($actor);
         }
     }
 
-    private function seedAdmins(): void
+    private function seedOwners(): void
     {
-        $adminRole = $this->roleRepository->findByName(RoleName::ADMIN);
-        $accountId = AccountId::fromString(AccountSeeder::$defaultAccountUuid);
+        $ownerType = $this->typeRepository->findByName(TypeName::OWNER);
+        $userIds = UserSeeder::$userIds;
 
-        $admins = [
-            ['Admin', 'admin@guesthub.com'],
-            ['Front Desk', 'frontdesk@guesthub.com'],
+        $owners = [
+            ['John Smith', 'john@hospitality.com', AccountSeeder::$accountSlugs['johns-hospitality'] ?? null],
+            ['Maria Santos', 'maria@tourism.com', AccountSeeder::$accountSlugs['marias-tourism'] ?? null],
         ];
 
-        foreach ($admins as [$name, $email]) {
-            if ($this->repository->findByEmail($email) !== null) {
+        foreach ($owners as [$name, $email, $accountUuid]) {
+            if ($accountUuid === null || $this->repository->findByEmail($email) !== null) {
                 continue;
             }
 
+            $userUuid = $userIds[$email] ?? null;
+            $userId = $userUuid ? $this->userRepository->resolveNumericId(UserId::fromString($userUuid)) : null;
+
             $actor = Actor::register(
                 uuid: $this->repository->nextIdentity(),
-                accountId: $accountId,
-                roleIds: [$adminRole->uuid],
+                accountId: AccountId::fromString($accountUuid),
+                typeIds: [$ownerType->uuid],
                 name: $name,
                 email: $email,
                 password: $this->hasher->hash('password'),
-                subjectType: null,
-                subjectId: null,
+                userId: $userId,
                 createdAt: new DateTimeImmutable,
+                emailUniquenessChecker: $this->emailChecker,
             );
 
             $this->repository->save($actor);
@@ -94,9 +103,8 @@ class ActorSeeder extends Seeder
 
     private function seedGuests(): void
     {
-        $guestRole = $this->roleRepository->findByName(RoleName::GUEST);
-        $accountId = AccountId::fromString(AccountSeeder::$defaultAccountUuid);
-        $guestIds = GuestSeeder::$guestIds;
+        $guestType = $this->typeRepository->findByName(TypeName::GUEST);
+        $userIds = UserSeeder::$userIds;
 
         $guests = [
             ['Alice Johnson', 'alice@example.com'],
@@ -111,19 +119,29 @@ class ActorSeeder extends Seeder
                 continue;
             }
 
-            $guestUuid = $guestIds[$email];
-            $guestId = $this->guestRepository->resolveNumericId(GuestId::fromString($guestUuid));
+            // Each guest gets their own personal account
+            $accountId = $this->accountRepository->nextIdentity();
+            $account = Account::create(
+                uuid: $accountId,
+                name: $name . "'s Account",
+                slug: Str::slug($name) . '-' . Str::random(6),
+                createdAt: new DateTimeImmutable,
+            );
+            $this->accountRepository->save($account);
+
+            $userUuid = $userIds[$email];
+            $userId = $this->userRepository->resolveNumericId(UserId::fromString($userUuid));
 
             $actor = Actor::register(
                 uuid: $this->repository->nextIdentity(),
                 accountId: $accountId,
-                roleIds: [$guestRole->uuid],
+                typeIds: [$guestType->uuid],
                 name: $name,
                 email: $email,
                 password: $this->hasher->hash('password'),
-                subjectType: 'guest',
-                subjectId: $guestId,
+                userId: $userId,
                 createdAt: new DateTimeImmutable,
+                emailUniquenessChecker: $this->emailChecker,
             );
 
             $this->repository->save($actor);

@@ -1,9 +1,12 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import GuestLayout from '../../Layouts/GuestLayout.vue';
 import Logo from '../../Components/Logo.vue';
 
 defineOptions({ layout: GuestLayout });
+
+const { t } = useI18n();
 
 const form = useForm({
     email: '',
@@ -42,22 +45,22 @@ const submit = () => {
                     </svg>
                 </div>
             </div>
-            <h1 class="text-4xl font-bold mb-4 leading-tight">Welcome to<br/>GuestHub</h1>
+            <h1 class="text-4xl font-bold mb-4 leading-tight">{{ $t('auth.welcome_title') }}<br/>GuestHub</h1>
             <p class="text-lg text-indigo-100 leading-relaxed max-w-md">
-                The modern hotel management platform. Streamline reservations, manage guests, and deliver exceptional hospitality.
+                {{ $t('auth.welcome_subtitle') }}
             </p>
             <div class="mt-12 flex items-center gap-6 text-indigo-200 text-sm">
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    Real-time booking
+                    {{ $t('auth.real_time_booking') }}
                 </div>
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    Guest management
+                    {{ $t('auth.guest_management') }}
                 </div>
                 <div class="flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    Multi-tenant
+                    {{ $t('auth.multi_tenant') }}
                 </div>
             </div>
         </div>
@@ -71,14 +74,14 @@ const submit = () => {
             </div>
 
             <div class="mb-8">
-                <h2 class="text-2xl font-bold text-gray-900">Sign in to your account</h2>
-                <p class="mt-2 text-sm text-gray-500">Enter your credentials to access the platform.</p>
+                <h2 class="text-2xl font-bold text-gray-900">{{ $t('auth.sign_in_title') }}</h2>
+                <p class="mt-2 text-sm text-gray-500">{{ $t('auth.sign_in_subtitle') }}</p>
             </div>
 
             <form @submit.prevent="submit" class="space-y-5">
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Email address
+                        {{ $t('auth.email') }}
                     </label>
                     <input
                         id="email"
@@ -86,7 +89,7 @@ const submit = () => {
                         type="email"
                         required
                         autofocus
-                        placeholder="you@example.com"
+                        :placeholder="$t('auth.email_placeholder')"
                         class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
                         :class="{ 'border-red-400 ring-1 ring-red-400': form.errors.email }"
                     />
@@ -97,14 +100,14 @@ const submit = () => {
 
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Password
+                        {{ $t('auth.password') }}
                     </label>
                     <input
                         id="password"
                         v-model="form.password"
                         type="password"
                         required
-                        placeholder="Enter your password"
+                        :placeholder="$t('auth.password_placeholder')"
                         class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
                         :class="{ 'border-red-400 ring-1 ring-red-400': form.errors.password }"
                     />
@@ -118,14 +121,14 @@ const submit = () => {
                     :disabled="form.processing"
                     class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-2.5 px-4 rounded-lg text-sm font-semibold hover:from-indigo-700 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
                 >
-                    <span v-if="form.processing">Signing in...</span>
-                    <span v-else>Sign in</span>
+                    <span v-if="form.processing">{{ $t('auth.signing_in') }}</span>
+                    <span v-else>{{ $t('auth.sign_in') }}</span>
                 </button>
 
                 <p class="text-center text-sm text-gray-500 pt-2">
-                    Don't have an account?
+                    {{ $t('auth.no_account') }}
                     <a href="/register" class="text-indigo-600 hover:text-indigo-700 font-semibold">
-                        Create one
+                        {{ $t('auth.create_one') }}
                     </a>
                 </p>
             </form>

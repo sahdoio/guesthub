@@ -6,9 +6,9 @@ namespace Tests\Integration\Guest;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Guest\Domain\Guest;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Domain\ValueObject\LoyaltyTier;
+use Modules\User\Domain\User;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\User\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use PHPUnit\Framework\Attributes\Test;
@@ -19,7 +19,7 @@ final class GuestStatsTest extends TestCase
 {
     use RefreshDatabase;
 
-    private GuestRepository $repository;
+    private UserRepository $repository;
 
     protected function setUp(): void
     {
@@ -28,20 +28,22 @@ final class GuestStatsTest extends TestCase
         $account = AccountModel::create([
             'uuid' => Uuid::uuid7()->toString(),
             'name' => 'Test Hotel',
+            'slug' => 'test-hotel',
+            'status' => 'active',
             'created_at' => now(),
         ]);
         $this->app->make(TenantContext::class)->set($account->id);
 
-        $this->repository = $this->app->make(GuestRepository::class);
+        $this->repository = $this->app->make(UserRepository::class);
     }
 
     private function createGuest(string $loyaltyTier = 'bronze'): void
     {
-        $profile = Guest::create(
+        $profile = User::create(
             uuid: $this->repository->nextIdentity(),
             fullName: 'Guest '.uniqid(),
             email: uniqid().'@hotel.com',
-            phone: '+5511999999999',
+            phone: '5511999999999',
             document: 'DOC'.uniqid(),
             loyaltyTier: LoyaltyTier::from($loyaltyTier),
             preferences: [],

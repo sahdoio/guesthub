@@ -14,6 +14,7 @@ final readonly class ReservationReadModel implements JsonSerializable
         public string $id,
         public string $status,
         public array $guest,
+        public array $hotel,
         public string $checkIn,
         public string $checkOut,
         public int $nights,
@@ -33,6 +34,7 @@ final readonly class ReservationReadModel implements JsonSerializable
             id: (string) $reservation->uuid,
             status: $reservation->status->value,
             guest: ['guest_id' => $reservation->guestId],
+            hotel: ['hotel_id' => $reservation->hotelId],
             checkIn: $reservation->period->checkIn->format('Y-m-d'),
             checkOut: $reservation->period->checkOut->format('Y-m-d'),
             nights: $reservation->period->nights(),
@@ -60,6 +62,28 @@ final readonly class ReservationReadModel implements JsonSerializable
             id: $this->id,
             status: $this->status,
             guest: $guest,
+            hotel: $this->hotel,
+            checkIn: $this->checkIn,
+            checkOut: $this->checkOut,
+            nights: $this->nights,
+            roomType: $this->roomType,
+            assignedRoomNumber: $this->assignedRoomNumber,
+            specialRequests: $this->specialRequests,
+            createdAt: $this->createdAt,
+            confirmedAt: $this->confirmedAt,
+            checkedInAt: $this->checkedInAt,
+            checkedOutAt: $this->checkedOutAt,
+            cancelledAt: $this->cancelledAt,
+        );
+    }
+
+    public function withHotel(array $hotel): self
+    {
+        return new self(
+            id: $this->id,
+            status: $this->status,
+            guest: $this->guest,
+            hotel: $hotel,
             checkIn: $this->checkIn,
             checkOut: $this->checkOut,
             nights: $this->nights,
@@ -80,6 +104,7 @@ final readonly class ReservationReadModel implements JsonSerializable
             'id' => $this->id,
             'status' => $this->status,
             'guest' => $this->guest,
+            'hotel' => $this->hotel,
             'period' => [
                 'check_in' => $this->checkIn,
                 'check_out' => $this->checkOut,

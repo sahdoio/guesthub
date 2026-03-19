@@ -6,8 +6,9 @@ namespace Modules\Shared\Infrastructure\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use Modules\Guest\Domain\Repository\GuestRepository;
+use Modules\User\Domain\Repository\UserRepository;
 use Modules\IAM\Domain\Repository\AccountRepository;
+use Modules\IAM\Domain\Repository\HotelRepository;
 
 final class HandleInertiaRequests extends Middleware
 {
@@ -15,7 +16,8 @@ final class HandleInertiaRequests extends Middleware
 
     public function __construct(
         private readonly AccountRepository $accountRepository,
-        private readonly GuestRepository $guestRepository,
+        private readonly UserRepository $userRepository,
+        private readonly HotelRepository $hotelRepository,
     ) {}
 
     public function share(Request $request): array
@@ -23,41 +25,35 @@ final class HandleInertiaRequests extends Middleware
         $user = $request->user();
 
         if ($user) {
-            $user->load('roles');
+            $user->load('types');
         }
 
-        $roleNames = $user ? $user->roles->pluck('name')->values()->toArray() : [];
-        $isSuperAdmin = in_array('superadmin', $roleNames, true);
+        $typeNames = $user ? $user->types->pluck('name')->values()->toArray() : [];
 
         $tenantData = [];
-        if ($user && $isSuperAdmin) {
-            $accounts = array_map(fn ($account) => [
-                'uuid' => (string) $account->uuid,
-                'name' => $account->name,
-            ], $this->accountRepository->findAll());
 
-            $currentAccountId = $request->session()->get('tenant_account_id');
-            $currentAccount = null;
-            if ($currentAccountId) {
-                $account = $this->accountRepository->findByNumericId((int) $currentAccountId);
-                $currentAccount = $account ? [
-                    'uuid' => (string) $account->uuid,
-                    'name' => $account->name,
-                ] : null;
+        // For owners, share their account info and hotel count
+        if ($user && in_array('owner', $typeNames, true) && $user->account_id) {
+            $ownerAccount = $this->accountRepository->findByNumericId((int) $user->account_id);
+            if ($ownerAccount) {
+                $tenantData['currentAccount'] = [
+                    'uuid' => (string) $ownerAccount->uuid,
+                    'name' => $ownerAccount->name,
+                    'slug' => $ownerAccount->slug ?? '',
+                ];
+                $hotels = $this->hotelRepository->findByAccountId($ownerAccount->uuid);
+                $tenantData['hasHotels'] = count($hotels) > 0;
             }
-
-            $tenantData = [
-                'accounts' => $accounts,
-                'currentAccount' => $currentAccount,
-            ];
         }
 
-        $guestUuid = null;
-        if ($user && in_array('guest', $roleNames, true)
-            && $user->subject_type === 'guest' && $user->subject_id !== null) {
-            $guest = $this->guestRepository->findByNumericId((int) $user->subject_id);
-            $guestUuid = $guest ? (string) $guest->uuid : null;
+        $userUuid = null;
+        if ($user && in_array('guest', $typeNames, true) && $user->user_id !== null) {
+            $userProfile = $this->userRepository->findByNumericId((int) $user->user_id);
+            $userUuid = $userProfile ? (string) $userProfile->uuid : null;
         }
+
+        // Impersonation state
+        $impersonating = $request->session()->has('impersonating_from');
 
         return array_merge(parent::share($request), [
             'auth' => [
@@ -65,9 +61,10 @@ final class HandleInertiaRequests extends Middleware
                     'id' => $user->getKey(),
                     'name' => $user->name,
                     'email' => $user->email,
-                    'roles' => $roleNames,
-                    'guest_uuid' => $guestUuid,
+                    'roles' => $typeNames,
+                    'guest_uuid' => $userUuid,
                 ] : null,
+                'impersonating' => $impersonating,
                 ...$tenantData,
             ],
             'flash' => [

@@ -37,7 +37,7 @@ final readonly class CreateReservationHandler extends EventDispatchingHandler
         }
 
         $id = $this->repository->nextIdentity();
-        $reservation = Reservation::create($id, $command->guestId, $period, $command->roomType);
+        $reservation = Reservation::create($id, $command->guestId, $command->accountId, $command->hotelId, $period, $command->roomType);
 
         $this->repository->save($reservation);
         $this->dispatchEvents($reservation);

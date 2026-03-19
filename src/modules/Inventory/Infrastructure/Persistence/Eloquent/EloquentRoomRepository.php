@@ -12,14 +12,22 @@ use Modules\Inventory\Domain\ValueObject\RoomStatus;
 use Modules\Inventory\Domain\ValueObject\RoomType;
 use Modules\Inventory\Infrastructure\Persistence\RoomReflector;
 use Modules\Shared\Domain\PaginatedResult;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\HotelModel;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
-final readonly class EloquentRoomRepository implements RoomRepository
+final class EloquentRoomRepository implements RoomRepository
 {
+    private ?int $hotelId = null;
+
     public function __construct(
-        private RoomModel $model,
-        private TenantContext $tenantContext,
+        private readonly RoomModel $model,
+        private readonly TenantContext $tenantContext,
     ) {}
+
+    public function setHotelId(int $hotelId): void
+    {
+        $this->hotelId = $hotelId;
+    }
 
     public function save(Room $room): void
     {
@@ -53,8 +61,13 @@ final readonly class EloquentRoomRepository implements RoomRepository
         ?string $status = null,
         ?string $type = null,
         ?int $floor = null,
+        ?int $hotelId = null,
     ): PaginatedResult {
         $query = $this->model->newQuery()->orderBy('floor')->orderBy('number');
+
+        if ($hotelId !== null) {
+            $query->where('hotel_id', $hotelId);
+        }
 
         if ($status !== null) {
             $query->where('status', $status);
@@ -126,6 +139,36 @@ final readonly class EloquentRoomRepository implements RoomRepository
             ->count();
     }
 
+    /** @return array<int, array{type: string, available: int, min_price: float}> */
+    public function getAvailableRoomTypes(): array
+    {
+        return $this->model->newQuery()
+            ->where('status', RoomStatus::AVAILABLE->value)
+            ->selectRaw('type, count(*) as available, min(price_per_night) as min_price')
+            ->groupBy('type')
+            ->get()
+            ->map(fn (RoomModel $row) => [
+                'type' => $row->type,
+                'available' => (int) $row->getAttribute('available'),
+                'min_price' => (float) $row->getAttribute('min_price'),
+            ])
+            ->all();
+    }
+
+    private function resolveDefaultHotelId(): int
+    {
+        $id = HotelModel::query()
+            ->withoutGlobalScopes()
+            ->where('account_id', $this->tenantContext->id())
+            ->value('id');
+
+        if ($id === null) {
+            throw new \RuntimeException('Cannot save room: no hotel exists for this account. Create a hotel first.');
+        }
+
+        return (int) $id;
+    }
+
     private function toEntity(object $record): Room
     {
         return RoomReflector::reconstruct(
@@ -147,6 +190,7 @@ final readonly class EloquentRoomRepository implements RoomRepository
         return [
             'uuid' => $room->uuid->value,
             'account_id' => $this->tenantContext->id(),
+            'hotel_id' => $this->hotelId ?? $this->resolveDefaultHotelId(),
             'number' => $room->number,
             'type' => $room->type->value,
             'floor' => $room->floor,

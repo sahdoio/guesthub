@@ -17,6 +17,7 @@ use Modules\Reservation\Domain\ValueObject\ReservationStatus;
 use Modules\Reservation\Domain\ValueObject\SpecialRequestId;
 use Modules\Reservation\Infrastructure\Persistence\ReservationReflector;
 use Modules\Reservation\Infrastructure\Persistence\SpecialRequestReflector;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\HotelModel;
 use Modules\Shared\Domain\PaginatedResult;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
@@ -26,6 +27,36 @@ final readonly class EloquentReservationRepository implements ReservationReposit
         private ReservationModel $model,
         private TenantContext $tenantContext,
     ) {}
+
+    public function listByGuestId(
+        string $guestId,
+        int $page = 1,
+        int $perPage = 15,
+        ?string $status = null,
+    ): PaginatedResult {
+        $query = $this->model->newQuery()
+            ->withoutGlobalScopes()
+            ->where('guest_id', $guestId)
+            ->orderByDesc('id');
+
+        if ($status !== null) {
+            $query->where('status', $status);
+        }
+
+        $paginator = $query->paginate(perPage: $perPage, page: $page);
+
+        $items = collect($paginator->items())
+            ->map(fn (object $record) => $this->toEntity($record))
+            ->all();
+
+        return new PaginatedResult(
+            items: $items,
+            total: $paginator->total(),
+            perPage: $paginator->perPage(),
+            currentPage: $paginator->currentPage(),
+            lastPage: $paginator->lastPage(),
+        );
+    }
 
     public function save(Reservation $reservation): void
     {
@@ -41,6 +72,19 @@ final readonly class EloquentReservationRepository implements ReservationReposit
     public function findByUuid(ReservationId $uuid): ?Reservation
     {
         $record = $this->model->newQuery()
+            ->where('uuid', $uuid->value)
+            ->first();
+
+        return $record ? $this->toEntity($record) : null;
+    }
+
+    /**
+     * @throws DateMalformedStringException
+     */
+    public function findByUuidGlobal(ReservationId $uuid): ?Reservation
+    {
+        $record = $this->model->newQuery()
+            ->withoutGlobalScopes()
             ->where('uuid', $uuid->value)
             ->first();
 
@@ -130,6 +174,9 @@ final readonly class EloquentReservationRepository implements ReservationReposit
         return [
             'uuid' => $reservation->uuid->value,
             'account_id' => $this->tenantContext->id(),
+            'account_uuid' => $reservation->accountId,
+            'hotel_id' => $this->resolveHotelNumericId($reservation->hotelId),
+            'hotel_uuid' => $reservation->hotelId,
             'status' => $reservation->status->value,
             'guest_id' => $reservation->guestId,
             'check_in' => $reservation->period->checkIn->format('Y-m-d'),
@@ -154,6 +201,8 @@ final readonly class EloquentReservationRepository implements ReservationReposit
         return ReservationReflector::reconstruct(
             uuid: ReservationId::fromString($record->uuid),
             guestId: $record->guest_id,
+            accountId: $record->account_uuid ?? '',
+            hotelId: $record->hotel_uuid ?? '',
             period: new ReservationPeriod(
                 new DateTimeImmutable($record->check_in),
                 new DateTimeImmutable($record->check_out),
@@ -171,6 +220,17 @@ final readonly class EloquentReservationRepository implements ReservationReposit
             cancelledAt: $record->cancelled_at ? new DateTimeImmutable($record->cancelled_at) : null,
             cancellationReason: $record->cancellation_reason,
         );
+    }
+
+    private function resolveHotelNumericId(string $hotelUuid): ?int
+    {
+        if ($hotelUuid === '') {
+            return null;
+        }
+
+        $id = HotelModel::query()->withoutGlobalScopes()->where('uuid', $hotelUuid)->value('id');
+
+        return $id !== null ? (int) $id : null;
     }
 
     /** @param SpecialRequest[] $requests */

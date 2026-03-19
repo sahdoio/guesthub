@@ -31,6 +31,8 @@ final class Reservation extends AggregateRoot
     private function __construct(
         public readonly ReservationId $uuid,
         public readonly string $guestId,
+        public readonly string $accountId,
+        public readonly string $hotelId,
         public readonly ReservationPeriod $period,
         public readonly string $roomType,
         private(set) ReservationStatus $status,
@@ -47,12 +49,16 @@ final class Reservation extends AggregateRoot
     public static function create(
         ReservationId $uuid,
         string $guestId,
+        string $accountId,
+        string $hotelId,
         ReservationPeriod $period,
         string $roomType,
     ): self {
         $reservation = new self(
             uuid: $uuid,
             guestId: $guestId,
+            accountId: $accountId,
+            hotelId: $hotelId,
             period: $period,
             roomType: $roomType,
             status: ReservationStatus::PENDING,

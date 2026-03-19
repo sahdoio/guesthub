@@ -5,28 +5,28 @@ declare(strict_types=1);
 namespace Tests\Unit\Guest\Infrastructure\Persistence;
 
 use DateTimeImmutable;
-use Modules\Guest\Domain\Guest;
-use Modules\Guest\Domain\GuestId;
-use Modules\Guest\Domain\ValueObject\LoyaltyTier;
-use Modules\Guest\Infrastructure\Persistence\GuestReflector;
+use Modules\User\Domain\User;
+use Modules\User\Domain\UserId;
+use Modules\User\Domain\ValueObject\LoyaltyTier;
+use Modules\User\Infrastructure\Persistence\UserReflector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(GuestReflector::class)]
+#[CoversClass(UserReflector::class)]
 final class GuestReflectorTest extends TestCase
 {
     #[Test]
     public function it_reconstructs_a_guest_profile(): void
     {
-        $uuid = GuestId::generate();
+        $uuid = UserId::generate();
         $createdAt = new DateTimeImmutable('2026-01-15 10:00:00');
 
-        $profile = GuestReflector::reconstruct(
+        $profile = UserReflector::reconstruct(
             uuid: $uuid,
             fullName: 'Alice Johnson',
             email: 'alice@hotel.com',
-            phone: '+5511999999999',
+            phone: '5511999999999',
             document: 'ABC123',
             loyaltyTier: LoyaltyTier::GOLD,
             preferences: ['late_checkout', 'high_floor'],
@@ -34,11 +34,11 @@ final class GuestReflectorTest extends TestCase
             updatedAt: null,
         );
 
-        $this->assertInstanceOf(Guest::class, $profile);
+        $this->assertInstanceOf(User::class, $profile);
         $this->assertTrue($uuid->equals($profile->uuid));
         $this->assertSame('Alice Johnson', $profile->fullName);
         $this->assertSame('alice@hotel.com', $profile->email);
-        $this->assertSame('+5511999999999', $profile->phone);
+        $this->assertSame('5511999999999', $profile->phone);
         $this->assertSame('ABC123', $profile->document);
         $this->assertSame(LoyaltyTier::GOLD, $profile->loyaltyTier);
         $this->assertSame(['late_checkout', 'high_floor'], $profile->preferences);
@@ -51,11 +51,11 @@ final class GuestReflectorTest extends TestCase
     {
         $updatedAt = new DateTimeImmutable('2026-02-01 15:30:00');
 
-        $profile = GuestReflector::reconstruct(
-            uuid: GuestId::generate(),
+        $profile = UserReflector::reconstruct(
+            uuid: UserId::generate(),
             fullName: 'Bob',
             email: 'bob@hotel.com',
-            phone: '+5511888888888',
+            phone: '5511888888888',
             document: 'DEF456',
             loyaltyTier: LoyaltyTier::BRONZE,
             preferences: [],
@@ -69,11 +69,11 @@ final class GuestReflectorTest extends TestCase
     #[Test]
     public function it_does_not_record_domain_events(): void
     {
-        $profile = GuestReflector::reconstruct(
-            uuid: GuestId::generate(),
+        $profile = UserReflector::reconstruct(
+            uuid: UserId::generate(),
             fullName: 'Carol',
             email: 'carol@hotel.com',
-            phone: '+5511777777777',
+            phone: '5511777777777',
             document: 'GHI789',
             loyaltyTier: LoyaltyTier::PLATINUM,
             preferences: [],

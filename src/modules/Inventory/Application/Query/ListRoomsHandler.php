@@ -23,6 +23,7 @@ final readonly class ListRoomsHandler
             status: $query->status,
             type: $query->type,
             floor: $query->floor,
+            hotelId: $query->hotelId,
         );
     }
 }

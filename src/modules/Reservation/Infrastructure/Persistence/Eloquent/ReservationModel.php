@@ -11,6 +11,9 @@ use Modules\Shared\Infrastructure\Persistence\Eloquent\BelongsToTenant;
  * @property int $id
  * @property string $uuid
  * @property int $account_id
+ * @property string $account_uuid
+ * @property int $hotel_id
+ * @property string $hotel_uuid
  * @property string $status
  * @property string $guest_id
  * @property string $check_in
@@ -37,6 +40,9 @@ final class ReservationModel extends Model
     protected $fillable = [
         'uuid',
         'account_id',
+        'account_uuid',
+        'hotel_id',
+        'hotel_uuid',
         'status',
         'guest_id',
         'check_in',

@@ -1,7 +1,10 @@
 <script setup>
+import { useI18n } from 'vue-i18n';
 import GuestPortalLayout from '@/Layouts/GuestPortalLayout.vue';
 
 defineOptions({ layout: GuestPortalLayout });
+
+const { t } = useI18n();
 
 const props = defineProps({
     guest: Object,
@@ -20,13 +23,13 @@ const tierColors = {
 <template>
     <div>
         <div class="mb-6 flex items-center gap-4">
-            <h1 class="text-2xl font-bold text-gray-800">My Profile</h1>
+            <h1 class="text-2xl font-bold text-gray-800">{{ $t('nav.my_profile') }}</h1>
             <span
                 v-if="g"
                 class="inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize"
                 :class="tierColors[g.loyalty_tier]"
             >
-                {{ g.loyalty_tier }}
+                {{ $t('tier.' + g.loyalty_tier) }}
             </span>
         </div>
 
@@ -34,22 +37,22 @@ const tierColors = {
             <div class="lg:col-span-2 space-y-6">
                 <!-- Contact Info -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Contact Information</h2>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('guest.contact_info') }}</h2>
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <span class="text-gray-500">Full Name</span>
+                            <span class="text-gray-500">{{ $t('guest.full_name') }}</span>
                             <p class="font-medium text-gray-900">{{ g.full_name }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Email</span>
+                            <span class="text-gray-500">{{ $t('guest.email') }}</span>
                             <p class="font-medium text-gray-900">{{ g.email }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Phone</span>
+                            <span class="text-gray-500">{{ $t('guest.phone') }}</span>
                             <p class="font-medium text-gray-900">{{ g.phone }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Document</span>
+                            <span class="text-gray-500">{{ $t('guest.document') }}</span>
                             <p class="font-medium text-gray-900">{{ g.document }}</p>
                         </div>
                     </div>
@@ -57,7 +60,7 @@ const tierColors = {
 
                 <!-- Preferences -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Preferences</h2>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('guest.preferences') }}</h2>
                     <div v-if="g.preferences && g.preferences.length > 0" class="flex flex-wrap gap-2">
                         <span
                             v-for="pref in g.preferences"
@@ -67,31 +70,31 @@ const tierColors = {
                             {{ pref }}
                         </span>
                     </div>
-                    <p v-else class="text-sm text-gray-500">No preferences set.</p>
+                    <p v-else class="text-sm text-gray-500">{{ $t('guest.no_preferences') }}</p>
                 </div>
             </div>
 
             <!-- Sidebar -->
             <div class="space-y-6">
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Actions</h2>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.actions') }}</h2>
                     <a
                         href="/portal/profile/edit"
                         class="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                     >
-                        Edit Profile
+                        {{ $t('guest.edit_profile') }}
                     </a>
                 </div>
 
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Account</h2>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.account') }}</h2>
                     <div class="space-y-2 text-sm">
                         <div>
-                            <span class="text-gray-500">Member since</span>
+                            <span class="text-gray-500">{{ $t('common.member_since') }}</span>
                             <p class="text-gray-900">{{ g.created_at }}</p>
                         </div>
                         <div v-if="g.updated_at">
-                            <span class="text-gray-500">Last updated</span>
+                            <span class="text-gray-500">{{ $t('common.last_updated') }}</span>
                             <p class="text-gray-900">{{ g.updated_at }}</p>
                         </div>
                     </div>

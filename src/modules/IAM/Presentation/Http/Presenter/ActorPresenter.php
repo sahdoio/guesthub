@@ -9,16 +9,16 @@ use Modules\IAM\Domain\Actor;
 final class ActorPresenter
 {
     /**
-     * @param  list<string>  $roleNames
+     * @param  list<string>  $typeNames
      */
-    public static function fromDomain(Actor $actor, array $roleNames = [], ?string $guestUuid = null): array
+    public static function fromDomain(Actor $actor, array $typeNames = [], ?string $userUuid = null): array
     {
         return [
             'id' => (string) $actor->uuid,
-            'roles' => $roleNames,
+            'roles' => $typeNames,
             'name' => $actor->name,
             'email' => $actor->email,
-            'guest_id' => $guestUuid,
+            'guest_id' => $userUuid,
             'created_at' => $actor->createdAt->format('Y-m-d H:i:s'),
             'updated_at' => $actor->updatedAt?->format('Y-m-d H:i:s'),
         ];

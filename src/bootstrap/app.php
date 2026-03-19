@@ -19,10 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'admin' => \Modules\Shared\Infrastructure\Http\Middleware\EnsureActorIsAdmin::class,
+            'owner' => \Modules\Shared\Infrastructure\Http\Middleware\EnsureActorIsOwner::class,
             'portal' => \Modules\Shared\Infrastructure\Http\Middleware\EnsureActorIsGuest::class,
             'tenant' => \Modules\Shared\Infrastructure\Http\Middleware\SetTenantContext::class,
-            'role' => \Modules\Shared\Infrastructure\Http\Middleware\EnsureActorRole::class,
+            'type' => \Modules\Shared\Infrastructure\Http\Middleware\EnsureActorType::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

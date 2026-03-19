@@ -7,9 +7,9 @@ namespace Tests\Feature\Guest;
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
-use Modules\Guest\Domain\Guest;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Domain\ValueObject\LoyaltyTier;
+use Modules\User\Domain\User;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\User\Domain\ValueObject\LoyaltyTier;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\SeedsRolesAndAccount;
 use Tests\TestCase;
@@ -24,18 +24,18 @@ final class GuestCrudTest extends TestCase
         parent::setUp();
         $this->seedRolesAndAccount();
 
-        Sanctum::actingAs($this->createAdminActor());
+        Sanctum::actingAs($this->createOwnerActor());
     }
 
     private function createGuest(array $overrides = []): string
     {
-        $repository = $this->app->make(GuestRepository::class);
+        $repository = $this->app->make(UserRepository::class);
 
-        $profile = Guest::create(
+        $profile = User::create(
             uuid: $repository->nextIdentity(),
             fullName: $overrides['full_name'] ?? 'Jane Doe',
             email: $overrides['email'] ?? 'jane@hotel.com',
-            phone: $overrides['phone'] ?? '+5511999999999',
+            phone: $overrides['phone'] ?? '5511999999999',
             document: $overrides['document'] ?? 'ABC123456',
             loyaltyTier: LoyaltyTier::from($overrides['loyalty_tier'] ?? 'bronze'),
             preferences: $overrides['preferences'] ?? ['late_checkout', 'high_floor'],
@@ -78,15 +78,15 @@ final class GuestCrudTest extends TestCase
         $response = $this->putJson("/api/guests/{$id}", [
             'full_name' => 'Jane Smith',
             'email' => 'jane.smith@hotel.com',
-            'phone' => '+5521888888888',
+            'phone' => '5521888888888',
         ]);
 
         $response->assertOk()
             ->assertJsonPath('data.full_name', 'Jane Smith')
             ->assertJsonPath('data.email', 'jane.smith@hotel.com')
-            ->assertJsonPath('data.phone', '+5521888888888');
+            ->assertJsonPath('data.phone', '5521888888888');
 
-        $this->assertDatabaseHas('guests', [
+        $this->assertDatabaseHas('users', [
             'uuid' => $id,
             'full_name' => 'Jane Smith',
         ]);
@@ -138,7 +138,7 @@ final class GuestCrudTest extends TestCase
         $this->deleteJson("/api/guests/{$id}")
             ->assertStatus(204);
 
-        $this->assertDatabaseMissing('guests', ['uuid' => $id]);
+        $this->assertDatabaseMissing('users', ['uuid' => $id]);
     }
 
     #[Test]

@@ -12,6 +12,9 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('account_id')->constrained('accounts')->cascadeOnDelete();
+            $table->uuid('account_uuid')->nullable();
+            $table->foreignId('hotel_id')->constrained('hotels')->cascadeOnDelete();
+            $table->uuid('hotel_uuid')->nullable();
             $table->string('status');
             $table->uuid('guest_id')->index();
             $table->date('check_in');
@@ -27,6 +30,7 @@ return new class extends Migration
             $table->timestamp('cancelled_at')->nullable();
 
             $table->index('account_id');
+            $table->index('hotel_id');
             $table->index('status');
             $table->index('check_in');
             $table->index('check_out');

@@ -6,9 +6,9 @@ namespace Tests\Feature\Dashboard;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Guest\Domain\Guest;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Domain\ValueObject\LoyaltyTier;
+use Modules\User\Domain\User;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\User\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use Modules\Inventory\Domain\Repository\RoomRepository;
 use Modules\Inventory\Domain\Room;
@@ -31,18 +31,18 @@ final class DashboardTest extends TestCase
     {
         parent::setUp();
         $this->seedRolesAndAccount();
-        $this->actor = $this->createAdminActor();
+        $this->actor = $this->createOwnerActor();
     }
 
     private function createGuest(array $overrides = []): string
     {
-        $repository = $this->app->make(GuestRepository::class);
+        $repository = $this->app->make(UserRepository::class);
 
-        $guest = Guest::create(
+        $guest = User::create(
             uuid: $repository->nextIdentity(),
             fullName: $overrides['full_name'] ?? 'Jane Doe',
             email: $overrides['email'] ?? 'jane'.uniqid().'@hotel.com',
-            phone: $overrides['phone'] ?? '+5511999999999',
+            phone: $overrides['phone'] ?? '5511999999999',
             document: $overrides['document'] ?? 'DOC'.uniqid(),
             loyaltyTier: LoyaltyTier::from($overrides['loyalty_tier'] ?? 'bronze'),
             preferences: [],
@@ -61,6 +61,8 @@ final class DashboardTest extends TestCase
         $reservation = Reservation::create(
             uuid: $repository->nextIdentity(),
             guestId: $guestId,
+            accountId: $this->account->uuid,
+            hotelId: $this->hotel->uuid,
             period: new ReservationPeriod(
                 new DateTimeImmutable($overrides['check_in'] ?? '+1 day'),
                 new DateTimeImmutable($overrides['check_out'] ?? '+3 days'),

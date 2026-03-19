@@ -7,7 +7,6 @@ namespace Modules\IAM\Application\Command;
 final readonly class RegisterActor
 {
     public function __construct(
-        public string $accountName,
         public string $name,
         public string $email,
         public string $password,

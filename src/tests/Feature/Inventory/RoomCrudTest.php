@@ -24,7 +24,7 @@ final class RoomCrudTest extends TestCase
         parent::setUp();
         $this->seedRolesAndAccount();
 
-        Sanctum::actingAs($this->createAdminActor());
+        Sanctum::actingAs($this->createOwnerActor());
     }
 
     private function createRoom(array $overrides = []): string

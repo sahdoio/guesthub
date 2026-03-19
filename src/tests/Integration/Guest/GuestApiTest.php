@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Integration\Guest;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Infrastructure\Integration\Dto\GuestData;
-use Modules\Guest\Infrastructure\Integration\GuestApi;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\User\Infrastructure\Integration\Dto\UserData;
+use Modules\User\Infrastructure\Integration\UserApi;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -15,14 +15,14 @@ use PHPUnit\Framework\Attributes\Test;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
-#[CoversClass(GuestApi::class)]
+#[CoversClass(UserApi::class)]
 final class GuestApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    private GuestApi $api;
+    private UserApi $api;
 
-    private GuestRepository $repository;
+    private UserRepository $repository;
 
     protected function setUp(): void
     {
@@ -31,12 +31,14 @@ final class GuestApiTest extends TestCase
         $account = AccountModel::create([
             'uuid' => Uuid::uuid7()->toString(),
             'name' => 'Test Hotel',
+            'slug' => 'test-hotel',
+            'status' => 'active',
             'created_at' => now(),
         ]);
         $this->app->make(TenantContext::class)->set($account->id);
 
-        $this->api = $this->app->make(GuestApi::class);
-        $this->repository = $this->app->make(GuestRepository::class);
+        $this->api = $this->app->make(UserApi::class);
+        $this->repository = $this->app->make(UserRepository::class);
     }
 
     #[Test]
@@ -45,7 +47,7 @@ final class GuestApiTest extends TestCase
         $id = $this->api->create(
             name: 'Alice Johnson',
             email: 'alice@hotel.com',
-            phone: '+5511999999999',
+            phone: '5511999999999',
             document: 'ABC123',
         );
 
@@ -63,7 +65,7 @@ final class GuestApiTest extends TestCase
         $this->api->create(
             name: 'Alice Johnson',
             email: 'alice@hotel.com',
-            phone: '+5511999999999',
+            phone: '5511999999999',
             document: 'ABC123',
         );
 
@@ -72,13 +74,13 @@ final class GuestApiTest extends TestCase
 
         $data = $this->api->findByUuid($uuid);
 
-        $this->assertInstanceOf(GuestData::class, $data);
+        $this->assertInstanceOf(UserData::class, $data);
         $this->assertSame($uuid, $data->uuid);
         $this->assertSame('Alice Johnson', $data->fullName);
         $this->assertSame('alice@hotel.com', $data->email);
-        $this->assertSame('+5511999999999', $data->phone);
+        $this->assertSame('5511999999999', $data->phone);
         $this->assertSame('ABC123', $data->document);
-        $this->assertSame('bronze', $data->loyaltyTier);
+        $this->assertNull($data->loyaltyTier);
     }
 
     #[Test]

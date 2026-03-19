@@ -7,25 +7,25 @@ namespace Modules\Reservation\Infrastructure\Http\View;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Guest\Application\Query\ListGuests;
-use Modules\Guest\Application\Query\ListGuestsHandler;
-use Modules\Guest\Presentation\Http\Presenter\GuestPresenter;
+use Modules\User\Application\Query\ListUsers;
+use Modules\User\Application\Query\ListUsersHandler;
+use Modules\User\Presentation\Http\Presenter\UserPresenter;
 use Modules\Shared\Application\Query\Pagination;
 
 final class ReservationCreateView
 {
     public function __construct(
-        private ListGuestsHandler $guestHandler,
+        private ListUsersHandler $userHandler,
     ) {}
 
     public function __invoke(Request $request): Response
     {
-        $guests = $this->guestHandler->handle(new ListGuests, new Pagination(1, 100));
+        $users = $this->userHandler->handle(new ListUsers, new Pagination(1, 100));
 
         return Inertia::render('Reservations/Create', [
             'guests' => array_map(
-                fn ($guest) => GuestPresenter::fromDomain($guest),
-                $guests->items,
+                fn ($user) => UserPresenter::fromDomain($user),
+                $users->items,
             ),
         ]);
     }

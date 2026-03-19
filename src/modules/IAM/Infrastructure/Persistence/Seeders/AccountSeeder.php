@@ -13,10 +13,12 @@ class AccountSeeder extends Seeder
 {
     public static ?string $defaultAccountUuid = null;
 
+    /** @var array<string, string> Maps account slug to UUID */
+    public static array $accountSlugs = [];
+
     private const ACCOUNTS = [
-        'GuestHub Hotel',
-        'Seaside Resort & Spa',
-        'Mountain Lodge Inn',
+        ['name' => "John's Hospitality", 'slug' => 'johns-hospitality'],
+        ['name' => "Maria's Tourism Group", 'slug' => 'marias-tourism'],
     ];
 
     public function __construct(
@@ -25,13 +27,15 @@ class AccountSeeder extends Seeder
 
     public function run(): void
     {
-        foreach (self::ACCOUNTS as $name) {
-            $existing = $this->repository->findByName($name);
+        foreach (self::ACCOUNTS as $data) {
+            $existing = $this->repository->findByName($data['name']);
 
             if ($existing !== null) {
                 if (self::$defaultAccountUuid === null) {
                     self::$defaultAccountUuid = (string) $existing->uuid;
                 }
+
+                self::$accountSlugs[$data['slug']] = (string) $existing->uuid;
 
                 continue;
             }
@@ -39,7 +43,8 @@ class AccountSeeder extends Seeder
             $id = $this->repository->nextIdentity();
             $account = Account::create(
                 uuid: $id,
-                name: $name,
+                name: $data['name'],
+                slug: $data['slug'],
                 createdAt: new DateTimeImmutable,
             );
 
@@ -48,6 +53,8 @@ class AccountSeeder extends Seeder
             if (self::$defaultAccountUuid === null) {
                 self::$defaultAccountUuid = $id->value;
             }
+
+            self::$accountSlugs[$data['slug']] = $id->value;
         }
     }
 }

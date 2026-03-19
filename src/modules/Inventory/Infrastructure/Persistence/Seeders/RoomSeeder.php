@@ -7,11 +7,15 @@ namespace Modules\Inventory\Infrastructure\Persistence\Seeders;
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
 use Modules\IAM\Domain\AccountId;
+use Modules\IAM\Domain\HotelId;
 use Modules\IAM\Domain\Repository\AccountRepository;
+use Modules\IAM\Domain\Repository\HotelRepository;
 use Modules\IAM\Infrastructure\Persistence\Seeders\AccountSeeder;
+use Modules\IAM\Infrastructure\Persistence\Seeders\HotelSeeder;
 use Modules\Inventory\Domain\Repository\RoomRepository;
 use Modules\Inventory\Domain\Room;
 use Modules\Inventory\Domain\ValueObject\RoomType;
+use Modules\Inventory\Infrastructure\Persistence\Eloquent\EloquentRoomRepository;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 class RoomSeeder extends Seeder
@@ -19,6 +23,7 @@ class RoomSeeder extends Seeder
     public function __construct(
         private readonly RoomRepository $repository,
         private readonly AccountRepository $accountRepository,
+        private readonly HotelRepository $hotelRepository,
         private readonly TenantContext $tenantContext,
     ) {}
 
@@ -26,6 +31,11 @@ class RoomSeeder extends Seeder
     {
         $accountId = $this->accountRepository->resolveNumericId(AccountId::fromString(AccountSeeder::$defaultAccountUuid));
         $this->tenantContext->set($accountId);
+
+        $hotelId = $this->hotelRepository->resolveNumericId(HotelId::fromString(HotelSeeder::$defaultHotelUuid));
+        if ($this->repository instanceof EloquentRoomRepository) {
+            $this->repository->setHotelId($hotelId);
+        }
 
         $rooms = [
             ['101', RoomType::SINGLE,  1, 1, 150.00, ['wifi', 'tv']],

@@ -14,6 +14,8 @@ interface ReservationRepository
 
     public function findByUuid(ReservationId $uuid): ?Reservation;
 
+    public function findByUuidGlobal(ReservationId $uuid): ?Reservation;
+
     /** @return PaginatedResult<Reservation> */
     public function list(
         int $page = 1,
@@ -24,6 +26,14 @@ interface ReservationRepository
     ): PaginatedResult;
 
     public function nextIdentity(): ReservationId;
+
+    /** @return PaginatedResult<Reservation> */
+    public function listByGuestId(
+        string $guestId,
+        int $page = 1,
+        int $perPage = 15,
+        ?string $status = null,
+    ): PaginatedResult;
 
     public function count(): int;
 

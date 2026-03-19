@@ -1,9 +1,13 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import GuestLayout from '../../Layouts/GuestLayout.vue';
 import Logo from '../../Components/Logo.vue';
+import PhoneInput from '../../Components/PhoneInput.vue';
 
 defineOptions({ layout: GuestLayout });
+
+const { t } = useI18n();
 
 const form = useForm({
     name: '',
@@ -46,28 +50,28 @@ const submit = () => {
                     </svg>
                 </div>
             </div>
-            <h1 class="text-4xl font-bold mb-4 leading-tight">Join<br/>GuestHub</h1>
+            <h1 class="text-4xl font-bold mb-4 leading-tight">{{ $t('auth.join_title') }}<br/>GuestHub</h1>
             <p class="text-lg text-indigo-100 leading-relaxed max-w-md">
-                Create your account to book stays, manage reservations, and enjoy a seamless hospitality experience.
+                {{ $t('auth.join_subtitle') }}
             </p>
             <div class="mt-12 space-y-3 text-indigo-200 text-sm">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
                         <span class="text-xs font-bold">1</span>
                     </div>
-                    Create your profile
+                    {{ $t('auth.step_1') }}
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
                         <span class="text-xs font-bold">2</span>
                     </div>
-                    Browse available rooms
+                    {{ $t('auth.step_2') }}
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
                         <span class="text-xs font-bold">3</span>
                     </div>
-                    Book your perfect stay
+                    {{ $t('auth.step_3') }}
                 </div>
             </div>
         </div>
@@ -81,20 +85,20 @@ const submit = () => {
             </div>
 
             <div class="mb-8">
-                <h2 class="text-2xl font-bold text-gray-900">Create your account</h2>
-                <p class="mt-2 text-sm text-gray-500">Fill in your details to get started.</p>
+                <h2 class="text-2xl font-bold text-gray-900">{{ $t('auth.create_account_title') }}</h2>
+                <p class="mt-2 text-sm text-gray-500">{{ $t('auth.create_account_subtitle') }}</p>
             </div>
 
             <form @submit.prevent="submit" class="space-y-4">
                 <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('auth.full_name') }}</label>
                     <input
                         id="name"
                         v-model="form.name"
                         type="text"
                         required
                         autofocus
-                        placeholder="John Doe"
+                        :placeholder="$t('auth.full_name_placeholder')"
                         class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
                         :class="{ 'border-red-400 ring-1 ring-red-400': form.errors.name }"
                     />
@@ -103,41 +107,40 @@ const submit = () => {
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('auth.email') }}</label>
                         <input
                             id="email"
                             v-model="form.email"
                             type="email"
                             required
-                            placeholder="you@example.com"
+                            :placeholder="$t('auth.email_placeholder')"
                             class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
                             :class="{ 'border-red-400 ring-1 ring-red-400': form.errors.email }"
                         />
                         <p v-if="form.errors.email" class="mt-1.5 text-sm text-red-600">{{ form.errors.email }}</p>
                     </div>
                     <div>
-                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
-                        <input
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('auth.phone') }}</label>
+                        <PhoneInput
                             id="phone"
                             v-model="form.phone"
-                            type="text"
                             required
-                            placeholder="+5511999999999"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-                            :class="{ 'border-red-400 ring-1 ring-red-400': form.errors.phone }"
+                            :placeholder="$t('auth.phone_placeholder')"
+                            input-class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+                            :has-error="!!form.errors.phone"
                         />
                         <p v-if="form.errors.phone" class="mt-1.5 text-sm text-red-600">{{ form.errors.phone }}</p>
                     </div>
                 </div>
 
                 <div>
-                    <label for="document" class="block text-sm font-medium text-gray-700 mb-1.5">Document</label>
+                    <label for="document" class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('auth.document') }}</label>
                     <input
                         id="document"
                         v-model="form.document"
                         type="text"
                         required
-                        placeholder="ID or passport number"
+                        :placeholder="$t('auth.document_placeholder')"
                         class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
                         :class="{ 'border-red-400 ring-1 ring-red-400': form.errors.document }"
                     />
@@ -146,26 +149,26 @@ const submit = () => {
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('auth.password') }}</label>
                         <input
                             id="password"
                             v-model="form.password"
                             type="password"
                             required
-                            placeholder="Min 8 characters"
+                            :placeholder="$t('auth.password_min')"
                             class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
                             :class="{ 'border-red-400 ring-1 ring-red-400': form.errors.password }"
                         />
                         <p v-if="form.errors.password" class="mt-1.5 text-sm text-red-600">{{ form.errors.password }}</p>
                     </div>
                     <div>
-                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1.5">Confirm</label>
+                        <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1.5">{{ $t('auth.confirm_password') }}</label>
                         <input
                             id="password_confirmation"
                             v-model="form.password_confirmation"
                             type="password"
                             required
-                            placeholder="Repeat password"
+                            :placeholder="$t('auth.repeat_password')"
                             class="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
                         />
                     </div>
@@ -176,14 +179,20 @@ const submit = () => {
                     :disabled="form.processing"
                     class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-2.5 px-4 rounded-lg text-sm font-semibold hover:from-indigo-700 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md mt-2"
                 >
-                    <span v-if="form.processing">Creating account...</span>
-                    <span v-else>Create Account</span>
+                    <span v-if="form.processing">{{ $t('auth.creating_account') }}</span>
+                    <span v-else>{{ $t('auth.create_account') }}</span>
                 </button>
 
                 <p class="text-center text-sm text-gray-500 pt-1">
-                    Already have an account?
+                    {{ $t('auth.has_account') }}
                     <a href="/login" class="text-indigo-600 hover:text-indigo-700 font-semibold">
-                        Sign in
+                        {{ $t('auth.sign_in_link') }}
+                    </a>
+                </p>
+                <p class="text-center text-sm text-gray-500 pt-1">
+                    {{ $t('auth.own_hotel_prompt') }}
+                    <a href="/register/hotel" class="text-indigo-600 hover:text-indigo-700 font-semibold">
+                        {{ $t('auth.register_hotel_link') }}
                     </a>
                 </p>
             </form>

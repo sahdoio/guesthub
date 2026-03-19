@@ -10,6 +10,8 @@ final readonly class CreateReservation
 {
     public function __construct(
         public string $guestId,
+        public string $accountId,
+        public string $hotelId,
         public DateTimeImmutable $checkIn,
         public DateTimeImmutable $checkOut,
         public string $roomType,

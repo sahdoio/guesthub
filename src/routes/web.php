@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Modules\IAM\Infrastructure\Http\View\SuperadminHomeView;
 use Modules\Shared\Infrastructure\Http\View\DashboardView;
 
 Route::get('/', function () {
@@ -10,17 +11,25 @@ Route::get('/', function () {
     }
 
     $user = Auth::user();
-    $user->load('roles');
-    $roleNames = $user->roles->pluck('name')->toArray();
+    $user->load('types');
+    $typeNames = $user->types->pluck('name')->toArray();
 
-    if (in_array('admin', $roleNames, true) || in_array('superadmin', $roleNames, true)) {
+    if (in_array('superadmin', $typeNames, true)) {
+        return redirect('/superadmin');
+    }
+
+    if (in_array('owner', $typeNames, true)) {
         return redirect('/dashboard');
     }
 
     return redirect('/portal');
 });
 
-Route::middleware(['auth', 'admin'])->group(function () {
+Route::middleware(['auth', 'type:superadmin'])->group(function () {
+    Route::get('/superadmin', SuperadminHomeView::class)->name('superadmin.home');
+});
+
+Route::middleware(['auth', 'owner'])->group(function () {
     Route::get('/dashboard', DashboardView::class)->name('dashboard');
 });
 

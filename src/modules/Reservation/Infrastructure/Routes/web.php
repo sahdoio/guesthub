@@ -11,7 +11,7 @@ use Modules\Reservation\Infrastructure\Http\View\ReservationListView;
 use Modules\Reservation\Infrastructure\Http\View\ReservationShowView;
 use Modules\Reservation\Infrastructure\Http\View\ReservationStoreView;
 
-Route::middleware(['auth', 'admin'])->prefix('reservations')->group(function () {
+Route::middleware(['auth', 'owner'])->prefix('reservations')->group(function () {
     Route::get('/', ReservationListView::class)->name('reservations.index');
     Route::get('/create', ReservationCreateView::class)->name('reservations.create');
     Route::post('/', ReservationStoreView::class)->name('reservations.store');

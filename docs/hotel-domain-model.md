@@ -7,22 +7,26 @@
 │                            MODULAR MONOLITH                                              │
 │                                                                                          │
 │  ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────────────┐   │
-│  │   IAM CONTEXT        │  │   GUEST CONTEXT       │  │   RESERVATION CONTEXT        │   │
+│  │   IAM CONTEXT        │  │   USER CONTEXT        │  │   RESERVATION CONTEXT        │   │
 │  │                      │  │                       │  │                              │   │
 │  │   Domain/            │  │   Domain/             │  │   Domain/                    │   │
-│  │   ├── Actor (AR)     │  │   ├── GuestProfile    │  │   ├── Reservation (AR)       │   │
-│  │   ├── ActorType      │  │   │   (AR)            │  │   │   ├── Period (VO)        │   │
-│  │   └── HashedPassword │  │   └── LoyaltyTier     │  │   │   └── SpecialRequest (E) │   │
-│  │                      │  │                       │  │   ├── Domain Events          │   │
-│  │   No domain events   │  │   No domain events    │  │   └── Repository Interfaces  │   │
-│  │                      │  │                       │  │                              │   │
+│  │   ├── Actor (AR)     │  │   ├── User (AR)       │  │   ├── Reservation (AR)       │   │
+│  │   ├── Account (AR)   │  │   └── LoyaltyTier     │  │   │   ├── Period (VO)        │   │
+│  │   ├── Hotel (AR)     │  │       (VO, nullable)  │  │   │   └── SpecialRequest (E) │   │
+│  │   ├── Type (E)       │  │                       │  │   ├── Domain Events          │   │
+│  │   └── HashedPassword │  │   Domain events:      │  │   └── Repository Interfaces  │   │
+│  │       (VO)           │  │   UserCreated,        │  │                              │   │
+│  │                      │  │   UserContactInfo-    │  │                              │   │
+│  │                      │  │   Updated,            │  │                              │   │
+│  │                      │  │   UserLoyaltyTier-    │  │                              │   │
+│  │                      │  │   Changed             │  │                              │   │
 │  └──────────┬───────────┘  └───────────▲───────────┘  └──────────────┬───────────────┘   │
 │             │                          │                             │                    │
-│             │  GuestProfileGateway     │  GuestGateway               │                   │
-│             │  (creates profiles)      │  (reads profiles)           │                   │
+│             │  UserGateway             │  GuestGateway               │                   │
+│             │  (creates profiles)      │  (reads profiles)          │                   │
 │             └──────────────────────────┘◄────────────────────────────┘                   │
 │                                        │                                                 │
-│                                  GuestProfileApi                                         │
+│                                    UserApi                                               │
 │                                  (single entry point                                     │
 │                                   for cross-BC access)                                   │
 │                                                                                          │
@@ -65,7 +69,7 @@
 │  │  • id: ReservationId                                                               │ │
 │  │                                                                                    │ │
 │  │  State:                                                                            │ │
-│  │  • guestProfileId: string               (soft link to Guest BC)                    │ │
+│  │  • guestId: string                        (soft link to User BC)                   │ │
 │  │  • status: ReservationStatus                                                       │ │
 │  │  • roomType: string                                                                │ │
 │  │  • assignedRoomNumber: ?string                                                     │ │
@@ -114,7 +118,7 @@
 
 Guest data (name, email, VIP status) is NOT stored in the aggregate. Instead, it's fetched
 on-demand via the GuestGateway port, which returns a GuestInfo DTO. This keeps the aggregate
-decoupled from the Guest BC.
+decoupled from the User BC.
 ```
 
 ### Why SpecialRequest is an ENTITY (not VO):
@@ -162,11 +166,11 @@ Reservation/
     │   └── ReservationRepository.php      # Interface only
     │
     ├── Service/                           # Domain Service Interfaces (ports)
-    │   ├── GuestGateway.php               # Port for fetching guest data from Guest BC
+    │   ├── GuestGateway.php               # Port for fetching user data from User BC
     │   └── InventoryGateway.php           # Port for checking room availability
     │
     ├── Policies/                          # Domain Policies
-    │   └── ReservationPolicy.php          # Business rules that don't fit in entity
+    │   └── ReservationPolicy.php          # Business rules
     │
     └── Exception/
         ├── ReservationNotFoundException.php
@@ -178,7 +182,7 @@ Reservation/
 
 ## Domain Events
 
-Domain events are recorded inside the Reservation aggregate via `recordEvent()` and dispatched by command handlers after persistence. Only the Reservation BC emits domain events.
+Domain events are recorded inside the Reservation aggregate via `recordEvent()` and dispatched by command handlers after persistence. Only the Reservation BC emits domain events currently (the User BC records events but has no listeners yet).
 
 | Event | Trigger | Payload |
 |-------|---------|---------|
@@ -226,26 +230,6 @@ Currently, integration events are dispatched via Laravel's event system and logg
 │   WHERE THEY LIVE:                           WHERE THEY LIVE:                          │
 │   Domain/Event/                              Infrastructure/IntegrationEvent/           │
 │                                                                                         │
-│   EXAMPLE:                                   EXAMPLE:                                   │
-│   ─────────                                  ─────────                                  │
-│   class ReservationConfirmed                 class ReservationConfirmedEvent            │
-│   {                                          implements IntegrationEvent                │
-│       public function __construct(           {                                          │
-│           public readonly ReservationId          public function __construct(           │
-│               $reservationId,                        public readonly string $id,        │
-│           public readonly DateTimeImmutable          public readonly string $roomType,  │
-│               $occurredOn,                           public readonly string $checkIn,   │
-│       ) {}                                           public readonly string $checkOut,  │
-│   }                                                  public readonly string $guestEmail,│
-│                                                      public readonly bool $isVip,       │
-│   // Can reference domain objects                    public readonly DateTimeImmutable  │
-│   // because it stays within BC                          $occurredAt,                   │
-│                                                  ) {}                                   │
-│                                              }                                          │
-│                                                                                         │
-│                                              // Only primitives and simple types        │
-│                                              // Other BCs don't know our domain         │
-│                                                                                         │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -267,7 +251,7 @@ Currently, integration events are dispatched via Laravel's event system and logg
                                                                     └──────────────────────┘
 ```
 
-> **Future:** When consumer BCs exist (e.g., Inventory), a message broker will replace the current log-only publisher to enable async cross-BC event delivery.
+> **Future:** When consumer BCs exist (e.g., Notifications), a message broker will replace the current log-only publisher to enable async cross-BC event delivery.
 
 ---
 
@@ -277,26 +261,26 @@ The system has three active integration paths, all using the Gateway + Adapter (
 
 | From | To | Gateway (Port) | Adapter (ACL) | Mechanism |
 |------|----|----------------|---------------|-----------|
-| Reservation | Guest | `GuestGateway` | `GuestGatewayAdapter` → `GuestProfileApi` | Sync (direct call) |
-| Reservation | Inventory | `InventoryGateway` | `InventoryGatewayAdapter` (stub) | Sync (hardcoded) |
-| IAM | Guest | `GuestProfileGateway` | `GuestProfileGatewayAdapter` → `GuestProfileApi` | Sync (direct call) |
+| Reservation | User | `GuestGateway` | `GuestGatewayAdapter` → `UserApi` | Sync (direct call) |
+| Reservation | Inventory | `InventoryGateway` | `InventoryGatewayAdapter` → `InventoryApi` | Sync (direct call) |
+| IAM | User | `UserGateway` | `UserGatewayAdapter` → `UserApi` | Sync (direct call) |
 
-## Reservation → Guest BC
+## Reservation → User BC
 
-Reservation needs guest data (name, email, VIP status) to enrich integration events. The domain defines a port; the infrastructure adapter calls Guest BC's exposed API.
+Reservation needs user data (name, email, VIP status) to enrich integration events. The domain defines a port; the infrastructure adapter calls User BC's exposed API.
 
 ```php
 // Reservation/Domain/Service/GuestGateway.php (PORT)
 interface GuestGateway
 {
-    public function findByUuid(string $guestProfileId): ?GuestInfo;
+    public function findByUuid(string $guestId): ?GuestInfo;
 }
 
 // Reservation/Domain/Dto/GuestInfo.php
 readonly class GuestInfo
 {
     public function __construct(
-        public string $guestProfileId,
+        public string $guestId,
         public string $fullName,
         public string $email,
         public string $phone,
@@ -306,22 +290,22 @@ readonly class GuestInfo
 }
 
 // Reservation/Infrastructure/Integration/GuestGatewayAdapter.php (ACL)
-// Calls GuestProfileApi and translates to Reservation's own DTO
+// Calls UserApi and translates to Reservation's own DTO
 class GuestGatewayAdapter implements GuestGateway
 {
     public function __construct(
-        private readonly GuestProfileApi $guestProfileApi,
+        private readonly UserApi $userApi,
     ) {}
 
-    public function findByUuid(string $guestProfileId): ?GuestInfo
+    public function findByUuid(string $guestId): ?GuestInfo
     {
-        $data = $this->guestProfileApi->findByUuid($guestProfileId);
+        $data = $this->userApi->findByUuid($guestId);
         if ($data === null) return null;
 
         $isVip = in_array($data->loyaltyTier, ['gold', 'platinum'], true);
 
         return new GuestInfo(
-            guestProfileId: $data->uuid,
+            guestId: $data->uuid,
             fullName: $data->fullName,
             email: $data->email,
             phone: $data->phone,
@@ -332,9 +316,9 @@ class GuestGatewayAdapter implements GuestGateway
 }
 ```
 
-## Reservation → Inventory BC (Stubbed)
+## Reservation → Inventory BC
 
-Reservation checks room availability and fetches room type info before creating a reservation. The Inventory BC doesn't exist yet, so the adapter returns hardcoded data.
+Same Anti-Corruption Layer pattern, backed by the Inventory BC:
 
 ```php
 // Reservation/Domain/Service/InventoryGateway.php (PORT)
@@ -342,81 +326,58 @@ interface InventoryGateway
 {
     public function checkAvailability(string $roomType, ReservationPeriod $period): RoomAvailability;
     public function getRoomTypeInfo(string $roomType): RoomTypeInfo;
+    public function listAvailableRooms(string $roomType): array;
+    public function isRoomAvailable(string $roomNumber): bool;
+}
+```
+
+## IAM → User BC
+
+When a new actor registers, IAM creates a user profile via the gateway. This is how the User BC gets populated for guests. Owners also get user profiles (with null loyalty tier).
+
+```php
+// IAM/Domain/Service/UserGateway.php (PORT)
+interface UserGateway
+{
+    public function create(string $name, string $email, string $phone, string $document, ?string $loyaltyTier = null): int;
 }
 
-// Reservation/Domain/Dto/RoomAvailability.php
-readonly class RoomAvailability
+// IAM/Infrastructure/Integration/UserGatewayAdapter.php (ACL)
+class UserGatewayAdapter implements UserGateway
 {
     public function __construct(
-        public string $roomType,
-        public int $availableCount,
-        public float $pricePerNight,
+        private UserApi $userApi,
     ) {}
-}
 
-// Reservation/Infrastructure/Integration/InventoryGatewayAdapter.php (STUB)
-// TODO: Replace with real integration when Inventory BC is implemented
-class InventoryGatewayAdapter implements InventoryGateway
-{
-    public function checkAvailability(string $roomType, ReservationPeriod $period): RoomAvailability
+    public function create(string $name, string $email, string $phone, string $document, ?string $loyaltyTier = null): int
     {
-        $prices = ['SINGLE' => 150.00, 'DOUBLE' => 250.00, 'SUITE' => 500.00];
-
-        return new RoomAvailability(
-            roomType: $roomType,
-            availableCount: 10,                      // Always available (stub)
-            pricePerNight: $prices[$roomType] ?? 200.00,
+        return $this->userApi->create(
+            name: $name, email: $email, phone: $phone, document: $document, loyaltyTier: $loyaltyTier,
         );
     }
 }
 ```
 
-## IAM → Guest BC
+## User BC — Exposed Integration API
 
-When a new actor registers, IAM creates a guest profile via the gateway. This is how the Guest BC gets populated — there is no direct HTTP endpoint for creating guests.
-
-```php
-// IAM/Domain/Service/GuestProfileGateway.php (PORT)
-interface GuestProfileGateway
-{
-    public function create(string $name, string $email, string $phone, string $document): string;
-}
-
-// IAM/Infrastructure/Integration/GuestProfileGatewayAdapter.php (ACL)
-class GuestProfileGatewayAdapter implements GuestProfileGateway
-{
-    public function __construct(
-        private GuestProfileApi $guestProfileApi,
-    ) {}
-
-    public function create(string $name, string $email, string $phone, string $document): string
-    {
-        return $this->guestProfileApi->create(
-            name: $name, email: $email, phone: $phone, document: $document,
-        );
-    }
-}
-```
-
-## Guest BC — Exposed Integration API
-
-The Guest BC exposes `GuestProfileApi` as an internal API for other BCs. It is **not** an HTTP endpoint — it's a PHP class resolved via the service container. Returns DTOs with primitives only.
+The User BC exposes `UserApi` as an internal API for other BCs. It is **not** an HTTP endpoint — it's a PHP class resolved via the service container. Returns DTOs with primitives only.
 
 ```php
-// Guest/Infrastructure/Integration/GuestProfileApi.php
-class GuestProfileApi
+// User/Infrastructure/Integration/UserApi.php
+class UserApi
 {
     public function __construct(
-        private CreateGuestProfileHandler $createHandler,
-        private GuestProfileRepository $repository,
+        private CreateUserHandler $createHandler,
+        private UserRepository $repository,
     ) {}
 
-    public function create(string $name, string $email, string $phone, string $document): string;
-    public function findByUuid(string $uuid): ?GuestProfileData;
+    public function create(string $name, string $email, string $phone, string $document, ?string $loyaltyTier = null): int;
+    public function findByUuid(string $uuid): ?UserData;
+    public function findById(int $id): ?UserData;
 }
 
-// Guest/Infrastructure/Integration/Dto/GuestProfileData.php
-readonly class GuestProfileData
+// User/Infrastructure/Integration/Dto/UserData.php
+readonly class UserData
 {
     public function __construct(
         public string $uuid,
@@ -424,7 +385,7 @@ readonly class GuestProfileData
         public string $email,
         public string $phone,
         public string $document,
-        public string $loyaltyTier,
+        public ?string $loyaltyTier,
     ) {}
 }
 ```
@@ -469,7 +430,7 @@ src/
 │   │   │   └── ReservationRepository.php     # Interface
 │   │   │
 │   │   ├── Service/                          # Domain Service Interfaces (ports)
-│   │   │   ├── GuestGateway.php              # Port for Guest BC data
+│   │   │   ├── GuestGateway.php              # Port for User BC data
 │   │   │   └── InventoryGateway.php          # Port for room availability
 │   │   │
 │   │   ├── Policies/
@@ -510,7 +471,7 @@ src/
 │       │       └── ReservationModel.php      # Eloquent model (internal)
 │       │
 │       ├── Integration/                      # ACL adapters
-│       │   ├── GuestGatewayAdapter.php       # Implements GuestGateway
+│       │   ├── GuestGatewayAdapter.php       # Implements GuestGateway (calls UserApi)
 │       │   └── InventoryGatewayAdapter.php   # Implements InventoryGateway
 │       │
 │       ├── IntegrationEvent/                 # Integration Events (cross-BC)
@@ -523,91 +484,114 @@ src/
 │       │   └── IntegrationEventPublisher.php
 │       │
 │       ├── Http/
-│       │   ├── Controllers/
-│       │   │   └── ReservationController.php
-│       │   ├── Requests/
-│       │   │   ├── CreateReservationRequest.php
-│       │   │   ├── CheckInRequest.php
-│       │   │   ├── CancelReservationRequest.php
-│       │   │   └── AddSpecialRequestRequest.php
-│       │   └── Resources/
-│       │       └── ReservationResource.php
+│       │   └── View/                         # Inertia view classes
+│       │
+│       ├── Presentation/
+│       │   └── Http/
+│       │       └── Action/                   # PSR-7 API actions
 │       │
 │       ├── Routes/
-│       │   └── api.php
+│       │   ├── api.php
+│       │   └── web.php
 │       │
 │       └── Providers/
 │           └── ReservationServiceProvider.php
 │
-├── Guest/                                    # BC: Guest
+├── User/                                     # BC: User (merged Guest + Owner)
 │   │
 │   ├── Domain/
-│   │   ├── GuestProfile.php                  # Aggregate Root
-│   │   ├── GuestProfileId.php                # Identity VO
+│   │   ├── User.php                          # Aggregate Root
+│   │   ├── UserId.php                        # Identity VO
 │   │   │
 │   │   ├── ValueObject/
 │   │   │   └── LoyaltyTier.php               # Enum (bronze, silver, gold, platinum)
 │   │   │
+│   │   ├── Event/
+│   │   │   ├── UserCreated.php
+│   │   │   ├── UserContactInfoUpdated.php
+│   │   │   └── UserLoyaltyTierChanged.php
+│   │   │
 │   │   ├── Repository/
-│   │   │   └── GuestProfileRepository.php    # Interface
+│   │   │   └── UserRepository.php            # Interface
 │   │   │
 │   │   └── Exception/
-│   │       └── GuestProfileNotFoundException.php
+│   │       └── UserNotFoundException.php
 │   │
 │   ├── Application/
 │   │   ├── Command/
-│   │   │   ├── CreateGuestProfile.php
-│   │   │   ├── CreateGuestProfileHandler.php
-│   │   │   ├── UpdateGuestProfile.php
-│   │   │   └── UpdateGuestProfileHandler.php
+│   │   │   ├── CreateUser.php
+│   │   │   ├── CreateUserHandler.php
+│   │   │   ├── UpdateUser.php
+│   │   │   └── UpdateUserHandler.php
 │   │   │
 │   │   └── Query/
-│   │       ├── ListGuestProfiles.php
-│   │       └── ListGuestProfilesHandler.php
+│   │       ├── ListUsers.php
+│   │       ├── ListUsersHandler.php
+│   │       ├── GetUserStats.php
+│   │       ├── GetUserStatsHandler.php
+│   │       └── UserStatsResult.php
+│   │
+│   ├── Presentation/
+│   │   └── Http/
+│   │       ├── Action/                       # PSR-7 API actions
+│   │       └── Presenter/
+│   │           └── UserPresenter.php
 │   │
 │   └── Infrastructure/
 │       ├── Persistence/
-│       │   ├── GuestProfileReflector.php
-│       │   └── Eloquent/
-│       │       ├── GuestProfileModel.php
-│       │       └── EloquentGuestProfileRepository.php
+│       │   ├── UserReflector.php
+│       │   ├── Eloquent/
+│       │   │   ├── UserModel.php
+│       │   │   └── EloquentUserRepository.php
+│       │   ├── Migrations/
+│       │   └── Seeders/
+│       │       └── UserSeeder.php
 │       │
 │       ├── Integration/                      # API exposed for other BCs
-│       │   ├── GuestProfileApi.php           # Entry point for cross-BC access
+│       │   ├── UserApi.php                   # Entry point for cross-BC access
 │       │   └── Dto/
-│       │       └── GuestProfileData.php      # DTO returned by the API
+│       │       └── UserData.php              # DTO returned by the API
 │       │
 │       ├── Http/
-│       │   ├── Controllers/
-│       │   │   └── GuestProfileController.php
-│       │   ├── Requests/
-│       │   │   └── UpdateGuestProfileRequest.php
-│       │   └── Resources/
-│       │       └── GuestProfileResource.php
+│       │   └── View/                         # Inertia view classes
 │       │
 │       ├── Routes/
-│       │   └── api.php
+│       │   ├── api.php
+│       │   └── web.php
 │       │
 │       └── Providers/
-│           └── GuestServiceProvider.php
+│           └── UserServiceProvider.php
 │
 ├── IAM/                                      # BC: Identity & Access Management
 │   │
 │   ├── Domain/
 │   │   ├── Actor.php                         # Aggregate Root
 │   │   ├── ActorId.php                       # Identity VO
+│   │   ├── Account.php                       # Aggregate Root
+│   │   ├── AccountId.php                     # Identity VO
+│   │   ├── Hotel.php                         # Aggregate Root
+│   │   ├── Type.php                          # Entity
+│   │   ├── TypeId.php                        # Identity VO
 │   │   │
 │   │   ├── ValueObject/
-│   │   │   ├── ActorType.php                 # Enum (guest, system)
+│   │   │   ├── TypeName.php                  # Enum (SUPERADMIN, OWNER, GUEST)
 │   │   │   └── HashedPassword.php            # VO
 │   │   │
+│   │   ├── Event/
+│   │   │   ├── ActorRegistered.php
+│   │   │   ├── AccountCreated.php
+│   │   │   └── HotelCreated.php
+│   │   │
 │   │   ├── Repository/
-│   │   │   └── ActorRepository.php           # Interface
+│   │   │   ├── ActorRepository.php           # Interface
+│   │   │   ├── AccountRepository.php         # Interface
+│   │   │   ├── HotelRepository.php           # Interface
+│   │   │   └── TypeRepository.php            # Interface
 │   │   │
 │   │   ├── Service/
 │   │   │   ├── PasswordHasher.php            # Interface
 │   │   │   ├── TokenManager.php              # Interface
-│   │   │   └── GuestProfileGateway.php       # Interface (port for Guest BC)
+│   │   │   └── UserGateway.php               # Interface (port for User BC)
 │   │   │
 │   │   └── Exception/
 │   │       ├── ActorAlreadyExistsException.php
@@ -618,6 +602,8 @@ src/
 │   │   └── Command/
 │   │       ├── RegisterActor.php
 │   │       ├── RegisterActorHandler.php
+│   │       ├── RegisterHotelOwner.php
+│   │       ├── RegisterHotelOwnerHandler.php
 │   │       ├── AuthenticateActor.php
 │   │       ├── AuthenticateActorHandler.php
 │   │       ├── RevokeToken.php
@@ -626,31 +612,40 @@ src/
 │   └── Infrastructure/
 │       ├── Persistence/
 │       │   ├── ActorReflector.php
+│       │   ├── AccountReflector.php
 │       │   └── Eloquent/
 │       │       ├── ActorModel.php            # Eloquent model (for Sanctum)
-│       │       └── EloquentActorRepository.php
+│       │       ├── AccountModel.php
+│       │       ├── TypeModel.php
+│       │       ├── EloquentActorRepository.php
+│       │       ├── EloquentAccountRepository.php
+│       │       └── EloquentTypeRepository.php
 │       │
 │       ├── Integration/
-│       │   └── GuestProfileGatewayAdapter.php
+│       │   └── UserGatewayAdapter.php        # Implements UserGateway (calls UserApi)
 │       │
 │       ├── Services/
 │       │   ├── BcryptPasswordHasher.php
 │       │   └── SanctumTokenManager.php
 │       │
 │       ├── Http/
-│       │   ├── Controllers/
-│       │   │   └── AuthController.php
-│       │   ├── Requests/
-│       │   │   ├── RegisterRequest.php
-│       │   │   └── LoginRequest.php
-│       │   └── Resources/
-│       │       └── ActorResource.php
+│       │   └── View/                         # Inertia view classes
+│       │
+│       ├── Presentation/
+│       │   └── Http/
+│       │       ├── Action/                   # PSR-7 API actions
+│       │       └── Presenter/
+│       │           └── ActorPresenter.php
 │       │
 │       ├── Routes/
-│       │   └── api.php
+│       │   ├── api.php
+│       │   └── web.php
 │       │
 │       └── Providers/
 │           └── IAMServiceProvider.php
+│
+├── Inventory/                                # BC: Inventory
+│   │  (similar structure)
 │
 └── Shared/                                   # Shared Kernel
     ├── Domain/
@@ -668,6 +663,18 @@ src/
     │       └── IntegrationEvent.php
     │
     └── Infrastructure/
+        ├── Persistence/
+        │   ├── TenantContext.php
+        │   └── BelongsToTenant.php
+        ├── Http/
+        │   └── Middleware/
+        │       ├── EnsureActorType.php
+        │       ├── EnsureActorIsOwner.php
+        │       ├── EnsureActorIsGuest.php
+        │       ├── SetTenantContext.php
+        │       └── HandleInertiaRequests.php
+        ├── Service/
+        │   └── AuthenticatedUserResolver.php
         └── Messaging/
             └── LaravelEventDispatcher.php
 ```
@@ -676,12 +683,12 @@ src/
 
 # SUMMARY
 
-| Aspect | Reservation | Guest | IAM |
-|--------|------------|-------|-----|
-| **Aggregate Root** | Reservation | GuestProfile | Actor |
-| **Child Entities** | SpecialRequest | — | — |
-| **Value Objects** | ReservationPeriod, ReservationStatus, RequestType, RequestStatus, SpecialRequestId | LoyaltyTier | ActorType, HashedPassword |
-| **DTOs** | GuestInfo, RoomAvailability, RoomTypeInfo | GuestProfileData (integration) | — |
-| **Domain Events** | 7 (internal) | — | — |
-| **Integration Events** | 4 (published) | — | — |
-| **Cross-BC Ports** | GuestGateway, InventoryGateway | — | GuestProfileGateway |
+| Aspect | Reservation | User | IAM | Inventory |
+|--------|------------|------|-----|-----------|
+| **Aggregate Root** | Reservation | User | Actor, Account, Hotel | Room |
+| **Child Entities** | SpecialRequest | — | Type | — |
+| **Value Objects** | ReservationPeriod, ReservationStatus, RequestType, RequestStatus, SpecialRequestId | LoyaltyTier (nullable) | TypeName, HashedPassword | RoomType, RoomStatus |
+| **DTOs** | GuestInfo, RoomAvailability, RoomTypeInfo | UserData (integration) | — | RoomData (integration) |
+| **Domain Events** | 7 (internal) | 3 | 3 | — |
+| **Integration Events** | 4 (published) | — | — | — |
+| **Cross-BC Ports** | GuestGateway, InventoryGateway | — | UserGateway | — |

@@ -36,16 +36,43 @@
 > `accountId, name`
 
 🟧 **Event:** Actor Registered
-> `actorId, accountId, email, role=GUEST`
+> `actorId, accountId, email, type=GUEST`
 
-🟪 **Policy:** Whenever Actor Registered (role=GUEST), then Create Guest
-> Integration via GuestGateway
+🟪 **Policy:** Whenever Actor Registered (type=GUEST), then Create User
+> Integration via UserGateway
 
-🟧 **Event:** Guest Created
-> `guestId, email, loyaltyTier=BRONZE`
+🟧 **Event:** User Created
+> `userId, email, loyaltyTier=BRONZE`
 
-🟪 **Policy:** Whenever Guest Created, then Link Actor to Guest
-> `Actor.subjectType='guest', Actor.subjectId=guestId`
+🟪 **Policy:** Whenever User Created, then Link Actor to User
+> `Actor.userId = user.id`
+
+---
+
+### Flow: Hotel Owner Registration
+
+🟨 **Actor:** Visitor (anonymous user)
+
+🟩 **Read Model:** Owner registration form (name, email, password, phone, document)
+
+🟦 **Command:** Register Hotel Owner
+> `name, email, password, phone, document`
+
+◼️ **Invariant:** Email must be unique across the system
+
+🟧 **Event:** Account Created
+> `accountId, name`
+
+🟧 **Event:** Actor Registered
+> `actorId, accountId, email, type=OWNER`
+
+🟪 **Policy:** Whenever Actor Registered (type=OWNER), then Create User (no loyalty tier)
+> Integration via UserGateway (loyaltyTier=null)
+
+🟧 **Event:** User Created
+> `userId, email, loyaltyTier=null`
+
+> Hotel creation is a separate step done after login inside the dashboard.
 
 ---
 
@@ -71,7 +98,7 @@
 
 ### Flow: Logout
 
-🟨 **Actor:** Guest | Admin | SuperAdmin
+🟨 **Actor:** Guest | Owner | SuperAdmin
 
 🟦 **Command:** Revoke Token
 
@@ -84,61 +111,61 @@
 
 - How does password recovery work?
 - Is there an email verification flow?
-- Can Admins be created via API or only via seeder?
+- Can Owners be created via API or only via seeder/superadmin?
 
 ---
 
-## Bounded Context: Guest (Guest Management)
+## Bounded Context: User (User Management)
 
-### Flow: Guest Creation (via admin API)
+### Flow: User Creation (via owner/superadmin API)
 
-🟨 **Actor:** Admin | SuperAdmin
+🟨 **Actor:** Owner | SuperAdmin
 
-🟩 **Read Model:** Existing guest list
+🟩 **Read Model:** Existing user list
 
-🟦 **Command:** Create Guest
-> `fullName, email, phone, document`
+🟦 **Command:** Create User
+> `fullName, email, phone, document, loyaltyTier?`
 
 ◼️ **Invariant:** Document must be unique
 
-🟧 **Event:** Guest Created
-> `guestId, email, loyaltyTier=BRONZE`
+🟧 **Event:** User Created
+> `userId, email, loyaltyTier=BRONZE (or null for owners)`
 
 ---
 
-### Flow: Guest Update
+### Flow: User Update
 
-🟨 **Actor:** Guest (own profile) | Admin | SuperAdmin
+🟨 **Actor:** Guest (own profile) | Owner | SuperAdmin
 
-🟩 **Read Model:** Guest Data (name, email, phone, loyalty tier, preferences)
+🟩 **Read Model:** User Data (name, email, phone, loyalty tier, preferences)
 
-🟦 **Command:** Update Guest
-> `guestId, fullName?, email?, phone?, loyaltyTier?, preferences?`
+🟦 **Command:** Update User
+> `userId, fullName?, email?, phone?, loyaltyTier?, preferences?`
 
-◼️ **Invariant:** Guest can only edit their own profile (except admin/superadmin)
+◼️ **Invariant:** Guest can only edit their own profile (except owner/superadmin)
 
-🟧 **Event:** Guest Contact Info Updated
-> `guestId`
+🟧 **Event:** User Contact Info Updated
+> `userId`
 
-🟧 **Event:** Guest Loyalty Tier Changed *(if tier changed)*
-> `guestId, tier (BRONZE | SILVER | GOLD | PLATINUM)`
+🟧 **Event:** User Loyalty Tier Changed *(if tier changed)*
+> `userId, tier (BRONZE | SILVER | GOLD | PLATINUM)`
 
 ---
 
-### Read Models — Guest
+### Read Models — User
 
-🟩 **Guest List** *(paginated, admin/superadmin only)*
+🟩 **User List** *(paginated, owner/superadmin only)*
 > `fullName, email, phone, document, loyaltyTier`
 
-🟩 **Guest Stats**
-> count by loyalty tier
+🟩 **User Stats**
+> count by loyalty tier (guests only, owners excluded)
 
-🟩 **Guest Detail**
+🟩 **User Detail**
 > `fullName, email, phone, document, loyaltyTier, preferences`
 
 ---
 
-### ⬜ Questions — Guest
+### ⬜ Questions — User
 
 - Is there a history of loyalty tier changes?
 - Are preferences free-text or from a predefined catalog?
@@ -150,7 +177,7 @@
 
 ### Flow: Room Creation
 
-🟨 **Actor:** Admin | SuperAdmin
+🟨 **Actor:** Owner | SuperAdmin
 
 🟦 **Command:** Create Room
 > `number, type (SINGLE|DOUBLE|SUITE), floor, capacity, pricePerNight, amenities[]`
@@ -164,7 +191,7 @@
 
 ### Flow: Room Update
 
-🟨 **Actor:** Admin | SuperAdmin
+🟨 **Actor:** Owner | SuperAdmin
 
 🟩 **Read Model:** Room Detail (number, type, floor, capacity, price, amenities, status)
 
@@ -178,7 +205,7 @@
 
 ### Flow: Room Status Change
 
-🟨 **Actor:** Admin | SuperAdmin
+🟨 **Actor:** Owner | SuperAdmin
 
 🟩 **Read Model:** Room Detail (current status)
 
@@ -203,7 +230,7 @@
 
 ### Read Models — Inventory
 
-🟩 **Room List** *(paginated, admin/superadmin only)*
+🟩 **Room List** *(paginated, owner/superadmin only)*
 > `number, type, floor, capacity, pricePerNight, status, amenities`
 
 🟩 **Room Stats**
@@ -226,10 +253,10 @@
 
 ### Flow: Reservation Creation
 
-🟨 **Actor:** Guest | Admin | SuperAdmin
+🟨 **Actor:** Guest | Owner | SuperAdmin
 
 🟩 **Read Model:** Room Availability (type, period, availability)
-🟩 **Read Model:** Guest Data (loyalty tier -> VIP status)
+🟩 **Read Model:** User Data (loyalty tier -> VIP status)
 
 🟦 **Command:** Create Reservation
 > `guestId, checkIn, checkOut, roomType (SINGLE|DOUBLE|SUITE)`
@@ -250,9 +277,9 @@
 
 ### Flow: Reservation Confirmation
 
-🟨 **Actor:** Admin | SuperAdmin
+🟨 **Actor:** Owner | SuperAdmin
 
-🟩 **Read Model:** Reservation Detail (current status, guest data)
+🟩 **Read Model:** Reservation Detail (current status, user data)
 
 🟦 **Command:** Confirm Reservation
 > `reservationId`
@@ -266,7 +293,7 @@
 
 ### Flow: Check-In
 
-🟨 **Actor:** Admin | SuperAdmin
+🟨 **Actor:** Owner | SuperAdmin
 
 🟩 **Read Model:** Reservation Detail (status, roomType)
 🟩 **Read Model:** Room Availability (available rooms of type)
@@ -290,7 +317,7 @@
 
 ### Flow: Check-Out
 
-🟨 **Actor:** Admin | SuperAdmin
+🟨 **Actor:** Owner | SuperAdmin
 
 🟩 **Read Model:** Reservation Detail (status, assigned room)
 
@@ -312,7 +339,7 @@
 
 ### Flow: Reservation Cancellation
 
-🟨 **Actor:** Guest (own reservation) | Admin | SuperAdmin
+🟨 **Actor:** Guest (own reservation) | Owner | SuperAdmin
 
 🟩 **Read Model:** Reservation Detail (current status)
 
@@ -329,7 +356,7 @@
 
 ### Flow: Special Requests
 
-🟨 **Actor:** Guest (own reservation) | Admin | SuperAdmin
+🟨 **Actor:** Guest (own reservation) | Owner | SuperAdmin
 
 🟩 **Read Model:** Reservation Detail (status, existing special requests)
 
@@ -345,7 +372,7 @@
 
 ---
 
-🟨 **Actor:** Admin | SuperAdmin
+🟨 **Actor:** Owner | SuperAdmin
 
 🟦 **Command:** Fulfill Special Request
 > `reservationId, requestId`
@@ -408,8 +435,8 @@ stateDiagram-v2
 
 ```mermaid
 graph LR
-    IAM -- GuestGateway --> Guest
-    Reservation -- GuestGateway --> Guest
+    IAM -- UserGateway --> User
+    Reservation -- GuestGateway --> User
     Reservation -- InventoryGateway --> Inventory
 ```
 
@@ -417,23 +444,23 @@ graph LR
 
 | Source | Target | Gateway | Operation |
 |--------|---------|---------|----------|
-| IAM | Guest | GuestGateway | Create guest during actor registration |
-| Reservation | Guest | GuestGateway | Fetch guest info (name, VIP status) |
+| IAM | User | UserGateway | Create user during actor registration |
+| Reservation | User | GuestGateway | Fetch user info (name, VIP status) |
 | Reservation | Inventory | InventoryGateway | Check room availability |
 | Reservation | Inventory | InventoryGateway | Occupy/release room (check-in/check-out) |
 
 ---
 
-## Actors (System Roles)
+## Actors (System Types)
 
 🟨 **SuperAdmin**
-> System administrator. No associated account. Full access to all bounded contexts.
+> System administrator. No associated account. Full access to all bounded contexts. Can impersonate hotel owners.
 
-🟨 **Admin**
-> Property manager / Front desk. Associated with an Account (tenant). Can: manage rooms, confirm/check-in/check-out reservations, view guests.
+🟨 **Owner**
+> Hotel owner / property manager. Associated with an Account (tenant) and Hotel. Can: manage rooms, confirm/check-in/check-out reservations, manage users.
 
 🟨 **Guest**
-> Hotel guest. Associated with an Account + Guest entity. Can: view/create/cancel own reservations, add special requests, edit own profile.
+> Hotel guest. Associated with an Account + User entity (with loyalty tier). Can: view/create/cancel own reservations, add special requests, edit own profile via portal.
 
 ---
 
@@ -443,27 +470,27 @@ graph LR
 sequenceDiagram
     participant V as Visitor
     participant IAM
-    participant G as Guest
+    participant U as User
     participant R as Reservation
     participant I as Inventory
 
     Note over V: Registration & Auth
     V->>IAM: Register Actor
     IAM->>IAM: Account Created
-    IAM->>G: Actor Registered (via GuestGateway)
-    G->>G: Guest Created
+    IAM->>U: Actor Registered (via UserGateway)
+    U->>U: User Created
     V->>IAM: Login
     IAM->>V: Actor Authenticated (token)
 
     Note over V: Booking (as Guest)
     V->>R: Create Reservation
-    R->>G: Fetch Guest Info (VIP status)
-    G-->>R: Guest Info
+    R->>U: Fetch User Info (VIP status)
+    U-->>R: Guest Info
     R->>I: Check Availability
     I-->>R: Available rooms
     R->>R: Reservation Created (PENDING)
 
-    Note over V: Operations (as Admin)
+    Note over V: Operations (as Owner)
     V->>R: Confirm Reservation
     R->>R: Reservation Confirmed
 

@@ -8,24 +8,23 @@ use DateTimeImmutable;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
-use Modules\IAM\Domain\RoleId;
+use Modules\IAM\Domain\TypeId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
 use ReflectionClass;
 
 final class ActorReflector
 {
     /**
-     * @param  list<RoleId>  $roleIds
+     * @param  list<TypeId>  $typeIds
      */
     public static function reconstruct(
         ActorId $uuid,
         ?AccountId $accountId,
-        array $roleIds,
+        array $typeIds,
         string $name,
         string $email,
         HashedPassword $password,
-        ?string $subjectType,
-        ?int $subjectId,
+        ?int $userId,
         DateTimeImmutable $createdAt,
         ?DateTimeImmutable $updatedAt,
     ): Actor {
@@ -34,12 +33,11 @@ final class ActorReflector
 
         self::set($ref, $actor, 'uuid', $uuid);
         self::set($ref, $actor, 'accountId', $accountId);
-        self::set($ref, $actor, 'roleIds', $roleIds);
+        self::set($ref, $actor, 'typeIds', $typeIds);
         self::set($ref, $actor, 'name', $name);
         self::set($ref, $actor, 'email', $email);
         self::set($ref, $actor, 'password', $password);
-        self::set($ref, $actor, 'subjectType', $subjectType);
-        self::set($ref, $actor, 'subjectId', $subjectId);
+        self::set($ref, $actor, 'userId', $userId);
         self::set($ref, $actor, 'createdAt', $createdAt);
         self::set($ref, $actor, 'updatedAt', $updatedAt);
 

@@ -22,12 +22,11 @@ final class RegisterSubmitView
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:actors,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'phone' => ['required', 'string', 'regex:/^\+[1-9]\d{1,14}$/'],
+            'phone' => ['required', 'string', 'regex:/^[1-9]\d{6,14}$/'],
             'document' => ['required', 'string', 'max:50'],
         ]);
 
         $this->handler->handle(new RegisterActor(
-            accountName: $data['name']."'s Account",
             name: $data['name'],
             email: $data['email'],
             password: $data['password'],
@@ -35,7 +34,6 @@ final class RegisterSubmitView
             document: $data['document'],
         ));
 
-        // Log the user in after registration
         Auth::attempt(['email' => $data['email'], 'password' => $data['password']]);
         $request->session()->regenerate();
 

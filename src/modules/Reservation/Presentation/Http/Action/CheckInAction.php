@@ -10,7 +10,7 @@ use Modules\Reservation\Application\Command\CheckInGuestHandler;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\ReservationId;
 use Modules\Reservation\Domain\Service\InventoryGateway;
-use Modules\Shared\Infrastructure\Service\AuthenticatedGuestResolver;
+use Modules\Shared\Infrastructure\Service\AuthenticatedUserResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;
 use Modules\Shared\Presentation\Validation\InputValidator;
 use Psr\Http\Message\ResponseInterface;
@@ -22,7 +22,7 @@ final readonly class CheckInAction
         private CheckInGuestHandler $handler,
         private InventoryGateway $inventoryGateway,
         private ReservationRepository $reservationRepository,
-        private AuthenticatedGuestResolver $guestResolver,
+        private AuthenticatedUserResolver $userResolver,
         private InputValidator $validator,
         private JsonResponder $responder,
     ) {}
@@ -53,11 +53,11 @@ final readonly class CheckInAction
 
     private function enforceReservationOwnership(string $reservationUuid): void
     {
-        if ($this->guestResolver->isAdminOrSuperAdmin()) {
+        if ($this->userResolver->isOwnerOrSuperAdmin()) {
             return;
         }
 
-        $ownGuestUuid = $this->guestResolver->resolveGuestUuid();
+        $ownGuestUuid = $this->userResolver->resolveUserUuid();
         if ($ownGuestUuid !== null) {
             $reservation = $this->reservationRepository->findByUuid(ReservationId::fromString($reservationUuid));
             if ($reservation === null || $ownGuestUuid !== $reservation->guestId) {

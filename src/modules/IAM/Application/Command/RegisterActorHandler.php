@@ -5,76 +5,75 @@ declare(strict_types=1);
 namespace Modules\IAM\Application\Command;
 
 use DateTimeImmutable;
+use Illuminate\Support\Str;
 use Modules\IAM\Domain\Account;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
-use Modules\IAM\Domain\Exception\ActorAlreadyExistsException;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
-use Modules\IAM\Domain\Repository\RoleRepository;
-use Modules\IAM\Domain\Service\GuestGateway;
+use Modules\IAM\Domain\Repository\TypeRepository;
+use Modules\IAM\Domain\Service\EmailUniquenessChecker;
 use Modules\IAM\Domain\Service\PasswordHasher;
-use Modules\IAM\Domain\ValueObject\RoleName;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
+use Modules\IAM\Domain\Service\UserGateway;
+use Modules\IAM\Domain\ValueObject\TypeName;
+use Modules\Shared\Application\EventDispatcher;
+use Modules\Shared\Application\EventDispatchingHandler;
 
-final readonly class RegisterActorHandler
+final readonly class RegisterActorHandler extends EventDispatchingHandler
 {
     public function __construct(
         private ActorRepository $repository,
         private AccountRepository $accountRepository,
-        private RoleRepository $roleRepository,
+        private TypeRepository $typeRepository,
         private PasswordHasher $hasher,
-        private GuestGateway $guestGateway,
-        private TenantContext $tenantContext,
-    ) {}
+        private EmailUniquenessChecker $emailUniquenessChecker,
+        private UserGateway $userGateway,
+        EventDispatcher $dispatcher
+    ) {
+        parent::__construct($dispatcher);
+    }
 
     public function handle(RegisterActor $command): ActorId
     {
-        $existing = $this->repository->findByEmail($command->email);
-
-        if ($existing !== null) {
-            throw ActorAlreadyExistsException::withEmail($command->email);
-        }
-
-        // Create account for this guest registration
+        // 1. Create Account (personal tenant for the guest)
         $accountId = $this->accountRepository->nextIdentity();
         $account = Account::create(
             uuid: $accountId,
-            name: $command->accountName,
+            name: $command->name . "'s Account",
+            slug: Str::slug($command->name) . '-' . Str::random(6),
             createdAt: new DateTimeImmutable,
         );
         $this->accountRepository->save($account);
 
-        // Set tenant context for cross-BC operations
-        $numericAccountId = $this->accountRepository->resolveNumericId($accountId);
-        $this->tenantContext->set($numericAccountId);
-
-        // Create guest via ACL
-        $guestId = $this->guestGateway->create(
+        // 2. Create User profile (global, no tenant scoping)
+        $userId = $this->userGateway->create(
             name: $command->name,
             email: $command->email,
             phone: $command->phone,
             document: $command->document,
+            loyaltyTier: 'bronze',
         );
 
-        // Get the guest role
-        $guestRole = $this->roleRepository->findByName(RoleName::GUEST);
-
+        // 3. Create Actor with guest type linkage and account
+        $guestType = $this->typeRepository->findByName(TypeName::GUEST);
         $id = $this->repository->nextIdentity();
 
         $actor = Actor::register(
             uuid: $id,
             accountId: $accountId,
-            roleIds: [$guestRole->uuid],
+            typeIds: [$guestType->uuid],
             name: $command->name,
             email: $command->email,
             password: $this->hasher->hash($command->password),
-            subjectType: 'guest',
-            subjectId: $guestId,
+            userId: $userId,
             createdAt: new DateTimeImmutable,
+            emailUniquenessChecker: $this->emailUniquenessChecker,
         );
 
         $this->repository->save($actor);
+
+        $this->dispatchEvents($account);
+        $this->dispatchEvents($actor);
 
         return $id;
     }

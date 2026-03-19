@@ -14,6 +14,8 @@ final class AccountReflector
     public static function reconstruct(
         AccountId $uuid,
         string $name,
+        string $slug,
+        string $status,
         DateTimeImmutable $createdAt,
         ?DateTimeImmutable $updatedAt,
     ): Account {
@@ -22,6 +24,8 @@ final class AccountReflector
 
         self::set($ref, $account, 'uuid', $uuid);
         self::set($ref, $account, 'name', $name);
+        self::set($ref, $account, 'slug', $slug);
+        self::set($ref, $account, 'status', $status);
         self::set($ref, $account, 'createdAt', $createdAt);
         self::set($ref, $account, 'updatedAt', $updatedAt);
 

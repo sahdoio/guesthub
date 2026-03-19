@@ -33,6 +33,8 @@ final class ReservationTest extends TestCase
         return Reservation::create(
             ReservationId::generate(),
             Uuid::uuid7()->toString(),
+            Uuid::uuid7()->toString(),
+            Uuid::uuid7()->toString(),
             new ReservationPeriod(new DateTimeImmutable('+1 day'), new DateTimeImmutable('+4 days')),
             'DOUBLE',
         );
@@ -288,9 +290,13 @@ final class ReservationTest extends TestCase
     public function it_stores_guest_id(): void
     {
         $guestId = Uuid::uuid7()->toString();
+        $accountId = Uuid::uuid7()->toString();
+        $hotelId = Uuid::uuid7()->toString();
         $reservation = Reservation::create(
             ReservationId::generate(),
             $guestId,
+            $accountId,
+            $hotelId,
             new ReservationPeriod(new DateTimeImmutable('+1 day'), new DateTimeImmutable('+4 days')),
             'SUITE',
         );

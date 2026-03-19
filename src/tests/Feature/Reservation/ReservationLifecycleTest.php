@@ -26,7 +26,7 @@ final class ReservationLifecycleTest extends TestCase
         parent::setUp();
         $this->seedRolesAndAccount();
 
-        Sanctum::actingAs($this->createAdminActor());
+        Sanctum::actingAs($this->createOwnerActor());
 
         $this->guestId = $this->createGuest();
         $this->seedRooms();

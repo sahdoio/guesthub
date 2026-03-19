@@ -6,6 +6,7 @@ namespace Modules\Inventory\Infrastructure\Http\View;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Modules\IAM\Domain\Repository\HotelRepository;
 use Modules\Inventory\Application\Command\UpdateRoom;
 use Modules\Inventory\Application\Command\UpdateRoomHandler;
 
@@ -13,10 +14,15 @@ final class RoomUpdateView
 {
     public function __construct(
         private UpdateRoomHandler $handler,
+        private HotelRepository $hotelRepository,
     ) {}
 
-    public function __invoke(Request $request, string $id): RedirectResponse
+    public function __invoke(Request $request, string $slug, string $id): RedirectResponse
     {
+        $hotel = $this->hotelRepository->findBySlug($slug);
+
+        abort_if($hotel === null, 404);
+
         $data = $request->validate([
             'price_per_night' => ['sometimes', 'numeric', 'min:0'],
             'amenities' => ['sometimes', 'array'],
@@ -29,6 +35,6 @@ final class RoomUpdateView
             amenities: $data['amenities'] ?? null,
         ));
 
-        return redirect("/rooms/{$id}")->with('success', 'Room updated.');
+        return redirect("/hotels/{$slug}/rooms/{$id}")->with('success', 'Room updated.');
     }
 }

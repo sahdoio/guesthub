@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Tests\Concerns;
 
 use DateTimeImmutable;
-use Modules\Guest\Domain\Guest;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Domain\ValueObject\LoyaltyTier;
+use Modules\User\Domain\User;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\User\Domain\ValueObject\LoyaltyTier;
 
 trait CreatesGuest
 {
     protected function createGuest(array $overrides = []): string
     {
-        $repository = $this->app->make(GuestRepository::class);
+        $repository = $this->app->make(UserRepository::class);
 
-        $guest = Guest::create(
+        $guest = User::create(
             uuid: $repository->nextIdentity(),
             fullName: $overrides['full_name'] ?? 'John Doe',
             email: $overrides['email'] ?? 'john@hotel.com',
-            phone: $overrides['phone'] ?? '+5511999999999',
+            phone: $overrides['phone'] ?? '5511999999999',
             document: $overrides['document'] ?? '12345678900',
             loyaltyTier: LoyaltyTier::from($overrides['loyalty_tier'] ?? 'bronze'),
             preferences: $overrides['preferences'] ?? [],

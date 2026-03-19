@@ -6,10 +6,11 @@ namespace Tests\Integration\Reservation;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Guest\Domain\Guest;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Domain\ValueObject\LoyaltyTier;
+use Modules\User\Domain\User;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\User\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\HotelModel;
 use Modules\Reservation\Domain\Service\GuestGateway;
 use Modules\Reservation\Infrastructure\Integration\GuestGatewayAdapter;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
@@ -25,7 +26,7 @@ final class GuestGatewayAdapterTest extends TestCase
 
     private GuestGateway $gateway;
 
-    private GuestRepository $guestRepo;
+    private UserRepository $userRepo;
 
     protected function setUp(): void
     {
@@ -33,31 +34,42 @@ final class GuestGatewayAdapterTest extends TestCase
 
         $account = AccountModel::create([
             'uuid' => Uuid::uuid7()->toString(),
-            'name' => 'Test Hotel',
+            'name' => 'Test Organization',
+            'slug' => 'test-org',
+            'status' => 'active',
             'created_at' => now(),
         ]);
         $this->app->make(TenantContext::class)->set($account->id);
 
+        HotelModel::withoutGlobalScopes()->create([
+            'uuid' => Uuid::uuid7()->toString(),
+            'account_id' => $account->id,
+            'name' => 'Test Hotel',
+            'slug' => 'test-hotel',
+            'status' => 'active',
+            'created_at' => now(),
+        ]);
+
         $this->gateway = $this->app->make(GuestGateway::class);
-        $this->guestRepo = $this->app->make(GuestRepository::class);
+        $this->userRepo = $this->app->make(UserRepository::class);
     }
 
     private function seedGuest(string $email, LoyaltyTier $tier = LoyaltyTier::BRONZE): string
     {
-        $guest = Guest::create(
-            uuid: $this->guestRepo->nextIdentity(),
+        $user = User::create(
+            uuid: $this->userRepo->nextIdentity(),
             fullName: 'Test Guest',
             email: $email,
-            phone: '+5511999999999',
+            phone: '5511999999999',
             document: 'DOC-'.uniqid(),
             loyaltyTier: $tier,
             preferences: [],
             createdAt: new DateTimeImmutable,
         );
 
-        $this->guestRepo->save($guest);
+        $this->userRepo->save($user);
 
-        return (string) $guest->uuid;
+        return (string) $user->uuid;
     }
 
     #[Test]

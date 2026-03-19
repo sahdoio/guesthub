@@ -2,7 +2,7 @@
 
 [![Watch the video](https://img.youtube.com/vi/dwifp5zka0g/maxresdefault.jpg)](https://youtu.be/dwifp5zka0g)
 
-A hotel management system built to explore Domain-Driven Design with Laravel. The goal is to model real hotel operations — reservations, guest profiles, room inventory — as isolated bounded contexts that communicate through well-defined boundaries.
+A hotel management system built to explore Domain-Driven Design with Laravel. The goal is to model real hotel operations — reservations, user profiles, room inventory — as isolated bounded contexts that communicate through well-defined boundaries.
 
 This is a learning project. The focus is on getting the architecture right: aggregates with real invariants, value objects, domain events, and repositories that don't leak infrastructure into the domain.
 
@@ -25,9 +25,9 @@ The project is organized into bounded contexts under `src/modules/`. Each module
 
 ```
 modules/
-├── IAM/             # BC — Identity & access management (actors, auth, tokens)
+├── IAM/             # BC — Identity & access management (actors, auth, tokens, hotels)
 ├── Reservation/     # BC — Reservation lifecycle (complex aggregate)
-├── Guest/           # BC — Guest profiles & preferences (simple CRUD)
+├── User/            # BC — User profiles & preferences (guests and owners in one table)
 ├── Inventory/       # BC — Room inventory, availability & status
 └── Shared/          # Shared kernel (Identity, AggregateRoot, ValueObject)
 ```
@@ -48,15 +48,16 @@ Each module follows the same structure:
 - **Eloquent for persistence, not for domain.** Eloquent models live in infrastructure and handle table mapping. Domain aggregates are reconstructed via reflection to avoid calling constructors (which record domain events).
 - **Command/Query separation.** Write operations go through `Command/` + `Handler/`. Read operations (like listing) go through `Query/`.
 - **Anti-Corruption Layer for cross-BC communication.** BCs never import each other's domain classes. All cross-boundary data flows through Gateway interfaces, adapters, and Integration APIs.
+- **Single `users` table.** Guests and owners share one table. Owners have a `null` loyalty tier. Actor types (superadmin, owner, guest) control access, not separate tables.
 
 ## Bounded Contexts
 
 ### IAM (Identity & Access Management)
 
-Handles actor registration, authentication, and token management. Registering an actor automatically creates a guest profile in the Guest BC via a gateway adapter.
+Handles actor registration, authentication, hotel management, and token management. Registering an actor automatically creates a user profile in the User BC via a gateway adapter. Actors have types (superadmin, owner, guest) stored in the `actor_types` pivot table. Each actor has a `user_id` foreign key linking to the User BC.
 
 ```
-POST   /api/auth/register   → create actor + guest profile, returns actor resource
+POST   /api/auth/register   → create actor + user profile, returns actor resource
 POST   /api/auth/login      → authenticate, returns Bearer token
 POST   /api/auth/logout     → revoke all tokens (requires auth)
 ```
@@ -83,18 +84,18 @@ POST   /api/reservations              → status: pending
 POST   /api/reservations/{id}/cancel  → status: cancelled (requires reason)
 ```
 
-### Guest
+### User
 
-Guest profiles and preferences. Simple CRUD — no state machine, no child entities. Guest profiles are created automatically during IAM registration; the HTTP API exposes read, update, and delete operations.
+User profiles and preferences. Simple CRUD — no state machine, no child entities. Guests and owners share the same `users` table; owners have a `null` loyalty tier. User profiles are created automatically during IAM registration; the HTTP API exposes read, update, and delete operations.
 
 ```
-GET    /api/guests           → list (paginated)
-GET    /api/guests/{uuid}    → show
-PUT    /api/guests/{uuid}    → update (contact info, loyalty tier, preferences)
-DELETE /api/guests/{uuid}    → delete
+GET    /api/users           → list (paginated)
+GET    /api/users/{uuid}    → show
+PUT    /api/users/{uuid}    → update (contact info, loyalty tier, preferences)
+DELETE /api/users/{uuid}    → delete
 ```
 
-Loyalty tiers: `bronze`, `silver`, `gold`, `platinum`.
+Loyalty tiers (guests only): `bronze`, `silver`, `gold`, `platinum`.
 
 ### Inventory
 
@@ -116,10 +117,11 @@ The frontend is a Vue 3 SPA served via Inertia.js. Each BC exposes its own web r
 
 ### Pages
 
-- **Dashboard** — Summary cards (total reservations, guests, today's check-ins/check-outs, total rooms) and charts (reservations by status, guests by loyalty tier, room inventory by status, reservations by room type). All data comes from dedicated stats query handlers per BC.
-- **Guests** — Full CRUD: list with pagination, create, show, edit, delete.
+- **Dashboard** — Summary cards (total reservations, users, today's check-ins/check-outs, total rooms) and charts (reservations by status, users by loyalty tier, room inventory by status, reservations by room type). All data comes from dedicated stats query handlers per BC.
+- **Users** — Full CRUD: list with pagination, create, show, edit, delete.
 - **Reservations** — Lifecycle management: list with status/room type filters, create (validates availability), show with actions (confirm, check-in with room selection dropdown, check-out, cancel), special requests.
 - **Rooms** — Full CRUD: list with status/type filters, create, show with status change buttons, edit (price/amenities), delete.
+- **Portal** — Guest-facing portal: dashboard with reservations, profile management, hotel browsing.
 
 ### Vite HMR in Docker
 
@@ -208,4 +210,4 @@ GitHub Actions runs three parallel jobs on every push/PR:
 
 Bruno collection files are in `bruno/`. Open the folder in [Bruno](https://www.usebruno.com/) and select the `Local` environment.
 
-The Reservation collection is sequenced as a full lifecycle flow — run them in order. The Guest and Room collections cover standard CRUD.
+The Reservation collection is sequenced as a full lifecycle flow — run them in order. The User and Room collections cover standard CRUD.

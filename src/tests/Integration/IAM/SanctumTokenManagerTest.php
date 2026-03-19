@@ -40,9 +40,9 @@ final class SanctumTokenManagerTest extends TestCase
             'created_at' => now(),
         ]);
 
-        DB::table('actor_roles')->insert([
+        DB::table('actor_types')->insert([
             'actor_id' => $actor->id,
-            'role_id' => $this->guestRole->id,
+            'type_id' => $this->guestType->id,
         ]);
 
         return $actor;

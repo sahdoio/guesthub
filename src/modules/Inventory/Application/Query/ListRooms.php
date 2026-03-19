@@ -10,5 +10,6 @@ final readonly class ListRooms
         public ?string $status = null,
         public ?string $type = null,
         public ?int $floor = null,
+        public ?int $hotelId = null,
     ) {}
 }

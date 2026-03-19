@@ -1,16 +1,19 @@
 <script setup>
 import { router, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 defineOptions({ layout: AuthenticatedLayout });
+
+const { t } = useI18n();
 
 const props = defineProps({
     reservation: Object,
     availableRooms: { type: Array, default: () => [] },
 });
 
-const r = props.reservation;
+const r = computed(() => props.reservation);
 
 const statusColors = {
     pending: 'bg-yellow-100 text-yellow-800',
@@ -20,22 +23,22 @@ const statusColors = {
     cancelled: 'bg-red-100 text-red-800',
 };
 
-const statusLabel = (status) => status.replace('_', ' ');
+const statusLabel = (status) => t('status.' + status);
 
 // Check-in form
 const checkInForm = useForm({ room_number: '' });
-const submitCheckIn = () => checkInForm.post(`/reservations/${r.id}/check-in`);
+const submitCheckIn = () => checkInForm.post(`/reservations/${r.value.id}/check-in`);
 
 // Cancel form
 const showCancelForm = ref(false);
 const cancelForm = useForm({ reason: '' });
-const submitCancel = () => cancelForm.post(`/reservations/${r.id}/cancel`);
+const submitCancel = () => cancelForm.post(`/reservations/${r.value.id}/cancel`);
 
 // Special request form
 const showSpecialRequestForm = ref(false);
 const specialRequestForm = useForm({ type: '', description: '' });
 const submitSpecialRequest = () => {
-    specialRequestForm.post(`/reservations/${r.id}/special-requests`, {
+    specialRequestForm.post(`/reservations/${r.value.id}/special-requests`, {
         onSuccess: () => {
             specialRequestForm.reset();
             showSpecialRequestForm.value = false;
@@ -43,14 +46,14 @@ const submitSpecialRequest = () => {
     });
 };
 
-const requestTypeLabels = {
-    early_check_in: 'Early Check-in',
-    late_check_out: 'Late Check-out',
-    extra_bed: 'Extra Bed',
-    dietary_restriction: 'Dietary Restriction',
-    special_occasion: 'Special Occasion',
-    other: 'Other',
-};
+const requestTypeLabels = computed(() => ({
+    early_check_in: t('special_request.types.early_check_in'),
+    late_check_out: t('special_request.types.late_check_out'),
+    extra_bed: t('special_request.types.extra_bed'),
+    dietary_restriction: t('special_request.types.dietary_restriction'),
+    special_occasion: t('special_request.types.special_occasion'),
+    other: t('special_request.types.other'),
+}));
 
 const requestStatusColors = {
     pending: 'bg-yellow-100 text-yellow-800',
@@ -62,8 +65,8 @@ const requestStatusColors = {
 <template>
     <div>
         <div class="mb-6 flex items-center gap-4">
-            <a href="/reservations" class="text-gray-500 hover:text-gray-700">&larr; Back</a>
-            <h1 class="text-2xl font-bold text-gray-800">Reservation Details</h1>
+            <a href="/reservations" class="text-gray-500 hover:text-gray-700">&larr; {{ $t('common.back') }}</a>
+            <h1 class="text-2xl font-bold text-gray-800">{{ $t('reservation.details') }}</h1>
             <span
                 class="inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize"
                 :class="statusColors[r.status]"
@@ -77,52 +80,52 @@ const requestStatusColors = {
             <div class="lg:col-span-2 space-y-6">
                 <!-- Guest -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Guest</h2>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('reservation.guest') }}</h2>
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <span class="text-gray-500">Name</span>
+                            <span class="text-gray-500">{{ $t('common.name') }}</span>
                             <p class="font-medium text-gray-900">{{ r.guest.full_name }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Email</span>
+                            <span class="text-gray-500">{{ $t('guest.email') }}</span>
                             <p class="font-medium text-gray-900">{{ r.guest.email }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Phone</span>
+                            <span class="text-gray-500">{{ $t('guest.phone') }}</span>
                             <p class="font-medium text-gray-900">{{ r.guest.phone }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Document</span>
+                            <span class="text-gray-500">{{ $t('guest.document') }}</span>
                             <p class="font-medium text-gray-900">{{ r.guest.document }}</p>
                         </div>
                     </div>
                     <div v-if="r.guest.is_vip" class="mt-3">
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">VIP</span>
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">{{ $t('common.vip') }}</span>
                     </div>
                 </div>
 
                 <!-- Stay Details -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Stay Details</h2>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('reservation.stay_details') }}</h2>
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <span class="text-gray-500">Check-in</span>
+                            <span class="text-gray-500">{{ $t('reservation.check_in') }}</span>
                             <p class="font-medium text-gray-900">{{ r.period.check_in }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Check-out</span>
+                            <span class="text-gray-500">{{ $t('reservation.check_out') }}</span>
                             <p class="font-medium text-gray-900">{{ r.period.check_out }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Nights</span>
+                            <span class="text-gray-500">{{ $t('reservation.nights') }}</span>
                             <p class="font-medium text-gray-900">{{ r.period.nights }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Room Type</span>
-                            <p class="font-medium text-gray-900">{{ r.room_type }}</p>
+                            <span class="text-gray-500">{{ $t('reservation.room_type') }}</span>
+                            <p class="font-medium text-gray-900">{{ $t('room_type.' + r.room_type.toLowerCase()) }}</p>
                         </div>
                         <div v-if="r.assigned_room_number">
-                            <span class="text-gray-500">Room Number</span>
+                            <span class="text-gray-500">{{ $t('reservation.room_number') }}</span>
                             <p class="font-medium text-gray-900">{{ r.assigned_room_number }}</p>
                         </div>
                     </div>
@@ -132,14 +135,14 @@ const requestStatusColors = {
                 <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center justify-between mb-3">
                         <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">
-                            Special Requests ({{ r.special_requests.length }}/5)
+                            {{ $t('special_request.title') }} ({{ r.special_requests.length }}/5)
                         </h2>
                         <button
                             v-if="!['cancelled', 'checked_out'].includes(r.status) && r.special_requests.length < 5"
                             @click="showSpecialRequestForm = !showSpecialRequestForm"
                             class="text-sm text-blue-600 hover:text-blue-800 font-medium"
                         >
-                            {{ showSpecialRequestForm ? 'Cancel' : '+ Add' }}
+                            {{ showSpecialRequestForm ? $t('common.cancel') : '+ ' + $t('special_request.add') }}
                         </button>
                     </div>
 
@@ -152,7 +155,7 @@ const requestStatusColors = {
                                 class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                                 :class="{ 'border-red-500': specialRequestForm.errors.type }"
                             >
-                                <option value="" disabled>Select type</option>
+                                <option value="" disabled>{{ $t('special_request.select_type') }}</option>
                                 <option v-for="(label, value) in requestTypeLabels" :key="value" :value="value">
                                     {{ label }}
                                 </option>
@@ -163,7 +166,7 @@ const requestStatusColors = {
                             <textarea
                                 v-model="specialRequestForm.description"
                                 required
-                                placeholder="Description (min 3 characters)"
+                                :placeholder="$t('special_request.description')"
                                 rows="2"
                                 class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                                 :class="{ 'border-red-500': specialRequestForm.errors.description }"
@@ -175,12 +178,12 @@ const requestStatusColors = {
                             :disabled="specialRequestForm.processing"
                             class="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
                         >
-                            Add Request
+                            {{ $t('special_request.add_request') }}
                         </button>
                     </form>
 
                     <div v-if="r.special_requests.length === 0 && !showSpecialRequestForm" class="text-sm text-gray-500">
-                        No special requests.
+                        {{ $t('special_request.no_requests') }}
                     </div>
                     <div v-else class="space-y-2">
                         <div
@@ -197,7 +200,7 @@ const requestStatusColors = {
                                 class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full capitalize"
                                 :class="requestStatusColors[sr.status]"
                             >
-                                {{ sr.status }}
+                                {{ $t('status.' + sr.status) }}
                             </span>
                         </div>
                     </div>
@@ -208,12 +211,12 @@ const requestStatusColors = {
             <div class="space-y-6">
                 <!-- Actions -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Actions</h2>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.actions') }}</h2>
                     <div class="space-y-3">
                         <!-- Confirm -->
-                        <form v-if="r.status === 'pending'" @submit.prevent="router.post(`/reservations/${r.id}/confirm`)">
+                        <form v-if="r.status === 'pending'" @submit.prevent="router.post(`/reservations/${r.id}/confirm`, {}, { preserveScroll: true })">
                             <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
-                                Confirm Reservation
+                                {{ $t('reservation.confirm') }}
                             </button>
                         </form>
 
@@ -226,17 +229,17 @@ const requestStatusColors = {
                                     class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                                     :class="{ 'border-red-500': checkInForm.errors.room_number }"
                                 >
-                                    <option value="" disabled>Select a room</option>
+                                    <option value="" disabled>{{ $t('reservation.select_room') }}</option>
                                     <option
                                         v-for="room in props.availableRooms"
                                         :key="room.number"
                                         :value="room.number"
                                     >
-                                        Room {{ room.number }} — Floor {{ room.floor }} — ${{ room.price_per_night }}/night
+                                        {{ $t('reservation.room') }} {{ room.number }} — {{ $t('room.floor') }} {{ room.floor }} — ${{ room.price_per_night }}{{ $t('common.per_night') }}
                                     </option>
                                 </select>
                                 <p v-if="props.availableRooms.length === 0" class="text-sm text-amber-600">
-                                    No rooms available for this type.
+                                    {{ $t('reservation.no_rooms_available') }}
                                 </p>
                                 <p v-if="checkInForm.errors.room_number" class="text-sm text-red-600">{{ checkInForm.errors.room_number }}</p>
                                 <button
@@ -244,15 +247,15 @@ const requestStatusColors = {
                                     :disabled="checkInForm.processing || props.availableRooms.length === 0"
                                     class="w-full bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors"
                                 >
-                                    Check In
+                                    {{ $t('reservation.check_in_action') }}
                                 </button>
                             </form>
                         </div>
 
                         <!-- Check Out -->
-                        <form v-if="r.status === 'checked_in'" @submit.prevent="router.post(`/reservations/${r.id}/check-out`)">
+                        <form v-if="r.status === 'checked_in'" @submit.prevent="router.post(`/reservations/${r.id}/check-out`, {}, { preserveScroll: true })">
                             <button type="submit" class="w-full bg-gray-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-700 transition-colors">
-                                Check Out
+                                {{ $t('reservation.check_out_action') }}
                             </button>
                         </form>
 
@@ -263,13 +266,13 @@ const requestStatusColors = {
                                 @click="showCancelForm = true"
                                 class="w-full bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
                             >
-                                Cancel Reservation
+                                {{ $t('reservation.cancel') }}
                             </button>
                             <form v-else @submit.prevent="submitCancel" class="space-y-2">
                                 <textarea
                                     v-model="cancelForm.reason"
                                     required
-                                    placeholder="Reason for cancellation (min 10 characters)"
+                                    :placeholder="$t('reservation.cancel_reason')"
                                     rows="3"
                                     class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                                     :class="{ 'border-red-500': cancelForm.errors.reason }"
@@ -281,47 +284,47 @@ const requestStatusColors = {
                                         :disabled="cancelForm.processing"
                                         class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50"
                                     >
-                                        Confirm Cancel
+                                        {{ $t('reservation.confirm_cancel') }}
                                     </button>
                                     <button
                                         type="button"
                                         @click="showCancelForm = false"
                                         class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700"
                                     >
-                                        Back
+                                        {{ $t('common.back') }}
                                     </button>
                                 </div>
                             </form>
                         </div>
 
                         <p v-if="['checked_out', 'cancelled'].includes(r.status)" class="text-sm text-gray-500 text-center">
-                            No actions available.
+                            {{ $t('reservation.no_actions') }}
                         </p>
                     </div>
                 </div>
 
                 <!-- Timestamps -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Timeline</h2>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.timeline') }}</h2>
                     <div class="space-y-2 text-sm">
                         <div>
-                            <span class="text-gray-500">Created</span>
+                            <span class="text-gray-500">{{ $t('common.created') }}</span>
                             <p class="text-gray-900">{{ r.timestamps.created_at }}</p>
                         </div>
                         <div v-if="r.timestamps.confirmed_at">
-                            <span class="text-gray-500">Confirmed</span>
+                            <span class="text-gray-500">{{ $t('common.confirmed') }}</span>
                             <p class="text-gray-900">{{ r.timestamps.confirmed_at }}</p>
                         </div>
                         <div v-if="r.timestamps.checked_in_at">
-                            <span class="text-gray-500">Checked In</span>
+                            <span class="text-gray-500">{{ $t('status.checked_in') }}</span>
                             <p class="text-gray-900">{{ r.timestamps.checked_in_at }}</p>
                         </div>
                         <div v-if="r.timestamps.checked_out_at">
-                            <span class="text-gray-500">Checked Out</span>
+                            <span class="text-gray-500">{{ $t('status.checked_out') }}</span>
                             <p class="text-gray-900">{{ r.timestamps.checked_out_at }}</p>
                         </div>
                         <div v-if="r.timestamps.cancelled_at">
-                            <span class="text-gray-500">Cancelled</span>
+                            <span class="text-gray-500">{{ $t('status.cancelled') }}</span>
                             <p class="text-gray-900">{{ r.timestamps.cancelled_at }}</p>
                         </div>
                     </div>
@@ -329,7 +332,7 @@ const requestStatusColors = {
 
                 <!-- Cancellation Reason -->
                 <div v-if="r.status === 'cancelled' && r.cancellation_reason" class="bg-red-50 rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-red-800 uppercase tracking-wide mb-2">Cancellation Reason</h2>
+                    <h2 class="text-sm font-medium text-red-800 uppercase tracking-wide mb-2">{{ $t('common.cancellation_reason') }}</h2>
                     <p class="text-sm text-red-700">{{ r.cancellation_reason }}</p>
                 </div>
             </div>

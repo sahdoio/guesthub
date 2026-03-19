@@ -1,12 +1,18 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 defineOptions({ layout: AuthenticatedLayout });
 
+const { t } = useI18n();
+
 const props = defineProps({
+    hotel: Object,
     room: Object,
 });
+
+const baseUrl = `/hotels/${props.hotel.slug}/rooms`;
 
 const form = useForm({
     price_per_night: props.room.price_per_night,
@@ -28,36 +34,36 @@ const removeAmenity = (index) => {
 };
 
 const submit = () => {
-    form.put(`/rooms/${props.room.id}`);
+    form.put(`${baseUrl}/${props.room.id}`);
 };
 </script>
 
 <template>
     <div>
         <div class="mb-6 flex items-center gap-4">
-            <a :href="`/rooms/${room.id}`" class="text-gray-500 hover:text-gray-700">&larr; Back</a>
-            <h1 class="text-2xl font-bold text-gray-800">Edit Room {{ room.number }}</h1>
+            <a :href="`${baseUrl}/${room.id}`" class="text-gray-500 hover:text-gray-700">&larr; {{ $t('common.back') }}</a>
+            <h1 class="text-2xl font-bold text-gray-800">{{ $t('room.edit') }} {{ room.number }}</h1>
         </div>
 
         <div class="bg-white rounded-lg shadow max-w-2xl">
             <form @submit.prevent="submit" class="p-6 space-y-5">
                 <div class="grid grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Room Number</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('room.room_number') }}</label>
                         <p class="text-sm text-gray-900 py-2">{{ room.number }}</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                        <p class="text-sm text-gray-900 py-2">{{ room.type }}</p>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('room.type') }}</label>
+                        <p class="text-sm text-gray-900 py-2">{{ $t('room_type.' + room.type.toLowerCase()) }}</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Floor</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('room.floor') }}</label>
                         <p class="text-sm text-gray-900 py-2">{{ room.floor }}</p>
                     </div>
                 </div>
 
                 <div>
-                    <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Price per Night ($)</label>
+                    <label for="price" class="block text-sm font-medium text-gray-700 mb-1">{{ $t('room.price_edit') }}</label>
                     <input
                         id="price"
                         v-model="form.price_per_night"
@@ -72,7 +78,7 @@ const submit = () => {
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Amenities</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('room.amenities') }}</label>
                     <div class="flex flex-wrap gap-2 mb-2" v-if="form.amenities.length > 0">
                         <span
                             v-for="(amenity, index) in form.amenities"
@@ -87,11 +93,11 @@ const submit = () => {
                         <input
                             v-model="newAmenity.value"
                             type="text"
-                            placeholder="Add an amenity..."
+                            :placeholder="$t('room.add_amenity')"
                             @keydown.enter.prevent="addAmenity"
                             class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
-                        <button type="button" @click="addAmenity" class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">Add</button>
+                        <button type="button" @click="addAmenity" class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">{{ $t('special_request.add') }}</button>
                     </div>
                 </div>
 
@@ -101,10 +107,10 @@ const submit = () => {
                         :disabled="form.processing"
                         class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                        <span v-if="form.processing">Saving...</span>
-                        <span v-else>Save Changes</span>
+                        <span v-if="form.processing">{{ $t('room.saving') }}</span>
+                        <span v-else>{{ $t('room.save') }}</span>
                     </button>
-                    <a :href="`/rooms/${room.id}`" class="text-sm text-gray-500 hover:text-gray-700">Cancel</a>
+                    <a :href="`${baseUrl}/${room.id}`" class="text-sm text-gray-500 hover:text-gray-700">{{ $t('common.cancel') }}</a>
                 </div>
             </form>
         </div>

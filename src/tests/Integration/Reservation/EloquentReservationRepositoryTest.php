@@ -7,6 +7,7 @@ namespace Tests\Integration\Reservation;
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\HotelModel;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ReservationId;
@@ -27,16 +28,33 @@ final class EloquentReservationRepositoryTest extends TestCase
 
     private ReservationRepository $repository;
 
+    private string $accountUuid;
+
+    private string $hotelUuid;
+
     protected function setUp(): void
     {
         parent::setUp();
 
+        $this->accountUuid = Uuid::uuid7()->toString();
         $account = AccountModel::create([
-            'uuid' => Uuid::uuid7()->toString(),
-            'name' => 'Test Hotel',
+            'uuid' => $this->accountUuid,
+            'name' => 'Test Organization',
+            'slug' => 'test-org',
+            'status' => 'active',
             'created_at' => now(),
         ]);
         $this->app->make(TenantContext::class)->set($account->id);
+
+        $this->hotelUuid = Uuid::uuid7()->toString();
+        HotelModel::withoutGlobalScopes()->create([
+            'uuid' => $this->hotelUuid,
+            'account_id' => $account->id,
+            'name' => 'Test Hotel',
+            'slug' => 'test-hotel',
+            'status' => 'active',
+            'created_at' => now(),
+        ]);
 
         $this->repository = $this->app->make(ReservationRepository::class);
     }
@@ -46,6 +64,8 @@ final class EloquentReservationRepositoryTest extends TestCase
         return Reservation::create(
             $overrides['uuid'] ?? $this->repository->nextIdentity(),
             $overrides['guestId'] ?? 'guest-uuid-123',
+            $overrides['accountId'] ?? $this->accountUuid,
+            $overrides['hotelId'] ?? $this->hotelUuid,
             $overrides['period'] ?? new ReservationPeriod(
                 new DateTimeImmutable('+1 day'),
                 new DateTimeImmutable('+4 days'),

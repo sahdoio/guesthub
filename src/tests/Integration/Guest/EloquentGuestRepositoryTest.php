@@ -6,11 +6,11 @@ namespace Tests\Integration\Guest;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Guest\Domain\Guest;
-use Modules\Guest\Domain\GuestId;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Domain\ValueObject\LoyaltyTier;
-use Modules\Guest\Infrastructure\Persistence\Eloquent\EloquentGuestRepository;
+use Modules\User\Domain\User;
+use Modules\User\Domain\UserId;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\User\Domain\ValueObject\LoyaltyTier;
+use Modules\User\Infrastructure\Persistence\Eloquent\EloquentUserRepository;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -18,12 +18,12 @@ use PHPUnit\Framework\Attributes\Test;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
-#[CoversClass(EloquentGuestRepository::class)]
+#[CoversClass(EloquentUserRepository::class)]
 final class EloquentGuestRepositoryTest extends TestCase
 {
     use RefreshDatabase;
 
-    private GuestRepository $repository;
+    private UserRepository $repository;
 
     protected function setUp(): void
     {
@@ -32,20 +32,22 @@ final class EloquentGuestRepositoryTest extends TestCase
         $account = AccountModel::create([
             'uuid' => Uuid::uuid7()->toString(),
             'name' => 'Test Hotel',
+            'slug' => 'test-hotel',
+            'status' => 'active',
             'created_at' => now(),
         ]);
         $this->app->make(TenantContext::class)->set($account->id);
 
-        $this->repository = $this->app->make(GuestRepository::class);
+        $this->repository = $this->app->make(UserRepository::class);
     }
 
-    private function createProfile(array $overrides = []): Guest
+    private function createProfile(array $overrides = []): User
     {
-        return Guest::create(
+        return User::create(
             uuid: $overrides['uuid'] ?? $this->repository->nextIdentity(),
             fullName: $overrides['fullName'] ?? 'Alice Johnson',
             email: $overrides['email'] ?? 'alice@hotel.com',
-            phone: $overrides['phone'] ?? '+5511999999999',
+            phone: $overrides['phone'] ?? '5511999999999',
             document: $overrides['document'] ?? 'ABC123',
             loyaltyTier: $overrides['loyaltyTier'] ?? LoyaltyTier::BRONZE,
             preferences: $overrides['preferences'] ?? [],
@@ -70,7 +72,7 @@ final class EloquentGuestRepositoryTest extends TestCase
     #[Test]
     public function it_returns_null_for_unknown_uuid(): void
     {
-        $this->assertNull($this->repository->findByUuid(GuestId::generate()));
+        $this->assertNull($this->repository->findByUuid(UserId::generate()));
     }
 
     #[Test]
@@ -103,7 +105,7 @@ final class EloquentGuestRepositoryTest extends TestCase
         $profile = $this->createProfile();
         $this->repository->save($profile);
 
-        $profile->updateContactInfo('Alice Updated', 'alice.new@hotel.com', '+5511000000000');
+        $profile->updateContactInfo('Alice Updated', 'alice.new@hotel.com', '5511000000000');
         $this->repository->save($profile);
 
         $found = $this->repository->findByUuid($profile->uuid);

@@ -6,10 +6,11 @@ namespace Tests\Integration\Reservation;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Guest\Domain\Guest;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Domain\ValueObject\LoyaltyTier;
+use Modules\User\Domain\User;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\User\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\HotelModel;
 use Modules\Reservation\Domain\Repository\ReservationRepository;
 use Modules\Reservation\Domain\Reservation;
 use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
@@ -26,25 +27,42 @@ final class ReservationStatsTest extends TestCase
 
     private string $guestId;
 
+    private string $accountUuid;
+
+    private string $hotelUuid;
+
     protected function setUp(): void
     {
         parent::setUp();
 
+        $this->accountUuid = Uuid::uuid7()->toString();
         $account = AccountModel::create([
-            'uuid' => Uuid::uuid7()->toString(),
-            'name' => 'Test Hotel',
+            'uuid' => $this->accountUuid,
+            'name' => 'Test Organization',
+            'slug' => 'test-org',
+            'status' => 'active',
             'created_at' => now(),
         ]);
         $this->app->make(TenantContext::class)->set($account->id);
 
+        $this->hotelUuid = Uuid::uuid7()->toString();
+        HotelModel::withoutGlobalScopes()->create([
+            'uuid' => $this->hotelUuid,
+            'account_id' => $account->id,
+            'name' => 'Test Hotel',
+            'slug' => 'test-hotel',
+            'status' => 'active',
+            'created_at' => now(),
+        ]);
+
         $this->repository = $this->app->make(ReservationRepository::class);
 
-        $guestRepo = $this->app->make(GuestRepository::class);
-        $guest = Guest::create(
+        $guestRepo = $this->app->make(UserRepository::class);
+        $guest = User::create(
             uuid: $guestRepo->nextIdentity(),
             fullName: 'Test Guest',
             email: 'test@hotel.com',
-            phone: '+5511999999999',
+            phone: '5511999999999',
             document: 'DOC123',
             loyaltyTier: LoyaltyTier::BRONZE,
             preferences: [],
@@ -59,6 +77,8 @@ final class ReservationStatsTest extends TestCase
         $reservation = Reservation::create(
             uuid: $this->repository->nextIdentity(),
             guestId: $this->guestId,
+            accountId: $this->accountUuid,
+            hotelId: $this->hotelUuid,
             period: new ReservationPeriod(
                 new DateTimeImmutable('+1 day'),
                 new DateTimeImmutable('+3 days'),

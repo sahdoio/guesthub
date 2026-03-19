@@ -10,7 +10,7 @@ use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Repository\ActorRepository;
-use Modules\IAM\Domain\RoleId;
+use Modules\IAM\Domain\TypeId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
 use Modules\IAM\Infrastructure\Persistence\ActorReflector;
 
@@ -27,16 +27,16 @@ final class EloquentActorRepository implements ActorRepository
         $this->model->newQuery()
             ->updateOrInsert(['uuid' => $data['uuid']], $data);
 
-        // Sync roles via pivot table
+        // Sync types via pivot table
         $actorId = $this->model->newQuery()->where('uuid', $actor->uuid->value)->value('id');
 
-        DB::table('actor_roles')->where('actor_id', $actorId)->delete();
+        DB::table('actor_types')->where('actor_id', $actorId)->delete();
 
-        foreach ($actor->roleIds() as $roleId) {
-            $dbRoleId = RoleModel::where('uuid', $roleId->value)->value('id');
-            DB::table('actor_roles')->insert([
+        foreach ($actor->typeIds() as $typeId) {
+            $dbTypeId = TypeModel::where('uuid', $typeId->value)->value('id');
+            DB::table('actor_types')->insert([
                 'actor_id' => $actorId,
-                'role_id' => $dbRoleId,
+                'type_id' => $dbTypeId,
             ]);
         }
     }
@@ -51,9 +51,9 @@ final class EloquentActorRepository implements ActorRepository
             return null;
         }
 
-        $roleIds = $this->loadRoleIds($record->id);
+        $typeIds = $this->loadTypeIds($record->id);
 
-        return $this->toEntity($record, $roleIds);
+        return $this->toEntity($record, $typeIds);
     }
 
     public function findByEmail(string $email): ?Actor
@@ -66,9 +66,9 @@ final class EloquentActorRepository implements ActorRepository
             return null;
         }
 
-        $roleIds = $this->loadRoleIds($record->id);
+        $typeIds = $this->loadTypeIds($record->id);
 
-        return $this->toEntity($record, $roleIds);
+        return $this->toEntity($record, $typeIds);
     }
 
     public function nextIdentity(): ActorId
@@ -76,14 +76,14 @@ final class EloquentActorRepository implements ActorRepository
         return ActorId::generate();
     }
 
-    /** @return list<RoleId> */
-    private function loadRoleIds(int $actorId): array
+    /** @return list<TypeId> */
+    private function loadTypeIds(int $actorId): array
     {
-        return DB::table('actor_roles')
-            ->join('roles', 'roles.id', '=', 'actor_roles.role_id')
-            ->where('actor_roles.actor_id', $actorId)
-            ->pluck('roles.uuid')
-            ->map(fn (string $uuid) => RoleId::fromString($uuid))
+        return DB::table('actor_types')
+            ->join('types', 'types.id', '=', 'actor_types.type_id')
+            ->where('actor_types.actor_id', $actorId)
+            ->pluck('types.uuid')
+            ->map(fn (string $uuid) => TypeId::fromString($uuid))
             ->all();
     }
 
@@ -99,15 +99,14 @@ final class EloquentActorRepository implements ActorRepository
             'name' => $actor->name,
             'email' => $actor->email,
             'password' => $actor->password->value,
-            'subject_type' => $actor->subjectType,
-            'subject_id' => $actor->subjectId,
+            'user_id' => $actor->userId,
             'created_at' => $actor->createdAt->format('Y-m-d H:i:s'),
             'updated_at' => $actor->updatedAt?->format('Y-m-d H:i:s'),
         ];
     }
 
-    /** @param list<RoleId> $roleIds */
-    private function toEntity(object $record, array $roleIds): Actor
+    /** @param list<TypeId> $typeIds */
+    private function toEntity(object $record, array $typeIds): Actor
     {
         $accountId = $record->account_id !== null
             ? AccountId::fromString(
@@ -118,12 +117,11 @@ final class EloquentActorRepository implements ActorRepository
         return ActorReflector::reconstruct(
             uuid: ActorId::fromString($record->uuid),
             accountId: $accountId,
-            roleIds: $roleIds,
+            typeIds: $typeIds,
             name: $record->name,
             email: $record->email,
             password: new HashedPassword($record->password),
-            subjectType: $record->subject_type,
-            subjectId: $record->subject_id !== null ? (int) $record->subject_id : null,
+            userId: $record->user_id !== null ? (int) $record->user_id : null,
             createdAt: new DateTimeImmutable($record->created_at),
             updatedAt: $record->updated_at ? new DateTimeImmutable($record->updated_at) : null,
         );

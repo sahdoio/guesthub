@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Integration\IAM;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\IAM\Domain\Service\GuestGateway;
-use Modules\IAM\Infrastructure\Integration\GuestGatewayAdapter;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\Service\UserGateway;
+use Modules\IAM\Infrastructure\Integration\UserGatewayAdapter;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -15,14 +15,14 @@ use PHPUnit\Framework\Attributes\Test;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
-#[CoversClass(GuestGatewayAdapter::class)]
+#[CoversClass(UserGatewayAdapter::class)]
 final class GuestGatewayAdapterTest extends TestCase
 {
     use RefreshDatabase;
 
-    private GuestGateway $gateway;
+    private UserGateway $gateway;
 
-    private GuestRepository $guestRepo;
+    private UserRepository $userRepo;
 
     protected function setUp(): void
     {
@@ -31,12 +31,14 @@ final class GuestGatewayAdapterTest extends TestCase
         $account = AccountModel::create([
             'uuid' => Uuid::uuid7()->toString(),
             'name' => 'Test Hotel',
+            'slug' => 'test-hotel',
+            'status' => 'active',
             'created_at' => now(),
         ]);
         $this->app->make(TenantContext::class)->set($account->id);
 
-        $this->gateway = $this->app->make(GuestGateway::class);
-        $this->guestRepo = $this->app->make(GuestRepository::class);
+        $this->gateway = $this->app->make(UserGateway::class);
+        $this->userRepo = $this->app->make(UserRepository::class);
     }
 
     #[Test]
@@ -45,14 +47,14 @@ final class GuestGatewayAdapterTest extends TestCase
         $id = $this->gateway->create(
             name: 'Alice Johnson',
             email: 'alice@hotel.com',
-            phone: '+5511999999999',
+            phone: '5511999999999',
             document: 'ABC123',
         );
 
         $this->assertIsInt($id);
         $this->assertGreaterThan(0, $id);
 
-        $this->assertDatabaseHas('guests', [
+        $this->assertDatabaseHas('users', [
             'id' => $id,
             'full_name' => 'Alice Johnson',
             'email' => 'alice@hotel.com',
@@ -60,18 +62,18 @@ final class GuestGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_guest_readable_by_guest_repository(): void
+    public function it_creates_guest_readable_by_user_repository(): void
     {
         $this->gateway->create(
             name: 'Bob Williams',
             email: 'bob@hotel.com',
-            phone: '+5511888888888',
+            phone: '5511888888888',
             document: 'DEF456',
         );
 
-        $guest = $this->guestRepo->findByEmail('bob@hotel.com');
+        $user = $this->userRepo->findByEmail('bob@hotel.com');
 
-        $this->assertNotNull($guest);
-        $this->assertSame('Bob Williams', $guest->fullName);
+        $this->assertNotNull($user);
+        $this->assertSame('Bob Williams', $user->fullName);
     }
 }

@@ -1,15 +1,20 @@
 <script setup>
 import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 defineOptions({ layout: AuthenticatedLayout });
 
+const { t } = useI18n();
+
 const props = defineProps({
+    hotel: Object,
     room: Object,
 });
 
 const r = props.room;
+const baseUrl = `/hotels/${props.hotel.slug}/rooms`;
 
 const statusColors = {
     available: 'bg-green-100 text-green-800',
@@ -18,23 +23,23 @@ const statusColors = {
     out_of_order: 'bg-red-100 text-red-800',
 };
 
-const statusLabel = (status) => status.replace('_', ' ');
+const statusLabel = (status) => t('status.' + status);
 
 const showDeleteConfirm = ref(false);
 
 const changeStatus = (status) => {
-    router.post(`/rooms/${r.id}/status`, { status });
+    router.post(`${baseUrl}/${r.id}/status`, { status });
 };
 
 const deleteRoom = () => {
-    router.delete(`/rooms/${r.id}`);
+    router.delete(`${baseUrl}/${r.id}`);
 };
 </script>
 
 <template>
     <div>
         <div class="mb-6 flex items-center gap-4">
-            <a href="/rooms" class="text-gray-500 hover:text-gray-700">&larr; Back</a>
+            <a :href="baseUrl" class="text-gray-500 hover:text-gray-700">&larr; {{ hotel.name }} - {{ $t('room.title') }}</a>
             <h1 class="text-2xl font-bold text-gray-800">Room {{ r.number }}</h1>
             <span
                 class="inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize"
@@ -48,26 +53,26 @@ const deleteRoom = () => {
             <div class="lg:col-span-2 space-y-6">
                 <!-- Room Details -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Details</h2>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('room.details') }}</h2>
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <span class="text-gray-500">Room Number</span>
+                            <span class="text-gray-500">{{ $t('room.room_number') }}</span>
                             <p class="font-medium text-gray-900">{{ r.number }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Type</span>
-                            <p class="font-medium text-gray-900">{{ r.type }}</p>
+                            <span class="text-gray-500">{{ $t('room.type') }}</span>
+                            <p class="font-medium text-gray-900">{{ $t('room_type.' + r.type.toLowerCase()) }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Floor</span>
+                            <span class="text-gray-500">{{ $t('room.floor') }}</span>
                             <p class="font-medium text-gray-900">{{ r.floor }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Capacity</span>
-                            <p class="font-medium text-gray-900">{{ r.capacity }} guest{{ r.capacity !== 1 ? 's' : '' }}</p>
+                            <span class="text-gray-500">{{ $t('room.capacity') }}</span>
+                            <p class="font-medium text-gray-900">{{ r.capacity }} {{ $t('room.guest_count', r.capacity) }}</p>
                         </div>
                         <div>
-                            <span class="text-gray-500">Price per Night</span>
+                            <span class="text-gray-500">{{ $t('room.price_label') }}</span>
                             <p class="font-medium text-gray-900">${{ r.price_per_night.toFixed(2) }}</p>
                         </div>
                     </div>
@@ -75,7 +80,7 @@ const deleteRoom = () => {
 
                 <!-- Amenities -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Amenities</h2>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('room.amenities') }}</h2>
                     <div v-if="r.amenities && r.amenities.length > 0" class="flex flex-wrap gap-2">
                         <span
                             v-for="amenity in r.amenities"
@@ -85,7 +90,7 @@ const deleteRoom = () => {
                             {{ amenity }}
                         </span>
                     </div>
-                    <p v-else class="text-sm text-gray-500">No amenities listed.</p>
+                    <p v-else class="text-sm text-gray-500">{{ $t('room.no_amenities') }}</p>
                 </div>
             </div>
 
@@ -93,13 +98,13 @@ const deleteRoom = () => {
             <div class="space-y-6">
                 <!-- Actions -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Actions</h2>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.actions') }}</h2>
                     <div class="space-y-3">
                         <a
-                            :href="`/rooms/${r.id}/edit`"
+                            :href="`${baseUrl}/${r.id}/edit`"
                             class="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                         >
-                            Edit Room
+                            {{ $t('room.edit') }}
                         </a>
 
                         <!-- Status changes -->
@@ -108,7 +113,7 @@ const deleteRoom = () => {
                             @click="changeStatus('available')"
                             class="w-full bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
                         >
-                            Mark Available
+                            {{ $t('room.mark_available') }}
                         </button>
 
                         <button
@@ -116,7 +121,7 @@ const deleteRoom = () => {
                             @click="changeStatus('maintenance')"
                             class="w-full bg-yellow-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-yellow-700 transition-colors"
                         >
-                            Mark Maintenance
+                            {{ $t('room.mark_maintenance') }}
                         </button>
 
                         <button
@@ -124,7 +129,7 @@ const deleteRoom = () => {
                             @click="changeStatus('out_of_order')"
                             class="w-full bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
                         >
-                            Mark Out of Order
+                            {{ $t('room.mark_out_of_order') }}
                         </button>
 
                         <!-- Delete -->
@@ -133,22 +138,22 @@ const deleteRoom = () => {
                             @click="showDeleteConfirm = true"
                             class="w-full border border-red-300 text-red-600 py-2 px-4 rounded-md text-sm font-medium hover:bg-red-50 transition-colors"
                         >
-                            Delete Room
+                            {{ $t('room.delete') }}
                         </button>
                         <div v-if="showDeleteConfirm" class="space-y-2">
-                            <p class="text-sm text-gray-600">Are you sure?</p>
+                            <p class="text-sm text-gray-600">{{ $t('room.are_you_sure') }}</p>
                             <div class="flex gap-2">
                                 <button
                                     @click="deleteRoom"
                                     class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700"
                                 >
-                                    Confirm
+                                    {{ $t('common.confirm') }}
                                 </button>
                                 <button
                                     @click="showDeleteConfirm = false"
                                     class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700"
                                 >
-                                    Cancel
+                                    {{ $t('common.cancel') }}
                                 </button>
                             </div>
                         </div>
@@ -157,14 +162,14 @@ const deleteRoom = () => {
 
                 <!-- Timestamps -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">Timeline</h2>
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.timeline') }}</h2>
                     <div class="space-y-2 text-sm">
                         <div>
-                            <span class="text-gray-500">Created</span>
+                            <span class="text-gray-500">{{ $t('common.created') }}</span>
                             <p class="text-gray-900">{{ r.created_at }}</p>
                         </div>
                         <div v-if="r.updated_at">
-                            <span class="text-gray-500">Updated</span>
+                            <span class="text-gray-500">{{ $t('common.updated') }}</span>
                             <p class="text-gray-900">{{ r.updated_at }}</p>
                         </div>
                     </div>

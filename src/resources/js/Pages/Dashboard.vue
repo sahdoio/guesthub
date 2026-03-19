@@ -1,22 +1,20 @@
 <script setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 defineOptions({ layout: AuthenticatedLayout });
 
-const props = defineProps({
-    guestStats: Object,
-    reservationStats: Object,
-    roomStats: Object,
-});
+const { t } = useI18n();
+const page = usePage();
+const hasHotels = computed(() => page.props.auth?.hasHotels ?? false);
 
-const statusLabels = {
-    pending: 'Pending',
-    confirmed: 'Confirmed',
-    checked_in: 'Checked In',
-    checked_out: 'Checked Out',
-    cancelled: 'Cancelled',
-};
+const props = defineProps({
+    guestStats: { type: Object, default: () => ({}) },
+    reservationStats: { type: Object, default: () => ({}) },
+    roomStats: { type: Object, default: () => ({}) },
+});
 
 const statusColors = {
     pending: 'bg-amber-400',
@@ -24,13 +22,6 @@ const statusColors = {
     checked_in: 'bg-emerald-400',
     checked_out: 'bg-gray-400',
     cancelled: 'bg-red-400',
-};
-
-const tierLabels = {
-    bronze: 'Bronze',
-    silver: 'Silver',
-    gold: 'Gold',
-    platinum: 'Platinum',
 };
 
 const tierColors = {
@@ -48,9 +39,10 @@ const roomTypeColors = {
 
 const statusEntries = computed(() => {
     const byStatus = props.reservationStats.by_status || {};
-    return Object.keys(statusLabels).map(key => ({
+    const keys = ['pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled'];
+    return keys.map(key => ({
         key,
-        label: statusLabels[key],
+        label: t('status.' + key),
         count: byStatus[key] || 0,
         color: statusColors[key],
     }));
@@ -60,9 +52,10 @@ const statusMax = computed(() => Math.max(1, ...statusEntries.value.map(e => e.c
 
 const tierEntries = computed(() => {
     const byTier = props.guestStats.by_loyalty_tier || {};
-    return Object.keys(tierLabels).map(key => ({
+    const keys = ['bronze', 'silver', 'gold', 'platinum'];
+    return keys.map(key => ({
         key,
-        label: tierLabels[key],
+        label: t('tier.' + key),
         count: byTier[key] || 0,
         color: tierColors[key],
     }));
@@ -74,20 +67,13 @@ const roomEntries = computed(() => {
     const byRoom = props.reservationStats.by_room_type || {};
     return Object.keys(roomTypeColors).map(key => ({
         key,
-        label: key.charAt(0) + key.slice(1).toLowerCase(),
+        label: t('room_type.' + key.toLowerCase()),
         count: byRoom[key] || 0,
         color: roomTypeColors[key],
     }));
 });
 
 const roomTotal = computed(() => Math.max(1, roomEntries.value.reduce((sum, e) => sum + e.count, 0)));
-
-const roomStatusLabels = {
-    available: 'Available',
-    occupied: 'Occupied',
-    maintenance: 'Maintenance',
-    out_of_order: 'Out of Order',
-};
 
 const roomStatusColors = {
     available: 'bg-emerald-400',
@@ -98,9 +84,10 @@ const roomStatusColors = {
 
 const roomStatusEntries = computed(() => {
     const byStatus = props.roomStats.by_status || {};
-    return Object.keys(roomStatusLabels).map(key => ({
+    const keys = ['available', 'occupied', 'maintenance', 'out_of_order'];
+    return keys.map(key => ({
         key,
-        label: roomStatusLabels[key],
+        label: t('status.' + key),
         count: byStatus[key] || 0,
         color: roomStatusColors[key],
     }));
@@ -111,33 +98,53 @@ const roomStatusMax = computed(() => Math.max(1, ...roomStatusEntries.value.map(
 
 <template>
     <div>
-        <h1 class="text-2xl font-bold text-gray-900 mb-8">Dashboard</h1>
+        <h1 class="text-2xl font-bold text-gray-900 mb-8">{{ $t('dashboard.title') }}</h1>
+
+        <!-- No Hotels CTA -->
+        <div v-if="!hasHotels" class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center mb-8">
+            <div class="mx-auto w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ $t('dashboard.no_hotels_title') }}</h2>
+            <p class="text-gray-500 mb-6 max-w-md mx-auto">{{ $t('dashboard.no_hotels_subtitle') }}</p>
+            <a
+                href="/hotels/create"
+                class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                {{ $t('dashboard.create_hotel') }}
+            </a>
+        </div>
 
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 md:grid-cols-5 gap-5 mb-8">
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Reservations</h2>
-                <p class="mt-2 text-3xl font-bold text-gray-900">{{ reservationStats.total }}</p>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $t('dashboard.total_reservations') }}</h2>
+                <p class="mt-2 text-3xl font-bold text-gray-900">{{ reservationStats.total ?? 0 }}</p>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Guests</h2>
-                <p class="mt-2 text-3xl font-bold text-gray-900">{{ guestStats.total }}</p>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $t('dashboard.total_guests') }}</h2>
+                <p class="mt-2 text-3xl font-bold text-gray-900">{{ guestStats.total ?? 0 }}</p>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Check-ins Today</h2>
-                <p class="mt-2 text-3xl font-bold text-emerald-600">{{ reservationStats.today_check_ins }}</p>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $t('dashboard.checkins_today') }}</h2>
+                <p class="mt-2 text-3xl font-bold text-emerald-600">{{ reservationStats.today_check_ins ?? 0 }}</p>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Check-outs Today</h2>
-                <p class="mt-2 text-3xl font-bold text-gray-600">{{ reservationStats.today_check_outs }}</p>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $t('dashboard.checkouts_today') }}</h2>
+                <p class="mt-2 text-3xl font-bold text-gray-600">{{ reservationStats.today_check_outs ?? 0 }}</p>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Rooms</h2>
-                <p class="mt-2 text-3xl font-bold text-gray-900">{{ roomStats.total }}</p>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $t('dashboard.total_rooms') }}</h2>
+                <p class="mt-2 text-3xl font-bold text-gray-900">{{ roomStats.total ?? 0 }}</p>
             </div>
         </div>
 
@@ -145,7 +152,7 @@ const roomStatusMax = computed(() => Math.max(1, ...roomStatusEntries.value.map(
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Reservations by Status -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Reservations by Status</h2>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">{{ $t('dashboard.reservations_by_status') }}</h2>
                 <div class="space-y-3">
                     <div v-for="entry in statusEntries" :key="entry.key" class="flex items-center gap-3">
                         <span class="text-sm text-gray-600 w-24 shrink-0">{{ entry.label }}</span>
@@ -163,7 +170,7 @@ const roomStatusMax = computed(() => Math.max(1, ...roomStatusEntries.value.map(
 
             <!-- Guests by Loyalty Tier -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Guests by Loyalty Tier</h2>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">{{ $t('dashboard.guests_by_tier') }}</h2>
                 <div class="space-y-3">
                     <div v-for="entry in tierEntries" :key="entry.key" class="flex items-center gap-3">
                         <span class="text-sm text-gray-600 w-24 shrink-0">{{ entry.label }}</span>
@@ -181,7 +188,7 @@ const roomStatusMax = computed(() => Math.max(1, ...roomStatusEntries.value.map(
 
             <!-- Room Inventory by Status -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Room Inventory</h2>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">{{ $t('dashboard.room_inventory') }}</h2>
                 <div class="space-y-3">
                     <div v-for="entry in roomStatusEntries" :key="entry.key" class="flex items-center gap-3">
                         <span class="text-sm text-gray-600 w-24 shrink-0">{{ entry.label }}</span>
@@ -199,7 +206,7 @@ const roomStatusMax = computed(() => Math.max(1, ...roomStatusEntries.value.map(
 
             <!-- Reservations by Room Type -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Reservations by Room Type</h2>
+                <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">{{ $t('dashboard.reservations_by_room_type') }}</h2>
                 <div class="flex items-end justify-center gap-10 h-48">
                     <div v-for="entry in roomEntries" :key="entry.key" class="flex flex-col items-center gap-2">
                         <span class="text-sm font-bold text-gray-700 tabular-nums">{{ entry.count }}</span>

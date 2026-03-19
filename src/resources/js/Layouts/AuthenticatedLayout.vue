@@ -1,9 +1,12 @@
 <script setup>
 import { router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import AccountSwitcher from '../Components/AccountSwitcher.vue';
+import { useI18n } from 'vue-i18n';
+import ImpersonationBanner from '../Components/ImpersonationBanner.vue';
+import LanguageSwitcher from '../Components/LanguageSwitcher.vue';
 import Logo from '../Components/Logo.vue';
 
+const { t } = useI18n();
 const page = usePage();
 
 const currentPath = computed(() => page.url.split('?')[0]);
@@ -17,10 +20,7 @@ const navClass = (path) => {
         : `${base} text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300`;
 };
 
-const isSuperAdmin = computed(() => {
-    const roles = page.props.auth?.user?.roles || [];
-    return roles.includes('superadmin');
-});
+const isImpersonating = computed(() => page.props.auth?.impersonating);
 
 const logout = () => {
     router.post('/logout');
@@ -29,7 +29,12 @@ const logout = () => {
 
 <template>
     <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
-        <nav class="bg-white/80 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-30">
+        <ImpersonationBanner />
+
+        <nav
+            class="bg-white/80 backdrop-blur-md border-b border-gray-200/60 sticky z-30"
+            :class="isImpersonating ? 'top-10' : 'top-0'"
+        >
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex items-center">
@@ -38,22 +43,22 @@ const logout = () => {
                         </a>
                         <div class="hidden sm:flex sm:ml-10 sm:space-x-6">
                             <a href="/dashboard" :class="navClass('/dashboard')">
-                                Dashboard
+                                {{ $t('nav.dashboard') }}
+                            </a>
+                            <a href="/hotels" :class="navClass('/hotels')">
+                                {{ $t('nav.hotels') }}
                             </a>
                             <a href="/reservations" :class="navClass('/reservations')">
-                                Reservations
+                                {{ $t('nav.reservations') }}
                             </a>
                             <a href="/guests" :class="navClass('/guests')">
-                                Guests
-                            </a>
-                            <a href="/rooms" :class="navClass('/rooms')">
-                                Rooms
+                                {{ $t('nav.guests') }}
                             </a>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-3">
-                        <AccountSwitcher v-if="isSuperAdmin" />
+                        <LanguageSwitcher />
                         <div class="hidden sm:flex items-center gap-3 pl-3 border-l border-gray-200">
                             <div class="flex items-center gap-2">
                                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
@@ -66,7 +71,7 @@ const logout = () => {
                             <button
                                 @click="logout"
                                 class="text-sm text-gray-400 hover:text-gray-600 transition-colors"
-                                title="Logout"
+                                :title="$t('nav.logout')"
                             >
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

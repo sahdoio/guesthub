@@ -19,8 +19,12 @@ interface AccountRepository
 
     public function findByName(string $name): ?Account;
 
+    public function findBySlug(string $slug): ?Account;
+
     public function resolveNumericId(AccountId $uuid): ?int;
 
     /** @return list<Account> */
     public function findAll(): array;
+
+    public function count(): int;
 }

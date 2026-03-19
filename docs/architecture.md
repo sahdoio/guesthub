@@ -19,31 +19,31 @@ GuestHub is a hotel management system built with **Domain-Driven Design (DDD)** 
 
 ## Bounded Contexts
 
-### Guest
+### User
 
-Manages guest profiles and loyalty information.
+Manages user profiles and loyalty information. Guests and owners share a single `users` table — owners have a `null` loyalty tier.
 
 | Concept | Class |
 |---|---|
-| Aggregate | `GuestProfile` |
-| Identity | `GuestProfileId` |
+| Aggregate | `User` |
+| Identity | `UserId` |
 | Value Object | `LoyaltyTier` (enum: BRONZE, SILVER, GOLD, PLATINUM) |
 
-No domain events — state changes are purely CRUD.
+Domain events: `UserCreated`, `UserContactInfoUpdated`, `UserLoyaltyTierChanged`.
 
 ### IAM (Identity & Access Management)
 
-Handles actors, accounts, roles, authentication, and token management. See [IAM Deep Dive](#iam-deep-dive--actors--authentication) for the full explanation.
+Handles actors, accounts, hotels, types, authentication, and token management. See [IAM Deep Dive](#iam-deep-dive--actors--authentication) for the full explanation.
 
 | Concept | Class |
 |---|---|
-| Aggregates | `Actor`, `Account` |
-| Entities | `Role` |
-| Identities | `ActorId`, `AccountId`, `RoleId` |
-| Value Objects | `RoleName` (enum: ADMIN, GUEST), `HashedPassword` |
-| Domain Services | `PasswordHasher`, `TokenManager`, `GuestProfileGateway` |
+| Aggregates | `Actor`, `Account`, `Hotel` |
+| Entities | `Type` |
+| Identities | `ActorId`, `AccountId`, `TypeId` |
+| Value Objects | `TypeName` (enum: SUPERADMIN, OWNER, GUEST), `HashedPassword` |
+| Domain Services | `PasswordHasher`, `TokenManager`, `UserGateway` |
 
-Multi-tenant: `Account` serves as the tenant boundary. All actors belong to an account, and other BCs' tables (guest_profiles, reservations, rooms) carry an `account_id` foreign key. No domain events.
+Multi-tenant: `Account` serves as the tenant boundary. All actors belong to an account, and other BCs' tables (users, reservations, rooms) carry an `account_id` foreign key. The `actor_types` pivot table links actors to their types.
 
 ### Inventory
 
@@ -93,16 +93,16 @@ PENDING ──> CONFIRMED ──> CHECKED_IN ──> CHECKED_OUT
 ## Context Map
 
 ```
-┌──────────┐       GuestProfileApi         ┌──────────────┐        InventoryApi        ┌─────────────┐
-│  Guest   │  <─────────────────────────── │ Reservation  │ ─────────────────────────> │  Inventory  │
-│          │   (GuestGateway adapter)      │              │  (InventoryGateway adapter)│             │
-│          │                               │              │                            │             │
-│          │       GuestProfileApi         │              │                            │             │
-│          │  <────────────────────────    │              │                            └─────────────┘
-└──────────┘   (GuestProfileGateway)       └──────────────┘
+┌──────────┐         UserApi              ┌──────────────┐        InventoryApi        ┌─────────────┐
+│  User    │  <────────────────────────── │ Reservation  │ ─────────────────────────> │  Inventory  │
+│          │   (GuestGateway adapter)     │              │  (InventoryGateway adapter)│             │
+│          │                              │              │                            │             │
+│          │         UserApi              │              │                            │             │
+│          │  <────────────────────────   │              │                            └─────────────┘
+└──────────┘   (UserGateway)              └──────────────┘
      ▲
-     │  GuestProfileApi
-     │  (GuestProfileGateway adapter)
+     │  UserApi
+     │  (UserGateway adapter)
 ┌──────────┐
 │   IAM    │
 │          │
@@ -113,12 +113,12 @@ PENDING ──> CONFIRMED ──> CHECKED_IN ──> CHECKED_OUT
 
 | Upstream | Downstream | Pattern | Purpose |
 |---|---|---|---|
-| Guest | Reservation | **Anti-Corruption Layer** (read-only via `GuestProfileApi`) | Reservation reads guest data (name, email, VIP status) via `GuestGateway` |
-| Guest | IAM | **Anti-Corruption Layer** (write via `GuestProfileApi`) | IAM creates guest profiles during registration via `GuestProfileGateway` |
+| User | Reservation | **Anti-Corruption Layer** (read-only via `UserApi`) | Reservation reads user data (name, email, VIP status) via `GuestGateway` |
+| User | IAM | **Anti-Corruption Layer** (write via `UserApi`) | IAM creates user profiles during registration via `UserGateway` |
 | Inventory | Reservation | **Anti-Corruption Layer** (via `InventoryApi`) | `InventoryGateway` checks room availability and pricing |
-| IAM | All BCs | **Sanctum middleware** | `auth:sanctum` protects Guest and Reservation API routes |
+| IAM | All BCs | **Sanctum middleware** | `auth:sanctum` protects User and Reservation API routes |
 
-No BC calls another BC's repository directly. All cross-boundary data flows through Gateway adapters and the Guest BC's `GuestProfileApi`.
+No BC calls another BC's repository directly. All cross-boundary data flows through Gateway adapters and the User BC's `UserApi`.
 
 ---
 
@@ -147,8 +147,8 @@ modules/{BC}/
 │
 └── Infrastructure/             # Framework adapters
     ├── Persistence/            # Repository implementations, Reflectors, Migrations, Eloquent models
-    ├── Http/                   # Controllers, Form Requests, Resources
-    ├── Routes/                 # API route definitions
+    ├── Http/                   # Inertia view classes, middleware
+    ├── Routes/                 # API and web route definitions
     ├── Services/               # Framework service implementations (e.g. BcryptPasswordHasher)
     ├── Integration/            # Anti-corruption layer adapters for other BCs
     ├── IntegrationEvent/       # Integration event classes
@@ -186,12 +186,20 @@ modules/{BC}/
 | Class | Purpose |
 |---|---|
 | `LaravelEventDispatcher` | Implements `EventDispatcher` by delegating to Laravel's `Illuminate\Contracts\Events\Dispatcher`. |
+| `TenantContext` | Singleton holding the current tenant (account) ID for multi-tenant scoping. |
+| `BelongsToTenant` | Eloquent global scope that filters queries by `account_id`. |
+| `HandleInertiaRequests` | Inertia middleware sharing auth/user data with all pages. |
+| `EnsureActorType` | Middleware that validates the authenticated actor has the required type(s). |
+| `SetTenantContext` | Middleware that sets the tenant context from the authenticated actor's account. |
+| `AuthenticatedUserResolver` | Service resolving the current user's UUID and type from the authenticated actor. |
 
 ---
 
 ## Domain Events
 
-Domain events are recorded inside aggregates via `recordEvent()` and pulled by application-layer handlers after persistence. Only the Reservation BC emits domain events.
+Domain events are recorded inside aggregates via `recordEvent()` and pulled by application-layer handlers after persistence.
+
+### Reservation Events
 
 | Event | Recorded When | Payload |
 |---|---|---|
@@ -202,6 +210,14 @@ Domain events are recorded inside aggregates via `recordEvent()` and pulled by a
 | `GuestCheckedOut` | `checkOut()` | `reservationId` |
 | `SpecialRequestAdded` | `addSpecialRequest()` | `reservationId`, `requestId` |
 | `SpecialRequestFulfilled` | `fulfillSpecialRequest()` | `reservationId`, `requestId` |
+
+### User Events
+
+| Event | Recorded When | Payload |
+|---|---|---|
+| `UserCreated` | `User::create()` | `userId`, `email` |
+| `UserContactInfoUpdated` | `updateContactInfo()` | `userId` |
+| `UserLoyaltyTierChanged` | `changeLoyaltyTier()` | `userId`, `tier` |
 
 ---
 
@@ -263,15 +279,15 @@ Note: `ReservationCreated`, `SpecialRequestAdded`, and `SpecialRequestFulfilled`
 
 ## Inter-BC Communication
 
-### GuestGateway (Reservation → Guest)
+### GuestGateway (Reservation → User)
 
-The Reservation BC needs guest data (name, email, VIP status) but does not depend on the Guest domain model. Instead:
+The Reservation BC needs user data (name, email, VIP status) but does not depend on the User domain model. Instead:
 
 1. **Port** — `Reservation/Domain/Service/GuestGateway` interface defines `findByUuid(string): ?GuestInfo`
 2. **DTO** — `GuestInfo` is a read-only DTO owned by the Reservation BC
-3. **Adapter** — `Reservation/Infrastructure/Integration/GuestGatewayAdapter` delegates to the Guest BC's `GuestProfileApi` and maps to `GuestInfo`
+3. **Adapter** — `Reservation/Infrastructure/Integration/GuestGatewayAdapter` delegates to the User BC's `UserApi` and maps to `GuestInfo`
 
-This is an **Anti-Corruption Layer**: the Reservation BC translates Guest data into its own language (`isVip` is derived from `loyalty_tier`).
+This is an **Anti-Corruption Layer**: the Reservation BC translates User data into its own language (`isVip` is derived from `loyalty_tier`).
 
 **Used by:**
 - `CreateReservationHandler` — checks VIP status for booking policy
@@ -279,23 +295,24 @@ This is an **Anti-Corruption Layer**: the Reservation BC translates Guest data i
 - `OnGuestCheckedIn` / `OnGuestCheckedOut` — same enrichment
 - `ReservationResource` — includes guest info in API response
 
-### GuestProfileGateway (IAM → Guest)
+### UserGateway (IAM → User)
 
-When an actor registers, the IAM BC creates a corresponding guest profile:
+When an actor registers, the IAM BC creates a corresponding user profile:
 
-1. **Port** — `IAM/Domain/Service/GuestProfileGateway` interface defines `create(name, email, phone, document): string`
-2. **Adapter** — `IAM/Infrastructure/Integration/GuestProfileGatewayAdapter` delegates to the Guest BC's `GuestProfileApi`
+1. **Port** — `IAM/Domain/Service/UserGateway` interface defines `create(name, email, phone, document, ?loyaltyTier): int`
+2. **Adapter** — `IAM/Infrastructure/Integration/UserGatewayAdapter` delegates to the User BC's `UserApi`
 
-The returned guest profile UUID is stored on the Actor as `guestProfileId`.
+The returned user `id` is stored on the Actor as `userId`.
 
-### Guest Integration API
+### User Integration API
 
-The Guest BC exposes a `GuestProfileApi` (in `Infrastructure/Integration/`) for other BCs to consume. It provides:
+The User BC exposes a `UserApi` (in `Infrastructure/Integration/`) for other BCs to consume. It provides:
 
-- `create(name, email, phone, document): string` — creates a guest profile, returns UUID
-- `findByUuid(string): ?GuestProfileData` — returns a `GuestProfileData` DTO with profile fields
+- `create(name, email, phone, document, ?loyaltyTier): int` — creates a user profile, returns numeric ID
+- `findByUuid(string): ?UserData` — returns a `UserData` DTO with profile fields
+- `findById(int): ?UserData` — returns a `UserData` DTO by numeric ID
 
-This API is the single entry point for cross-BC access to guest data. Both the Reservation and IAM adapters depend on it.
+This API is the single entry point for cross-BC access to user data. Both the Reservation and IAM adapters depend on it.
 
 ### InventoryGateway (Reservation → Inventory)
 
@@ -324,7 +341,7 @@ The Inventory BC exposes an `InventoryApi` (in `Infrastructure/Integration/`) fo
 
 - No BC imports another BC's domain classes
 - No BC calls another BC's repository
-- Cross-BC data flows through `GuestProfileApi` and Gateway adapters
+- Cross-BC data flows through `UserApi`, `InventoryApi`, and Gateway adapters
 - IAM protects routes via Sanctum middleware (framework-level, not a domain dependency)
 
 ---
@@ -343,24 +360,23 @@ Aggregates have **private constructors** and static factory methods that enforce
 Each aggregate has a corresponding Reflector class in `Infrastructure/Persistence/`:
 
 ```php
-// GuestProfileReflector::reconstruct(...)
-$ref = new ReflectionClass(GuestProfile::class);
-$profile = $ref->newInstanceWithoutConstructor();
+// UserReflector::reconstruct(...)
+$ref = new ReflectionClass(User::class);
+$user = $ref->newInstanceWithoutConstructor();
 
 $prop = $ref->getProperty('uuid');
-$prop->setValue($profile, $uuid);
+$prop->setValue($user, $uuid);
 // ... repeat for each property
 
-return $profile;
+return $user;
 ```
 
 | Reflector | Reconstitutes | Used By |
 |---|---|---|
 | `RoomReflector` | `Room` | `EloquentRoomRepository` |
-| `GuestProfileReflector` | `GuestProfile` | `EloquentGuestProfileRepository` |
+| `UserReflector` | `User` | `EloquentUserRepository` |
 | `ActorReflector` | `Actor` | `EloquentActorRepository` |
 | `AccountReflector` | `Account` | `EloquentAccountRepository` |
-| `RoleReflector` | `Role` | `EloquentRoleRepository` |
 | `ReservationReflector` | `Reservation` (with nested `SpecialRequest[]`) | `EloquentReservationRepository` |
 | `SpecialRequestReflector` | `SpecialRequest` | `EloquentReservationRepository` (during deserialization) |
 
@@ -368,26 +384,27 @@ Reflectors are **unaffected by private constructors** — they use `ReflectionCl
 
 ---
 
-## IAM Deep Dive — Actors, Accounts, Roles & Authentication
+## IAM Deep Dive — Actors, Accounts, Types & Authentication
 
 ### Multi-Tenancy: Accounts
 
-An **Account** is the IAM aggregate that represents a tenant. Each account is a hotel or organization. All actors belong to an account, and all main tables across BCs (guest_profiles, reservations, rooms) carry an `account_id` foreign key for data isolation.
+An **Account** is the IAM aggregate that represents a tenant. Each account is a hotel or organization. All actors belong to an account, and all main tables across BCs (users, reservations, rooms) carry an `account_id` foreign key for data isolation.
 
-### Roles
+### Types
 
-**Role** is a domain entity stored in the `roles` table. Roles are seeded (`admin`, `guest`) and referenced by actors via `role_id` foreign key. The `RoleName` enum provides type-safe domain logic:
+**Type** is a domain entity stored in the `types` table. Types are seeded (`superadmin`, `owner`, `guest`) and referenced by actors via the `actor_types` pivot table (many-to-many). The `TypeName` enum provides type-safe domain logic:
 
-| `RoleName` | Purpose |
+| `TypeName` | Purpose |
 |---|---|
-| `ADMIN` | Staff who manage the hotel dashboard (web) |
-| `GUEST` | Hotel guests who will access the mobile app (future) |
+| `SUPERADMIN` | System administrator. Can impersonate any hotel owner to manage their properties. |
+| `OWNER` | Hotel owner / property manager. Manages rooms, reservations, and guests for their hotel(s). |
+| `GUEST` | Hotel guest who accesses the guest portal for reservations and profile management. |
 
 ### What is an Actor?
 
-An **Actor** is the IAM aggregate — it represents any identity that can authenticate against the system. The system deliberately avoids calling this "User" because actors have different roles with different access levels.
+An **Actor** is the IAM aggregate — it represents any identity that can authenticate against the system. Actors have types (not roles) that control access levels.
 
-An Actor belongs to an Account (tenant) and has a Role. Guest actors have a `guest_profile_id` linking to a `GuestProfile` in the Guest BC. Admin actors have `guest_profile_id` set to null.
+An Actor belongs to an Account (tenant) and has one or more Types. Each actor has a `userId` linking to a `User` in the User BC.
 
 ### The Actor Aggregate
 
@@ -396,29 +413,30 @@ final class Actor extends AggregateRoot
 {
     private function __construct(
         public readonly ActorId $uuid,           // identity
-        public readonly AccountId $accountId,    // tenant reference
-        public readonly RoleId $roleId,          // role FK
-        public readonly RoleName $roleName,      // denormalized for isAdmin() without lookups
+        public readonly ?AccountId $accountId,   // tenant reference (null for superadmin)
+        /** @var list<TypeId> */
+        private(set) array $typeIds,             // types via pivot table
         public readonly string $name,
         public readonly string $email,           // unique, used for login
         public private(set) HashedPassword $password,
-        public readonly ?string $guestProfileId, // soft link to GuestProfile in Guest BC
+        public readonly ?int $userId,            // FK to users table in User BC
         public readonly DateTimeImmutable $createdAt,
         public private(set) ?DateTimeImmutable $updatedAt = null,
     ) {}
 
     public static function register(...): self { ... }
-    public function isAdmin(): bool { return $this->roleName === RoleName::ADMIN; }
+    public function hasTypeId(TypeId $typeId): bool { ... }
+    public function assignType(TypeId $typeId): void { ... }
     public function changePassword(HashedPassword $password): void { ... }
 }
 ```
 
 Key design decisions:
-- **`readonly` properties** (uuid, accountId, roleId, roleName, name, email, guestProfileId, createdAt) — set once at registration, never change
-- **`private(set)` properties** (password, updatedAt) — mutable only through behavior methods
+- **`readonly` properties** (uuid, accountId, name, email, userId, createdAt) — set once at registration, never change
+- **`private(set)` properties** (typeIds, password, updatedAt) — mutable only through behavior methods
 - **`register()` factory** — the only way to create an Actor (constructor is private)
-- **Denormalized `roleName`** — avoids a database lookup on every `isAdmin()` call
-- **No domain events** — registration and password changes don't need event-driven side effects (yet)
+- **`userId` FK** — direct foreign key to `users` table, replacing the old polymorphic `subject_type`/`subject_id`
+- **Many-to-many types** — actors can have multiple types via the `actor_types` pivot table
 
 ### Domain Service Ports
 
@@ -444,14 +462,14 @@ interface TokenManager
 ```
 Implemented by `SanctumTokenManager` (in `Infrastructure/Services/`). This is the one place where the Eloquent `ActorModel` is used — Sanctum needs an Authenticatable model to issue tokens. The `ActorModel` exists solely for this infrastructure concern; the domain layer never sees it.
 
-**`GuestProfileGateway`** — cross-BC guest profile creation:
+**`UserGateway`** — cross-BC user profile creation:
 ```php
-interface GuestProfileGateway
+interface UserGateway
 {
-    public function create(string $name, string $email, string $phone, string $document): string;
+    public function create(string $name, string $email, string $phone, string $document, ?string $loyaltyTier = null): int;
 }
 ```
-Implemented by `GuestProfileGatewayAdapter` (in `Infrastructure/Integration/`) which delegates to the Guest BC's `GuestProfileApi`.
+Implemented by `UserGatewayAdapter` (in `Infrastructure/Integration/`) which delegates to the User BC's `UserApi`.
 
 ### The Dual-Model Approach
 
@@ -464,7 +482,7 @@ IAM has two representations of an actor:
 | Created by | `Actor::register()` | Seeded or created alongside the domain actor |
 | Persistence | `EloquentActorRepository` writes to `actors` table | Reads from the same `actors` table |
 
-Both read/write the same `actors` table. The domain `Actor` is persisted via `EloquentActorRepository` (through `ActorReflector` for hydration). The `ActorModel` is only used by `SanctumTokenManager`, Laravel's `auth:sanctum` middleware, and the web login/register views. It has `BelongsTo` relationships to `AccountModel` and `RoleModel`.
+Both read/write the same `actors` table. The domain `Actor` is persisted via `EloquentActorRepository` (through `ActorReflector` for hydration). The `ActorModel` is only used by `SanctumTokenManager`, Laravel's `auth:sanctum` middleware, and the web login/register views. It has `BelongsToMany` relationship to `TypeModel` via the `actor_types` pivot table, and a `BelongsTo` relationship to `AccountModel`.
 
 ### Token Expiration
 
@@ -476,13 +494,25 @@ Sanctum tokens are configured to expire after 24 hours (configurable via `SANCTU
 ```
 1. Check if email already exists → throw ActorAlreadyExistsException
 2. Create Account for the new guest
-3. Create guest profile via GuestProfileGateway → returns guestProfileId
-4. Look up the 'guest' Role
+3. Create user profile via UserGateway → returns userId
+4. Look up the 'guest' Type
 5. Generate new ActorId
 6. Hash the plain password via PasswordHasher → HashedPassword
-7. Actor::register(...) → creates the aggregate with account, role, guestProfileId
+7. Actor::register(...) → creates the aggregate with account, type, userId
 8. Save to repository
 ```
+
+**`RegisterHotelOwnerHandler`** — Owner Registration:
+```
+1. Create Account for the new owner
+2. Create user profile via UserGateway (null loyaltyTier) → returns userId
+3. Look up the 'owner' Type
+4. Generate new ActorId
+5. Hash the plain password via PasswordHasher → HashedPassword
+6. Actor::register(...) → creates the aggregate with account, type, userId
+7. Save to repository
+```
+Hotel creation is a separate step done after login inside the dashboard.
 
 **`AuthenticateActorHandler`** — Login:
 ```
@@ -503,7 +533,7 @@ Sanctum tokens are configured to expire after 24 hours (configurable via `SANCTU
                Public                          Protected (auth:sanctum)
           ┌──────────────┐               ┌──────────────────────────────┐
           │              │               │                              │
-POST /auth/register      │    Token      │  GET  /guests/*              │
+POST /auth/register      │    Token      │  GET  /users/*               │
   → RegisterActorHandler │ ──────────>   │  POST /reservations/*        │
           │              │  Bearer       │  POST /auth/logout           │
 POST /auth/login         │  header       │  ...all other endpoints      │
@@ -512,13 +542,23 @@ POST /auth/login         │  header       │  ...all other endpoints      │
           └──────────────┘
 ```
 
-1. **Register** — `POST /api/auth/register` with `{ name, email, password, phone, document }`. Creates an Account, a guest profile (via `GuestProfileGateway`), and an Actor with `guest` role, returns the actor resource. Also available as web form at `/register`. Validates: email format, password min 8 chars, phone in E.164 format. Rejects duplicate emails.
+1. **Register** — `POST /api/auth/register` with `{ name, email, password, phone, document }`. Creates an Account, a user profile (via `UserGateway`), and an Actor with `guest` type, returns the actor resource. Also available as web form at `/register`. Validates: email format, password min 8 chars, phone in E.164 format. Rejects duplicate emails.
 
 2. **Login** — `POST /api/auth/login` with `{ email, password }`. Verifies credentials against the domain aggregate, then issues a Sanctum token via `TokenManager`. Returns `{ token, actor_id }`.
 
-3. **Authenticated requests** — include `Authorization: Bearer {token}`. Laravel's `auth:sanctum` middleware validates the token against the `ActorModel` (Eloquent). All Guest and Reservation routes are protected this way.
+3. **Authenticated requests** — include `Authorization: Bearer {token}`. Laravel's `auth:sanctum` middleware validates the token against the `ActorModel` (Eloquent). All User and Reservation routes are protected this way.
 
 4. **Logout** — `POST /api/auth/logout` (authenticated). Revokes all tokens for the actor.
+
+### Middleware
+
+| Middleware | Purpose |
+|---|---|
+| `EnsureActorType` | Validates actor has required type(s). Used as `type:owner,superadmin` in route groups. |
+| `EnsureActorIsOwner` | Validates actor is an owner type. |
+| `EnsureActorIsGuest` | Validates actor is a guest type; sets `guest_uuid` on request. |
+| `SetTenantContext` | Sets `TenantContext` from the authenticated actor's account. |
+| `HandleInertiaRequests` | Shares auth data (actor, user, types) with all Inertia pages. |
 
 ### Exceptions
 

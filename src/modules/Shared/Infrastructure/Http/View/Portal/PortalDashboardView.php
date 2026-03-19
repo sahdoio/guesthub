@@ -7,39 +7,65 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Guest\Domain\GuestId;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Presentation\Http\Presenter\GuestPresenter;
-use Modules\Reservation\Application\Query\ListReservations;
-use Modules\Reservation\Application\Query\ListReservationsHandler;
-use Modules\Shared\Application\Query\Pagination;
+use Modules\User\Domain\UserId;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\User\Presentation\Http\Presenter\UserPresenter;
+use Modules\IAM\Domain\HotelId;
+use Modules\IAM\Domain\Repository\HotelRepository;
+use Modules\Reservation\Application\Query\ReservationReadModel;
+use Modules\Reservation\Domain\Repository\ReservationRepository;
+use Modules\Reservation\Domain\Reservation;
 
 final class PortalDashboardView
 {
     public function __construct(
-        private GuestRepository $guestRepository,
-        private ListReservationsHandler $reservationsHandler,
+        private UserRepository $userRepository,
+        private ReservationRepository $reservationRepository,
+        private HotelRepository $hotelRepository,
     ) {}
 
     public function __invoke(Request $request): Response
     {
         $guestUuid = $request->attributes->get('guest_uuid');
 
-        $guest = $guestUuid
-            ? $this->guestRepository->findByUuid(GuestId::fromString($guestUuid))
+        $user = $guestUuid
+            ? $this->userRepository->findByUuid(UserId::fromString($guestUuid))
             : null;
 
-        $reservations = $this->reservationsHandler->handle(
-            new ListReservations(guestId: $guestUuid),
-            new Pagination(page: 1, perPage: 5),
-        );
+        // Get user's reservations across all hotels
+        $reservationResult = $guestUuid
+            ? $this->reservationRepository->listByGuestId($guestUuid, page: 1, perPage: 5)
+            : null;
+
+        // Get featured hotels
+        $hotels = array_map(fn ($hotel) => [
+            'uuid' => (string) $hotel->uuid,
+            'name' => $hotel->name,
+            'slug' => $hotel->slug,
+            'description' => $hotel->description,
+            'address' => $hotel->address,
+        ], $this->hotelRepository->findAll());
 
         return Inertia::render('Portal/Dashboard', [
-            'guest' => $guest ? GuestPresenter::fromDomain($guest) : null,
-            'reservations' => $reservations->items,
+            'guest' => $user ? UserPresenter::fromDomain($user) : null,
+            'reservations' => $reservationResult !== null
+                ? array_map(function (Reservation $r) {
+                    $readModel = ReservationReadModel::fromReservation($r);
+                    $hotel = $this->hotelRepository->findByUuid(HotelId::fromString($r->hotelId));
+                    if ($hotel) {
+                        $readModel = $readModel->withHotel([
+                            'hotel_id' => (string) $hotel->uuid,
+                            'name' => $hotel->name,
+                            'address' => $hotel->address,
+                        ]);
+                    }
+                    return $readModel->jsonSerialize();
+                }, $reservationResult->items)
+                : [],
             'reservationsMeta' => [
-                'total' => $reservations->total,
+                'total' => $reservationResult !== null ? $reservationResult->total : 0,
             ],
+            'hotels' => $hotels,
         ]);
     }
 }

@@ -6,6 +6,8 @@ namespace Modules\IAM\Domain;
 
 use DateTimeImmutable;
 use Modules\IAM\Domain\Event\ActorRegistered;
+use Modules\IAM\Domain\Exception\ActorAlreadyExistsException;
+use Modules\IAM\Domain\Service\EmailUniquenessChecker;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
 use Modules\Shared\Domain\AggregateRoot;
 use Modules\Shared\Domain\Identity;
@@ -15,40 +17,42 @@ final class Actor extends AggregateRoot
     private function __construct(
         public readonly ActorId $uuid,
         public readonly ?AccountId $accountId,
-        /** @var list<RoleId> */
-        public private(set) array $roleIds,
+        /** @var list<TypeId> */
+        private(set) array $typeIds,
         public readonly string $name,
         public readonly string $email,
-        public private(set) HashedPassword $password,
-        public readonly ?string $subjectType,
-        public readonly ?int $subjectId,
+        private(set) HashedPassword $password,
+        public readonly ?int $userId,
         public readonly DateTimeImmutable $createdAt,
-        public private(set) ?DateTimeImmutable $updatedAt = null,
+        private(set) ?DateTimeImmutable $updatedAt = null,
     ) {}
 
     /**
-     * @param  list<RoleId>  $roleIds
+     * @param  list<TypeId>  $typeIds
      */
     public static function register(
         ActorId $uuid,
         ?AccountId $accountId,
-        array $roleIds,
+        array $typeIds,
         string $name,
         string $email,
         HashedPassword $password,
-        ?string $subjectType,
-        ?int $subjectId,
+        ?int $userId,
         DateTimeImmutable $createdAt,
+        EmailUniquenessChecker $emailUniquenessChecker,
     ): self {
+        if ($emailUniquenessChecker->isEmailTaken($email)) {
+            throw ActorAlreadyExistsException::withEmail($email);
+        }
+
         $actor = new self(
             uuid: $uuid,
             accountId: $accountId,
-            roleIds: $roleIds,
+            typeIds: $typeIds,
             name: $name,
             email: $email,
             password: $password,
-            subjectType: $subjectType,
-            subjectId: $subjectId,
+            userId: $userId,
             createdAt: $createdAt,
         );
 
@@ -57,10 +61,10 @@ final class Actor extends AggregateRoot
         return $actor;
     }
 
-    public function hasRoleId(RoleId $roleId): bool
+    public function hasTypeId(TypeId $typeId): bool
     {
-        foreach ($this->roleIds as $id) {
-            if ($id->equals($roleId)) {
+        foreach ($this->typeIds as $id) {
+            if ($id->equals($typeId)) {
                 return true;
             }
         }
@@ -68,18 +72,18 @@ final class Actor extends AggregateRoot
         return false;
     }
 
-    public function assignRole(RoleId $roleId): void
+    public function assignType(TypeId $typeId): void
     {
-        if (! $this->hasRoleId($roleId)) {
-            $this->roleIds[] = $roleId;
+        if (! $this->hasTypeId($typeId)) {
+            $this->typeIds[] = $typeId;
             $this->updatedAt = new DateTimeImmutable;
         }
     }
 
-    /** @return list<RoleId> */
-    public function roleIds(): array
+    /** @return list<TypeId> */
+    public function typeIds(): array
     {
-        return $this->roleIds;
+        return $this->typeIds;
     }
 
     public function id(): Identity

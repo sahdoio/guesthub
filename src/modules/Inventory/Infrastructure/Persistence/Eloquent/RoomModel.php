@@ -11,6 +11,7 @@ use Modules\Shared\Infrastructure\Persistence\Eloquent\BelongsToTenant;
  * @property int $id
  * @property string $uuid
  * @property int $account_id
+ * @property int $hotel_id
  * @property string $number
  * @property string $type
  * @property int $floor
@@ -32,6 +33,7 @@ final class RoomModel extends Model
     protected $fillable = [
         'uuid',
         'account_id',
+        'hotel_id',
         'number',
         'type',
         'floor',

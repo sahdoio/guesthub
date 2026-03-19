@@ -7,23 +7,23 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Guest\Domain\GuestId;
-use Modules\Guest\Domain\Repository\GuestRepository;
-use Modules\Guest\Presentation\Http\Presenter\GuestPresenter;
+use Modules\User\Domain\UserId;
+use Modules\User\Domain\Repository\UserRepository;
+use Modules\User\Presentation\Http\Presenter\UserPresenter;
 
 final class PortalProfileEditView
 {
     public function __construct(
-        private GuestRepository $repository,
+        private UserRepository $repository,
     ) {}
 
     public function __invoke(Request $request): Response
     {
         $guestUuid = $request->attributes->get('guest_uuid');
-        $guest = $this->repository->findByUuid(GuestId::fromString($guestUuid));
+        $user = $this->repository->findByUuid(UserId::fromString($guestUuid));
 
         return Inertia::render('Portal/Profile/Edit', [
-            'guest' => $guest ? GuestPresenter::fromDomain($guest) : null,
+            'guest' => $user ? UserPresenter::fromDomain($user) : null,
         ]);
     }
 }
