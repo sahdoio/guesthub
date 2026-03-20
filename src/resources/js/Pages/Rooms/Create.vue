@@ -51,7 +51,7 @@ const submit = () => {
             <h1 class="text-2xl font-bold text-gray-800">{{ $t('room.new') }}</h1>
         </div>
 
-        <div class="bg-white rounded-lg shadow max-w-2xl">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 max-w-2xl">
             <form @submit.prevent="submit" class="p-6 space-y-5">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -62,7 +62,7 @@ const submit = () => {
                             type="text"
                             required
                             :placeholder="$t('room.room_number_placeholder')"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             :class="{ 'border-red-500': form.errors.number }"
                         />
                         <p v-if="form.errors.number" class="mt-1 text-sm text-red-600">{{ form.errors.number }}</p>
@@ -74,7 +74,7 @@ const submit = () => {
                             id="type"
                             v-model="form.type"
                             required
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             :class="{ 'border-red-500': form.errors.type }"
                         >
                             <option value="" disabled>{{ $t('room.select_type') }}</option>
@@ -95,7 +95,7 @@ const submit = () => {
                             type="number"
                             required
                             min="1"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             :class="{ 'border-red-500': form.errors.floor }"
                         />
                         <p v-if="form.errors.floor" class="mt-1 text-sm text-red-600">{{ form.errors.floor }}</p>
@@ -109,7 +109,7 @@ const submit = () => {
                             type="number"
                             required
                             min="1"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             :class="{ 'border-red-500': form.errors.capacity }"
                         />
                         <p v-if="form.errors.capacity" class="mt-1 text-sm text-red-600">{{ form.errors.capacity }}</p>
@@ -124,7 +124,7 @@ const submit = () => {
                             required
                             min="0"
                             step="0.01"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             :class="{ 'border-red-500': form.errors.price_per_night }"
                         />
                         <p v-if="form.errors.price_per_night" class="mt-1 text-sm text-red-600">{{ form.errors.price_per_night }}</p>
@@ -149,9 +149,9 @@ const submit = () => {
                             type="text"
                             :placeholder="$t('room.add_amenity')"
                             @keydown.enter.prevent="addAmenity"
-                            class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         />
-                        <button type="button" @click="addAmenity" class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">{{ $t('special_request.add') }}</button>
+                        <button type="button" @click="addAmenity" class="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">{{ $t('special_request.add') }}</button>
                     </div>
                 </div>
 
@@ -159,7 +159,7 @@ const submit = () => {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <span v-if="form.processing">{{ $t('room.creating') }}</span>
                         <span v-else>{{ $t('room.create') }}</span>

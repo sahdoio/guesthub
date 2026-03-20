@@ -17,6 +17,6 @@ final readonly class ListUsersHandler
     /** @return PaginatedResult<\Modules\User\Domain\User> */
     public function handle(ListUsers $query, Pagination $pagination): PaginatedResult
     {
-        return $this->repository->list($pagination->page, $pagination->perPage);
+        return $this->repository->list($pagination->page, $pagination->perPage, $query->filters);
     }
 }

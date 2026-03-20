@@ -25,13 +25,13 @@ const statusColors = {
                 <div class="flex items-center gap-3">
                     <a
                         :href="`/hotels/${hotel.slug}/rooms`"
-                        class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
+                        class="bg-indigo-600 text-white px-4 py-2.5 rounded-lg shadow-sm text-sm font-medium hover:bg-indigo-700 transition-colors"
                     >
                         {{ $t('hotel.manage_rooms') }}
                     </a>
                     <a
                         :href="`/hotels/${hotel.slug}/edit`"
-                        class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                        class="bg-indigo-600 text-white px-4 py-2.5 rounded-lg shadow-sm text-sm font-medium hover:bg-indigo-700 transition-colors"
                     >
                         {{ $t('common.edit') }}
                     </a>

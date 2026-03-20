@@ -36,7 +36,7 @@ const tierColors = {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" v-if="g">
             <div class="lg:col-span-2 space-y-6">
                 <!-- Contact Info -->
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('guest.contact_info') }}</h2>
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
@@ -59,7 +59,7 @@ const tierColors = {
                 </div>
 
                 <!-- Preferences -->
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('guest.preferences') }}</h2>
                     <div v-if="g.preferences && g.preferences.length > 0" class="flex flex-wrap gap-2">
                         <span
@@ -76,17 +76,17 @@ const tierColors = {
 
             <!-- Sidebar -->
             <div class="space-y-6">
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.actions') }}</h2>
                     <a
                         href="/portal/profile/edit"
-                        class="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                        class="block w-full text-center bg-indigo-600 text-white py-2.5 px-4 rounded-lg shadow-sm text-sm font-medium hover:bg-indigo-700 transition-colors"
                     >
                         {{ $t('guest.edit_profile') }}
                     </a>
                 </div>
 
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.account') }}</h2>
                     <div class="space-y-2 text-sm">
                         <div>

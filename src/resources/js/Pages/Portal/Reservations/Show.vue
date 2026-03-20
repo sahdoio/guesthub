@@ -74,7 +74,7 @@ const requestStatusColors = {
             <!-- Main Info -->
             <div class="lg:col-span-2 space-y-6">
                 <!-- Hotel Info -->
-                <div v-if="r.hotel?.name" class="bg-white rounded-lg shadow p-6">
+                <div v-if="r.hotel?.name" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('hotel.details') }}</h2>
                     <div class="flex items-start gap-3">
                         <div class="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center shrink-0">
@@ -96,7 +96,7 @@ const requestStatusColors = {
                 </div>
 
                 <!-- Stay Details -->
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('reservation.stay_details') }}</h2>
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
@@ -123,7 +123,7 @@ const requestStatusColors = {
                 </div>
 
                 <!-- Special Requests -->
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <div class="flex items-center justify-between mb-3">
                         <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">
                             {{ $t('special_request.title') }} ({{ r.special_requests.length }}/5)
@@ -138,12 +138,12 @@ const requestStatusColors = {
                     </div>
 
                     <!-- Add form -->
-                    <form v-if="showSpecialRequestForm" @submit.prevent="submitSpecialRequest" class="mb-4 p-4 bg-gray-50 rounded-md space-y-3">
+                    <form v-if="showSpecialRequestForm" @submit.prevent="submitSpecialRequest" class="mb-4 p-4 bg-gray-50 rounded-lg space-y-3">
                         <div>
                             <select
                                 v-model="specialRequestForm.type"
                                 required
-                                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
                                 :class="{ 'border-red-500': specialRequestForm.errors.type }"
                             >
                                 <option value="" disabled>{{ $t('special_request.select_type') }}</option>
@@ -159,7 +159,7 @@ const requestStatusColors = {
                                 required
                                 :placeholder="$t('special_request.description')"
                                 rows="2"
-                                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
                                 :class="{ 'border-red-500': specialRequestForm.errors.description }"
                             ></textarea>
                             <p v-if="specialRequestForm.errors.description" class="mt-1 text-sm text-red-600">{{ specialRequestForm.errors.description }}</p>
@@ -167,7 +167,7 @@ const requestStatusColors = {
                         <button
                             type="submit"
                             :disabled="specialRequestForm.processing"
-                            class="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                            class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg shadow-sm text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
                         >
                             {{ $t('special_request.add_request') }}
                         </button>
@@ -180,7 +180,7 @@ const requestStatusColors = {
                         <div
                             v-for="sr in r.special_requests"
                             :key="sr.id"
-                            class="flex items-start justify-between p-3 bg-gray-50 rounded-md"
+                            class="flex items-start justify-between p-3 bg-gray-50 rounded-lg"
                         >
                             <div class="text-sm">
                                 <span class="font-medium text-gray-900">{{ requestTypeLabels[sr.type] || sr.type }}</span>
@@ -201,7 +201,7 @@ const requestStatusColors = {
             <!-- Sidebar -->
             <div class="space-y-6">
                 <!-- Actions -->
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.actions') }}</h2>
                     <div class="space-y-3">
                         <!-- Cancel -->
@@ -209,7 +209,7 @@ const requestStatusColors = {
                             <button
                                 v-if="!showCancelForm"
                                 @click="showCancelForm = true"
-                                class="w-full bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
+                                class="w-full bg-red-600 text-white py-2 px-4 rounded-lg shadow-sm text-sm font-medium hover:bg-red-700 transition-colors"
                             >
                                 {{ $t('reservation.cancel') }}
                             </button>
@@ -219,7 +219,7 @@ const requestStatusColors = {
                                     required
                                     :placeholder="$t('reservation.cancel_reason')"
                                     rows="3"
-                                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
                                     :class="{ 'border-red-500': cancelForm.errors.reason }"
                                 ></textarea>
                                 <p v-if="cancelForm.errors.reason" class="text-sm text-red-600">{{ cancelForm.errors.reason }}</p>
@@ -227,7 +227,7 @@ const requestStatusColors = {
                                     <button
                                         type="submit"
                                         :disabled="cancelForm.processing"
-                                        class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+                                        class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg shadow-sm text-sm font-medium hover:bg-red-700 disabled:opacity-50"
                                     >
                                         {{ $t('reservation.confirm_cancel') }}
                                     </button>
@@ -253,7 +253,7 @@ const requestStatusColors = {
                 </div>
 
                 <!-- Timeline -->
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.timeline') }}</h2>
                     <div class="space-y-2 text-sm">
                         <div>

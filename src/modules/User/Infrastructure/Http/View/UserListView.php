@@ -20,8 +20,13 @@ final class UserListView
 
     public function __invoke(Request $request): Response
     {
+        $filters = [
+            'search' => $request->query('search'),
+            'loyalty_tier' => $request->query('loyalty_tier'),
+        ];
+
         $result = $this->handler->handle(
-            new ListUsers,
+            new ListUsers(filters: array_filter($filters)),
             new Pagination(
                 page: (int) $request->query('page', 1),
                 perPage: (int) $request->query('per_page', 15),
@@ -40,7 +45,8 @@ final class UserListView
                 'total' => $result->total,
             ],
             'filters' => [
-                'loyalty_tier' => $request->query('loyalty_tier'),
+                'search' => $request->query('search', ''),
+                'loyalty_tier' => $request->query('loyalty_tier', ''),
             ],
         ]);
     }

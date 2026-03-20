@@ -4,10 +4,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Modules\IAM\Infrastructure\Http\View\SuperadminHomeView;
 use Modules\Shared\Infrastructure\Http\View\DashboardView;
+use Modules\Shared\Infrastructure\Http\View\LandingPageView;
 
 Route::get('/', function () {
     if (! Auth::check()) {
-        return redirect('/login');
+        return app(LandingPageView::class)(request());
     }
 
     $user = Auth::user();

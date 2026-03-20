@@ -18,7 +18,10 @@ interface UserRepository
 
     public function findByDocument(string $document): ?User;
 
-    public function list(int $page = 1, int $perPage = 15): PaginatedResult;
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function list(int $page = 1, int $perPage = 15, array $filters = []): PaginatedResult;
 
     public function remove(User $user): void;
 

@@ -22,7 +22,7 @@ const statusColors = {
             <h1 class="text-2xl font-bold text-gray-800">{{ $t('hotel.title') }}</h1>
             <a
                 href="/hotels/create"
-                class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                class="bg-indigo-600 text-white px-4 py-2.5 rounded-lg shadow-sm text-sm font-medium hover:bg-indigo-700 transition-colors"
             >
                 {{ $t('hotel.new') }}
             </a>

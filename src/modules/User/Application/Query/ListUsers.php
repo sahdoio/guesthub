@@ -6,5 +6,10 @@ namespace Modules\User\Application\Query;
 
 final readonly class ListUsers
 {
-    public function __construct() {}
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function __construct(
+        public array $filters = [],
+    ) {}
 }

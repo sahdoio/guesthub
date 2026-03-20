@@ -36,7 +36,7 @@ const submit = () => form.post('/portal/reservations');
         </div>
 
         <!-- Hotel Details -->
-        <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
             <h2 class="text-lg font-semibold text-gray-700 mb-4">{{ $t('hotel.details') }}</h2>
 
             <p class="text-gray-600 leading-relaxed mb-6">{{ hotel.description }}</p>
@@ -80,7 +80,7 @@ const submit = () => form.post('/portal/reservations');
                 <div
                     v-for="roomType in roomTypes"
                     :key="roomType.type"
-                    class="bg-white rounded-lg shadow p-5 flex flex-col justify-between hover:shadow-md transition-shadow"
+                    class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col justify-between hover:shadow-md transition-shadow"
                 >
                     <div>
                         <h3 class="text-base font-semibold text-gray-800 mb-1">
@@ -99,7 +99,7 @@ const submit = () => form.post('/portal/reservations');
                     <button
                         type="button"
                         @click="selectRoomType(roomType.type)"
-                        class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-indigo-700 active:bg-indigo-800 transition-colors"
+                        class="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-lg text-sm font-medium hover:bg-indigo-700 active:bg-indigo-800 transition-colors shadow-sm"
                     >
                         {{ $t('hotel.book_now') }}
                     </button>
@@ -108,7 +108,7 @@ const submit = () => form.post('/portal/reservations');
         </div>
 
         <!-- Booking Form -->
-        <div id="booking-form" class="bg-white rounded-lg shadow p-6">
+        <div id="booking-form" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 class="text-lg font-semibold text-gray-700 mb-6">{{ $t('reservation.booking') }}</h2>
 
             <form @submit.prevent="submit" class="space-y-5 max-w-2xl">
@@ -123,7 +123,7 @@ const submit = () => form.post('/portal/reservations');
                             v-model="form.check_in"
                             type="date"
                             required
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             :class="{ 'border-red-500': form.errors.check_in }"
                         />
                         <p v-if="form.errors.check_in" class="mt-1 text-sm text-red-600">{{ form.errors.check_in }}</p>
@@ -139,7 +139,7 @@ const submit = () => form.post('/portal/reservations');
                             v-model="form.check_out"
                             type="date"
                             required
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             :class="{ 'border-red-500': form.errors.check_out }"
                         />
                         <p v-if="form.errors.check_out" class="mt-1 text-sm text-red-600">{{ form.errors.check_out }}</p>
@@ -155,7 +155,7 @@ const submit = () => form.post('/portal/reservations');
                         id="room_type"
                         v-model="form.room_type"
                         required
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         :class="{ 'border-red-500': form.errors.room_type }"
                     >
                         <option value="" disabled>{{ $t('reservation.room_type') }}</option>
@@ -174,7 +174,7 @@ const submit = () => form.post('/portal/reservations');
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="bg-indigo-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <span v-if="form.processing">{{ $t('reservation.booking') }}</span>
                         <span v-else>{{ $t('reservation.book') }}</span>

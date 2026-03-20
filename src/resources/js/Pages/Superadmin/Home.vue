@@ -106,7 +106,7 @@ const impersonate = (actorId) => {
                         </div>
                         <button
                             @click="impersonate(actor.id)"
-                            class="text-xs font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-md transition-colors"
+                            class="text-xs font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors"
                         >
                             {{ $t('superadmin.impersonate') }}
                         </button>

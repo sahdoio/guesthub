@@ -53,11 +53,25 @@ final class EloquentUserRepository implements UserRepository
         return $record ? $this->toEntity($record) : null;
     }
 
-    public function list(int $page = 1, int $perPage = 15): PaginatedResult
+    public function list(int $page = 1, int $perPage = 15, array $filters = []): PaginatedResult
     {
-        $paginator = $this->model->newQuery()
-            ->orderByDesc('id')
-            ->paginate(perPage: $perPage, page: $page);
+        $query = $this->model->newQuery()->orderByDesc('id');
+
+        if (! empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('document', 'like', "%{$search}%");
+            });
+        }
+
+        if (! empty($filters['loyalty_tier'])) {
+            $query->where('loyalty_tier', $filters['loyalty_tier']);
+        }
+
+        $paginator = $query->paginate(perPage: $perPage, page: $page);
 
         $items = collect($paginator->items())
             ->map(fn (object $record) => $this->toEntity($record))

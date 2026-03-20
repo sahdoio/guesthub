@@ -52,7 +52,7 @@ const deleteRoom = () => {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 space-y-6">
                 <!-- Room Details -->
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('room.details') }}</h2>
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
@@ -79,7 +79,7 @@ const deleteRoom = () => {
                 </div>
 
                 <!-- Amenities -->
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('room.amenities') }}</h2>
                     <div v-if="r.amenities && r.amenities.length > 0" class="flex flex-wrap gap-2">
                         <span
@@ -97,12 +97,12 @@ const deleteRoom = () => {
             <!-- Sidebar -->
             <div class="space-y-6">
                 <!-- Actions -->
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.actions') }}</h2>
                     <div class="space-y-3">
                         <a
                             :href="`${baseUrl}/${r.id}/edit`"
-                            class="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                            class="block w-full text-center bg-indigo-600 text-white py-2 px-4 rounded-lg shadow-sm text-sm font-medium hover:bg-indigo-700 transition-colors"
                         >
                             {{ $t('room.edit') }}
                         </a>
@@ -111,7 +111,7 @@ const deleteRoom = () => {
                         <button
                             v-if="r.status !== 'available' && r.status !== 'occupied'"
                             @click="changeStatus('available')"
-                            class="w-full bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                            class="w-full bg-green-600 text-white py-2 px-4 rounded-lg shadow-sm text-sm font-medium hover:bg-green-700 transition-colors"
                         >
                             {{ $t('room.mark_available') }}
                         </button>
@@ -119,7 +119,7 @@ const deleteRoom = () => {
                         <button
                             v-if="r.status === 'available'"
                             @click="changeStatus('maintenance')"
-                            class="w-full bg-yellow-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-yellow-700 transition-colors"
+                            class="w-full bg-yellow-600 text-white py-2 px-4 rounded-lg shadow-sm text-sm font-medium hover:bg-yellow-700 transition-colors"
                         >
                             {{ $t('room.mark_maintenance') }}
                         </button>
@@ -127,7 +127,7 @@ const deleteRoom = () => {
                         <button
                             v-if="r.status === 'available'"
                             @click="changeStatus('out_of_order')"
-                            class="w-full bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
+                            class="w-full bg-red-600 text-white py-2 px-4 rounded-lg shadow-sm text-sm font-medium hover:bg-red-700 transition-colors"
                         >
                             {{ $t('room.mark_out_of_order') }}
                         </button>
@@ -136,7 +136,7 @@ const deleteRoom = () => {
                         <button
                             v-if="!showDeleteConfirm && r.status !== 'occupied'"
                             @click="showDeleteConfirm = true"
-                            class="w-full border border-red-300 text-red-600 py-2 px-4 rounded-md text-sm font-medium hover:bg-red-50 transition-colors"
+                            class="w-full border border-red-300 text-red-600 py-2 px-4 rounded-lg shadow-sm text-sm font-medium hover:bg-red-50 transition-colors"
                         >
                             {{ $t('room.delete') }}
                         </button>
@@ -145,7 +145,7 @@ const deleteRoom = () => {
                             <div class="flex gap-2">
                                 <button
                                     @click="deleteRoom"
-                                    class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700"
+                                    class="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg shadow-sm text-sm font-medium hover:bg-red-700"
                                 >
                                     {{ $t('common.confirm') }}
                                 </button>
@@ -161,7 +161,7 @@ const deleteRoom = () => {
                 </div>
 
                 <!-- Timestamps -->
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.timeline') }}</h2>
                     <div class="space-y-2 text-sm">
                         <div>

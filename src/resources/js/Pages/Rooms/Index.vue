@@ -50,7 +50,7 @@ const goToPage = (page) => {
             <h1 class="text-2xl font-bold text-gray-800">{{ $t('room.title') }}</h1>
             <a
                 :href="`${baseUrl}/create`"
-                class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm text-sm font-medium hover:bg-indigo-700 transition-colors"
             >
                 {{ $t('room.new') }}
             </a>
@@ -61,7 +61,7 @@ const goToPage = (page) => {
                 <select
                     :value="filters.status || ''"
                     @change="applyFilter('status', $event.target.value)"
-                    class="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm"
                 >
                     <option value="">{{ $t('common.all_statuses') }}</option>
                     <option value="available">{{ $t('status.available') }}</option>
@@ -73,7 +73,7 @@ const goToPage = (page) => {
                 <select
                     :value="filters.type || ''"
                     @change="applyFilter('type', $event.target.value)"
-                    class="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm"
                 >
                     <option value="">{{ $t('common.all_types') }}</option>
                     <option value="SINGLE">{{ $t('room_type.single') }}</option>

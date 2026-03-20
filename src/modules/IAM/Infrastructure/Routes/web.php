@@ -9,6 +9,9 @@ use Modules\IAM\Infrastructure\Http\View\HotelStoreView;
 use Modules\IAM\Infrastructure\Http\View\HotelUpdateView;
 use Modules\IAM\Infrastructure\Http\View\ImpersonateView;
 use Modules\IAM\Infrastructure\Http\View\LoginSubmitView;
+use Modules\IAM\Infrastructure\Http\View\ProfileEditView;
+use Modules\IAM\Infrastructure\Http\View\ProfileShowView;
+use Modules\IAM\Infrastructure\Http\View\ProfileUpdateView;
 use Modules\IAM\Infrastructure\Http\View\LoginView;
 use Modules\IAM\Infrastructure\Http\View\LogoutSubmitView;
 use Modules\IAM\Infrastructure\Http\View\RegisterHotelSubmitView;
@@ -33,6 +36,12 @@ Route::post('/logout', LogoutSubmitView::class)
 Route::middleware('auth')->group(function () {
     Route::post('/impersonate/{actorId}', ImpersonateView::class)->name('impersonate');
     Route::post('/stop-impersonation', StopImpersonationView::class)->name('stop-impersonation');
+});
+
+Route::middleware(['auth', 'owner'])->prefix('profile')->group(function () {
+    Route::get('/', ProfileShowView::class)->name('profile.show');
+    Route::get('/edit', ProfileEditView::class)->name('profile.edit');
+    Route::put('/', ProfileUpdateView::class)->name('profile.update');
 });
 
 Route::middleware(['auth', 'owner'])->prefix('hotels')->group(function () {

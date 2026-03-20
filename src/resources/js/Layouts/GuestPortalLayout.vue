@@ -1,6 +1,6 @@
 <script setup>
 import { router, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ImpersonationBanner from '../Components/ImpersonationBanner.vue';
 import LanguageSwitcher from '../Components/LanguageSwitcher.vue';
@@ -25,6 +25,22 @@ const navClass = (path) => {
 };
 
 const isImpersonating = computed(() => page.props.auth?.impersonating);
+
+const userMenuOpen = ref(false);
+const userMenuRef = ref(null);
+
+const toggleUserMenu = () => {
+    userMenuOpen.value = !userMenuOpen.value;
+};
+
+const closeUserMenu = (e) => {
+    if (userMenuRef.value && !userMenuRef.value.contains(e.target)) {
+        userMenuOpen.value = false;
+    }
+};
+
+onMounted(() => document.addEventListener('click', closeUserMenu));
+onUnmounted(() => document.removeEventListener('click', closeUserMenu));
 
 const logout = () => {
     router.post('/logout');
@@ -52,35 +68,81 @@ const logout = () => {
                             <a href="/portal/hotels" :class="navClass('/portal/hotels')">
                                 {{ $t('nav.hotels') }}
                             </a>
-                            <a href="/portal/reservations" :class="navClass('/portal/reservations')">
-                                {{ $t('nav.my_reservations') }}
-                            </a>
-                            <a href="/portal/profile" :class="navClass('/portal/profile')">
-                                {{ $t('nav.my_profile') }}
-                            </a>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-3">
                         <LanguageSwitcher />
-                        <div class="hidden sm:flex items-center gap-3">
-                            <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                                    {{ $page.props.auth?.user?.name?.charAt(0)?.toUpperCase() }}
-                                </div>
-                                <span class="text-sm font-medium text-gray-700">
-                                    {{ $page.props.auth?.user?.name }}
-                                </span>
+                        <div class="hidden sm:flex items-center" ref="userMenuRef">
+                            <div class="relative">
+                                <button
+                                    @click="toggleUserMenu"
+                                    class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                                >
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                        {{ $page.props.auth?.user?.name?.charAt(0)?.toUpperCase() }}
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-700">
+                                        {{ $page.props.auth?.user?.name }}
+                                    </span>
+                                    <svg class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-180': userMenuOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                <Transition
+                                    enter-active-class="transition ease-out duration-100"
+                                    enter-from-class="transform opacity-0 scale-95"
+                                    enter-to-class="transform opacity-100 scale-100"
+                                    leave-active-class="transition ease-in duration-75"
+                                    leave-from-class="transform opacity-100 scale-100"
+                                    leave-to-class="transform opacity-0 scale-95"
+                                >
+                                    <div
+                                        v-if="userMenuOpen"
+                                        class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg ring-1 ring-black/5 py-1 z-50"
+                                    >
+                                        <!-- User info header -->
+                                        <div class="px-4 py-3 border-b border-gray-100">
+                                            <p class="text-sm font-medium text-gray-900 truncate">{{ $page.props.auth?.user?.name }}</p>
+                                            <p class="text-xs text-gray-500 truncate mt-0.5">{{ $page.props.auth?.user?.email }}</p>
+                                        </div>
+
+                                        <a
+                                            href="/portal/profile"
+                                            class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            @click="userMenuOpen = false"
+                                        >
+                                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            {{ $t('nav.my_profile') }}
+                                        </a>
+                                        <a
+                                            href="/portal/reservations"
+                                            class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            @click="userMenuOpen = false"
+                                        >
+                                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            {{ $t('nav.my_reservations') }}
+                                        </a>
+
+                                        <div class="border-t border-gray-100 my-1"></div>
+
+                                        <button
+                                            @click="logout"
+                                            class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                            </svg>
+                                            {{ $t('nav.logout') }}
+                                        </button>
+                                    </div>
+                                </Transition>
                             </div>
-                            <button
-                                @click="logout"
-                                class="text-sm text-gray-400 hover:text-gray-600 transition-colors"
-                                :title="$t('nav.logout')"
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                            </button>
                         </div>
                     </div>
                 </div>

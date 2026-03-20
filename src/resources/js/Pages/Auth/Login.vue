@@ -38,12 +38,7 @@ const submit = () => {
 
         <div class="relative z-10 flex flex-col justify-center px-16 text-white">
             <div class="mb-8">
-                <div class="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 shadow-lg">
-                    <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                        <polyline points="9 22 9 12 15 12 15 22" />
-                    </svg>
-                </div>
+                <img src="/logo.png" alt="GuestHub" class="h-12 brightness-0 invert object-contain mb-6" />
             </div>
             <h1 class="text-4xl font-bold mb-4 leading-tight">{{ $t('auth.welcome_title') }}<br/>GuestHub</h1>
             <p class="text-lg text-indigo-100 leading-relaxed max-w-md">

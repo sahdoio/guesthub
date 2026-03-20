@@ -26,7 +26,7 @@ const submit = () => {
             <h1 class="text-2xl font-bold text-gray-800">{{ $t('hotel.new') }}</h1>
         </div>
 
-        <div class="bg-white rounded-lg shadow max-w-2xl">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 max-w-2xl">
             <form @submit.prevent="submit" class="p-6 space-y-5">
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-1">{{ $t('hotel.name') }}</label>
@@ -36,7 +36,7 @@ const submit = () => {
                         type="text"
                         required
                         :placeholder="$t('hotel.name_placeholder')"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         :class="{ 'border-red-500': form.errors.name }"
                     />
                     <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">{{ form.errors.name }}</p>
@@ -52,7 +52,7 @@ const submit = () => {
                         v-model="form.description"
                         rows="3"
                         :placeholder="$t('hotel.description_placeholder')"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         :class="{ 'border-red-500': form.errors.description }"
                     ></textarea>
                     <p v-if="form.errors.description" class="mt-1 text-sm text-red-600">{{ form.errors.description }}</p>
@@ -68,7 +68,7 @@ const submit = () => {
                         v-model="form.address"
                         type="text"
                         :placeholder="$t('hotel.address_placeholder')"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         :class="{ 'border-red-500': form.errors.address }"
                     />
                     <p v-if="form.errors.address" class="mt-1 text-sm text-red-600">{{ form.errors.address }}</p>
@@ -85,7 +85,7 @@ const submit = () => {
                             v-model="form.contact_email"
                             type="email"
                             :placeholder="$t('hotel.contact_email_placeholder')"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             :class="{ 'border-red-500': form.errors.contact_email }"
                         />
                         <p v-if="form.errors.contact_email" class="mt-1 text-sm text-red-600">{{ form.errors.contact_email }}</p>
@@ -101,7 +101,7 @@ const submit = () => {
                             v-model="form.contact_phone"
                             type="text"
                             :placeholder="$t('hotel.contact_phone_placeholder')"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             :class="{ 'border-red-500': form.errors.contact_phone }"
                         />
                         <p v-if="form.errors.contact_phone" class="mt-1 text-sm text-red-600">{{ form.errors.contact_phone }}</p>
@@ -112,7 +112,7 @@ const submit = () => {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        class="bg-indigo-600 text-white px-4 py-2.5 rounded-lg shadow-sm text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <span v-if="form.processing">{{ $t('hotel.creating') }}</span>
                         <span v-else>{{ $t('hotel.create') }}</span>
