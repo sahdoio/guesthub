@@ -7,33 +7,37 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\IAM\Domain\Repository\HotelRepository;
-use Modules\Inventory\Domain\Repository\RoomRepository;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\HotelModel;
+use Modules\Inventory\Infrastructure\Persistence\Eloquent\RoomModel;
 
 final class PortalDashboardView
 {
-    public function __construct(
-        private HotelRepository $hotelRepository,
-        private AccountRepository $accountRepository,
-        private RoomRepository $roomRepository,
-        private TenantContext $tenantContext,
-    ) {}
-
     public function __invoke(Request $request): Response
     {
-        $allHotels = $this->hotelRepository->findAll();
+        $hotelRecords = HotelModel::query()
+            ->withoutGlobalScopes()
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->limit(8)
+            ->get();
 
-        $hotels = array_map(function ($hotel) {
-            // Set tenant context to load this hotel's rooms
-            $numericId = $this->accountRepository->resolveNumericId($hotel->accountId);
-            $this->tenantContext->set($numericId);
+        $hotels = $hotelRecords->map(function ($hotel) {
+            $roomTypes = RoomModel::query()
+                ->withoutGlobalScopes()
+                ->where('hotel_id', $hotel->id)
+                ->where('status', 'AVAILABLE')
+                ->selectRaw('type, count(*) as available, min(price_per_night) as min_price')
+                ->groupBy('type')
+                ->get()
+                ->map(fn ($row) => [
+                    'type' => $row->type,
+                    'available' => (int) $row->getAttribute('available'),
+                    'min_price' => (float) $row->getAttribute('min_price'),
+                ])
+                ->all();
 
-            $roomTypes = $this->roomRepository->getAvailableRoomTypes();
             $minPrice = null;
             $totalAvailable = 0;
-
             foreach ($roomTypes as $rt) {
                 $totalAvailable += $rt['available'];
                 if ($minPrice === null || $rt['min_price'] < $minPrice) {
@@ -42,18 +46,18 @@ final class PortalDashboardView
             }
 
             return [
-                'uuid' => (string) $hotel->uuid,
+                'uuid' => $hotel->uuid,
                 'name' => $hotel->name,
                 'slug' => $hotel->slug,
                 'description' => $hotel->description,
                 'address' => $hotel->address,
-                'contact_email' => $hotel->contactEmail,
-                'contact_phone' => $hotel->contactPhone,
+                'contact_email' => $hotel->contact_email,
+                'contact_phone' => $hotel->contact_phone,
                 'min_price' => $minPrice,
                 'available_rooms' => $totalAvailable,
                 'room_types' => $roomTypes,
             ];
-        }, $allHotels);
+        })->all();
 
         return Inertia::render('Portal/Dashboard', [
             'hotels' => $hotels,

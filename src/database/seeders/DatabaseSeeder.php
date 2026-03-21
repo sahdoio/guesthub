@@ -11,6 +11,7 @@ use Modules\IAM\Infrastructure\Persistence\Seeders\TypeSeeder;
 use Modules\User\Infrastructure\Persistence\Seeders\UserSeeder;
 use Modules\Inventory\Infrastructure\Persistence\Seeders\RoomSeeder;
 use Modules\Reservation\Infrastructure\Persistence\Seeders\ReservationSeeder;
+use Modules\Shared\Infrastructure\Persistence\Seeders\MassSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -26,6 +27,7 @@ class DatabaseSeeder extends Seeder
             ActorSeeder::class,
             RoomSeeder::class,
             ReservationSeeder::class,
+            MassSeeder::class,
         ]);
     }
 }

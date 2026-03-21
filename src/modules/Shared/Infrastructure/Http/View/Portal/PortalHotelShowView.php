@@ -7,18 +7,14 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\HotelRepository;
-use Modules\Inventory\Domain\Repository\RoomRepository;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\HotelModel;
+use Modules\Inventory\Infrastructure\Persistence\Eloquent\RoomModel;
 
 final class PortalHotelShowView
 {
     public function __construct(
         private HotelRepository $hotelRepository,
-        private AccountRepository $accountRepository,
-        private RoomRepository $roomRepository,
-        private TenantContext $tenantContext,
     ) {}
 
     public function __invoke(Request $request, string $slug): Response
@@ -29,11 +25,22 @@ final class PortalHotelShowView
             abort(404, 'Hotel not found.');
         }
 
-        // Set tenant context to load this hotel's rooms
-        $numericId = $this->accountRepository->resolveNumericId($hotel->accountId);
-        $this->tenantContext->set($numericId);
+        // Resolve the hotel's numeric ID for room query
+        $hotelNumericId = $this->hotelRepository->resolveNumericId($hotel->uuid);
 
-        $roomTypes = $this->roomRepository->getAvailableRoomTypes();
+        $roomTypes = RoomModel::query()
+            ->withoutGlobalScopes()
+            ->where('hotel_id', $hotelNumericId)
+            ->where('status', 'AVAILABLE')
+            ->selectRaw('type, count(*) as available, min(price_per_night) as min_price')
+            ->groupBy('type')
+            ->get()
+            ->map(fn ($row) => [
+                'type' => $row->type,
+                'available' => (int) $row->getAttribute('available'),
+                'min_price' => (float) $row->getAttribute('min_price'),
+            ])
+            ->all();
 
         return Inertia::render('Portal/Hotels/Show', [
             'hotel' => [

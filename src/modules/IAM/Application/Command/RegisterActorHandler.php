@@ -55,13 +55,13 @@ final readonly class RegisterActorHandler extends EventDispatchingHandler
         );
 
         // 3. Create Actor with guest type linkage and account
-        $guestType = $this->typeRepository->findByName(TypeName::GUEST);
+        $actorType = $this->typeRepository->findByName(TypeName::GUEST);
         $id = $this->repository->nextIdentity();
 
         $actor = Actor::register(
             uuid: $id,
             accountId: $accountId,
-            typeIds: [$guestType->uuid],
+            typeIds: [$actorType->uuid],
             name: $command->name,
             email: $command->email,
             password: $this->hasher->hash($command->password),
