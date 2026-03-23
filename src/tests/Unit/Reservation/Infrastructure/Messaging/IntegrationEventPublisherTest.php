@@ -7,8 +7,8 @@ namespace Tests\Unit\Reservation\Infrastructure\Messaging;
 use DateTimeImmutable;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\Log;
-use Modules\Reservation\Infrastructure\IntegrationEvent\ReservationConfirmedEvent;
-use Modules\Reservation\Infrastructure\Messaging\IntegrationEventPublisher;
+use Modules\Stay\Infrastructure\IntegrationEvent\ReservationConfirmedEvent;
+use Modules\Stay\Infrastructure\Messaging\IntegrationEventPublisher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -24,7 +24,7 @@ final class IntegrationEventPublisherTest extends TestCase
         $event = new ReservationConfirmedEvent(
             reservationId: 'res-123',
             guestEmail: 'alice@hotel.com',
-            roomType: 'SUITE',
+            stayId: 'stay-uuid-123',
             checkIn: '2026-02-01',
             checkOut: '2026-02-05',
             isVip: true,

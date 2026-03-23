@@ -9,7 +9,6 @@ use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\CreatesGuest;
 use Tests\Concerns\SeedsRolesAndAccount;
-use Tests\Concerns\SeedsRooms;
 use Tests\TestCase;
 
 final class ListReservationsTest extends TestCase
@@ -17,7 +16,6 @@ final class ListReservationsTest extends TestCase
     use CreatesGuest;
     use RefreshDatabase;
     use SeedsRolesAndAccount;
-    use SeedsRooms;
 
     private string $guestId;
 
@@ -29,16 +27,15 @@ final class ListReservationsTest extends TestCase
         Sanctum::actingAs($this->createOwnerActor());
 
         $this->guestId = $this->createGuest();
-        $this->seedRooms();
     }
 
     private function createReservation(array $overrides = []): string
     {
         $payload = array_merge([
             'guest_id' => $this->guestId,
+            'stay_id' => $this->stay->uuid,
             'check_in' => now()->addDay()->format('Y-m-d'),
             'check_out' => now()->addDays(4)->format('Y-m-d'),
-            'room_type' => 'DOUBLE',
         ], $overrides);
 
         $response = $this->postJson('/api/reservations', $payload);
@@ -127,8 +124,6 @@ final class ListReservationsTest extends TestCase
                         'status',
                         'guest' => ['guest_id', 'full_name', 'email', 'phone', 'document', 'is_vip'],
                         'period' => ['check_in', 'check_out', 'nights'],
-                        'room_type',
-                        'assigned_room_number',
                         'special_requests',
                         'timestamps' => ['created_at'],
                     ],
@@ -149,37 +144,6 @@ final class ListReservationsTest extends TestCase
         $response->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.status', 'confirmed');
-    }
-
-    #[Test]
-    public function it_filters_by_room_type(): void
-    {
-        $this->createReservation(['room_type' => 'DOUBLE']);
-        $this->createReservation(['room_type' => 'SUITE']);
-        $this->createReservation(['room_type' => 'DOUBLE']);
-
-        $response = $this->getJson('/api/reservations?room_type=SUITE');
-
-        $response->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.room_type', 'SUITE');
-    }
-
-    #[Test]
-    public function it_combines_filters(): void
-    {
-        $id = $this->createReservation(['room_type' => 'DOUBLE']);
-        $this->createReservation(['room_type' => 'SUITE']);
-        $this->createReservation(['room_type' => 'DOUBLE']);
-
-        $this->postJson("/api/reservations/{$id}/confirm");
-
-        $response = $this->getJson('/api/reservations?status=confirmed&room_type=DOUBLE');
-
-        $response->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.status', 'confirmed')
-            ->assertJsonPath('data.0.room_type', 'DOUBLE');
     }
 
     #[Test]

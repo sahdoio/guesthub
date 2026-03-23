@@ -44,7 +44,7 @@ const logout = () => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30" :class="isImpersonating ? 'pt-10' : ''">
         <ImpersonationBanner />
 
         <nav
@@ -61,14 +61,17 @@ const logout = () => {
                             <a href="/dashboard" :class="navClass('/dashboard')">
                                 {{ $t('nav.dashboard') }}
                             </a>
-                            <a href="/hotels" :class="navClass('/hotels')">
-                                {{ $t('nav.hotels') }}
+                            <a href="/stays" :class="navClass('/stays')">
+                                {{ $t('nav.stays') }}
                             </a>
                             <a href="/reservations" :class="navClass('/reservations')">
                                 {{ $t('nav.reservations') }}
                             </a>
                             <a href="/guests" :class="navClass('/guests')">
                                 {{ $t('nav.guests') }}
+                            </a>
+                            <a href="/billing" :class="navClass('/billing')">
+                                {{ $t('billing.title') }}
                             </a>
                         </div>
                     </div>

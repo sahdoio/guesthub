@@ -5,62 +5,41 @@ declare(strict_types=1);
 namespace Modules\Shared\Infrastructure\Http\View\Portal;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\HotelModel;
-use Modules\Inventory\Infrastructure\Persistence\Eloquent\RoomModel;
+use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
 
 final class PortalDashboardView
 {
     public function __invoke(Request $request): Response
     {
-        $hotelRecords = HotelModel::query()
+        $stayRecords = StayModel::query()
             ->withoutGlobalScopes()
             ->where('status', 'active')
             ->orderBy('name')
             ->limit(8)
             ->get();
 
-        $hotels = $hotelRecords->map(function ($hotel) {
-            $roomTypes = RoomModel::query()
-                ->withoutGlobalScopes()
-                ->where('hotel_id', $hotel->id)
-                ->where('status', 'AVAILABLE')
-                ->selectRaw('type, count(*) as available, min(price_per_night) as min_price')
-                ->groupBy('type')
-                ->get()
-                ->map(fn ($row) => [
-                    'type' => $row->type,
-                    'available' => (int) $row->getAttribute('available'),
-                    'min_price' => (float) $row->getAttribute('min_price'),
-                ])
-                ->all();
+        $disk = Storage::disk(config('filesystems.stays_disk', 'public'));
 
-            $minPrice = null;
-            $totalAvailable = 0;
-            foreach ($roomTypes as $rt) {
-                $totalAvailable += $rt['available'];
-                if ($minPrice === null || $rt['min_price'] < $minPrice) {
-                    $minPrice = $rt['min_price'];
-                }
-            }
-
-            return [
-                'uuid' => $hotel->uuid,
-                'name' => $hotel->name,
-                'slug' => $hotel->slug,
-                'description' => $hotel->description,
-                'address' => $hotel->address,
-                'contact_email' => $hotel->contact_email,
-                'contact_phone' => $hotel->contact_phone,
-                'min_price' => $minPrice,
-                'available_rooms' => $totalAvailable,
-                'room_types' => $roomTypes,
-            ];
-        })->all();
+        $stays = $stayRecords->map(fn ($stay) => [
+            'uuid' => $stay->uuid,
+            'name' => $stay->name,
+            'slug' => $stay->slug,
+            'description' => $stay->description,
+            'address' => $stay->address,
+            'type' => $stay->type,
+            'category' => $stay->category,
+            'price_per_night' => (float) $stay->price_per_night,
+            'capacity' => (int) $stay->capacity,
+            'contact_email' => $stay->contact_email,
+            'contact_phone' => $stay->contact_phone,
+            'cover_image_url' => $stay->cover_image_path ? $disk->url($stay->cover_image_path) : null,
+        ])->all();
 
         return Inertia::render('Portal/Dashboard', [
-            'hotels' => $hotels,
+            'stays' => $stays,
         ]);
     }
 }

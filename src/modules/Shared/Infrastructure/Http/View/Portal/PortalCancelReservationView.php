@@ -7,10 +7,10 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\Reservation\Application\Command\CancelReservation;
-use Modules\Reservation\Application\Command\CancelReservationHandler;
-use Modules\Reservation\Domain\Repository\ReservationRepository;
-use Modules\Reservation\Domain\ReservationId;
+use Modules\Stay\Application\Command\CancelReservation;
+use Modules\Stay\Application\Command\CancelReservationHandler;
+use Modules\Stay\Domain\Repository\ReservationRepository;
+use Modules\Stay\Domain\ReservationId;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 final class PortalCancelReservationView

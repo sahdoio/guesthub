@@ -7,27 +7,41 @@ namespace Modules\Shared\Infrastructure\Http\View;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\User\Application\Query\GetUserStats;
-use Modules\User\Application\Query\GetUserStatsHandler;
-use Modules\Inventory\Application\Query\GetRoomStats;
-use Modules\Inventory\Application\Query\GetRoomStatsHandler;
-use Modules\Reservation\Application\Query\GetReservationStats;
-use Modules\Reservation\Application\Query\GetReservationStatsHandler;
+use Modules\IAM\Application\Query\GetUserStats;
+use Modules\IAM\Application\Query\GetUserStatsHandler;
+use Modules\Stay\Application\Query\GetReservationStats;
+use Modules\Stay\Application\Query\GetReservationStatsHandler;
+use Modules\Stay\Application\Query\GetStayStats;
+use Modules\Stay\Application\Query\GetStayStatsHandler;
+use Modules\Stay\Application\Query\ListReservations;
+use Modules\Stay\Application\Query\ListReservationsHandler;
+use Modules\Billing\Application\Query\GetBillingStats;
+use Modules\Billing\Application\Query\GetBillingStatsHandler;
+use Modules\Shared\Application\Query\Pagination;
 
 final class DashboardView
 {
     public function __construct(
         private GetUserStatsHandler $userStatsHandler,
         private GetReservationStatsHandler $reservationStatsHandler,
-        private GetRoomStatsHandler $roomStatsHandler,
+        private GetStayStatsHandler $stayStatsHandler,
+        private GetBillingStatsHandler $billingStatsHandler,
+        private ListReservationsHandler $listReservationsHandler,
     ) {}
 
     public function __invoke(Request $request): Response
     {
+        $pendingReservations = $this->listReservationsHandler->handle(
+            new ListReservations(status: 'pending'),
+            new Pagination(page: 1, perPage: 10),
+        );
+
         return Inertia::render('Dashboard', [
             'guestStats' => $this->userStatsHandler->handle(new GetUserStats)->toArray(),
             'reservationStats' => $this->reservationStatsHandler->handle(new GetReservationStats)->toArray(),
-            'roomStats' => $this->roomStatsHandler->handle(new GetRoomStats)->toArray(),
+            'stayStats' => $this->stayStatsHandler->handle(new GetStayStats)->toArray(),
+            'billingStats' => $this->billingStatsHandler->handle(new GetBillingStats())->toArray(),
+            'pendingReservations' => $pendingReservations->items,
         ]);
     }
 }

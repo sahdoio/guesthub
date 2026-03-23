@@ -6,20 +6,20 @@ namespace Tests\Unit\Reservation\Domain;
 
 use DateTimeImmutable;
 use DomainException;
-use Modules\Reservation\Domain\Event\GuestCheckedIn;
-use Modules\Reservation\Domain\Event\GuestCheckedOut;
-use Modules\Reservation\Domain\Event\ReservationCancelled;
-use Modules\Reservation\Domain\Event\ReservationConfirmed;
-use Modules\Reservation\Domain\Event\ReservationCreated;
-use Modules\Reservation\Domain\Event\SpecialRequestAdded;
-use Modules\Reservation\Domain\Event\SpecialRequestFulfilled;
-use Modules\Reservation\Domain\Exception\InvalidReservationStateException;
-use Modules\Reservation\Domain\Exception\MaxSpecialRequestsExceededException;
-use Modules\Reservation\Domain\Reservation;
-use Modules\Reservation\Domain\ReservationId;
-use Modules\Reservation\Domain\ValueObject\RequestType;
-use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
-use Modules\Reservation\Domain\ValueObject\ReservationStatus;
+use Modules\Stay\Domain\Event\GuestCheckedIn;
+use Modules\Stay\Domain\Event\GuestCheckedOut;
+use Modules\Stay\Domain\Event\ReservationCancelled;
+use Modules\Stay\Domain\Event\ReservationConfirmed;
+use Modules\Stay\Domain\Event\ReservationCreated;
+use Modules\Stay\Domain\Event\SpecialRequestAdded;
+use Modules\Stay\Domain\Event\SpecialRequestFulfilled;
+use Modules\Stay\Domain\Exception\InvalidReservationStateException;
+use Modules\Stay\Domain\Exception\MaxSpecialRequestsExceededException;
+use Modules\Stay\Domain\Reservation;
+use Modules\Stay\Domain\ReservationId;
+use Modules\Stay\Domain\ValueObject\RequestType;
+use Modules\Stay\Domain\ValueObject\ReservationPeriod;
+use Modules\Stay\Domain\ValueObject\ReservationStatus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,7 +36,6 @@ final class ReservationTest extends TestCase
             Uuid::uuid7()->toString(),
             Uuid::uuid7()->toString(),
             new ReservationPeriod(new DateTimeImmutable('+1 day'), new DateTimeImmutable('+4 days')),
-            'DOUBLE',
         );
     }
 
@@ -48,8 +47,6 @@ final class ReservationTest extends TestCase
         $reservation = $this->createReservation();
 
         $this->assertSame(ReservationStatus::PENDING, $reservation->status);
-        $this->assertSame('DOUBLE', $reservation->roomType);
-        $this->assertNull($reservation->assignedRoomNumber);
     }
 
     #[Test]
@@ -86,10 +83,9 @@ final class ReservationTest extends TestCase
         $reservation->confirm();
         $reservation->pullDomainEvents();
 
-        $reservation->checkIn('201');
+        $reservation->checkIn();
 
         $this->assertSame(ReservationStatus::CHECKED_IN, $reservation->status);
-        $this->assertSame('201', $reservation->assignedRoomNumber);
         $this->assertInstanceOf(DateTimeImmutable::class, $reservation->checkedInAt);
 
         $events = $reservation->pullDomainEvents();
@@ -102,7 +98,7 @@ final class ReservationTest extends TestCase
     {
         $reservation = $this->createReservation();
         $reservation->confirm();
-        $reservation->checkIn('201');
+        $reservation->checkIn();
         $reservation->pullDomainEvents();
 
         $reservation->checkOut();
@@ -120,7 +116,7 @@ final class ReservationTest extends TestCase
     {
         $reservation = $this->createReservation();
         $reservation->confirm();
-        $reservation->checkIn('305');
+        $reservation->checkIn();
         $reservation->checkOut();
 
         $this->assertSame(ReservationStatus::CHECKED_OUT, $reservation->status);
@@ -168,7 +164,7 @@ final class ReservationTest extends TestCase
     {
         $reservation = $this->createReservation();
         $reservation->confirm();
-        $reservation->checkIn('201');
+        $reservation->checkIn();
 
         $this->expectException(InvalidReservationStateException::class);
         $reservation->cancel('Too late');
@@ -192,7 +188,7 @@ final class ReservationTest extends TestCase
         $reservation = $this->createReservation();
 
         $this->expectException(InvalidReservationStateException::class);
-        $reservation->checkIn('201');
+        $reservation->checkIn();
     }
 
     #[Test]
@@ -277,11 +273,45 @@ final class ReservationTest extends TestCase
     {
         $reservation = $this->createReservation();
         $reservation->confirm();
-        $reservation->checkIn('201');
+        $reservation->checkIn();
         $reservation->checkOut();
 
         $this->expectException(DomainException::class);
         $reservation->addSpecialRequest(RequestType::OTHER, 'Too late');
+    }
+
+    // --- Guest Counts ---
+
+    #[Test]
+    public function it_defaults_to_one_adult(): void
+    {
+        $reservation = $this->createReservation();
+
+        $this->assertSame(1, $reservation->adults);
+        $this->assertSame(0, $reservation->children);
+        $this->assertSame(0, $reservation->babies);
+        $this->assertSame(0, $reservation->pets);
+    }
+
+    #[Test]
+    public function it_creates_with_custom_guest_counts(): void
+    {
+        $reservation = Reservation::create(
+            ReservationId::generate(),
+            Uuid::uuid7()->toString(),
+            Uuid::uuid7()->toString(),
+            Uuid::uuid7()->toString(),
+            new ReservationPeriod(new DateTimeImmutable('+1 day'), new DateTimeImmutable('+4 days')),
+            adults: 2,
+            children: 3,
+            babies: 1,
+            pets: 2,
+        );
+
+        $this->assertSame(2, $reservation->adults);
+        $this->assertSame(3, $reservation->children);
+        $this->assertSame(1, $reservation->babies);
+        $this->assertSame(2, $reservation->pets);
     }
 
     // --- Guest Profile ---
@@ -291,14 +321,13 @@ final class ReservationTest extends TestCase
     {
         $guestId = Uuid::uuid7()->toString();
         $accountId = Uuid::uuid7()->toString();
-        $hotelId = Uuid::uuid7()->toString();
+        $stayId = Uuid::uuid7()->toString();
         $reservation = Reservation::create(
             ReservationId::generate(),
             $guestId,
             $accountId,
-            $hotelId,
+            $stayId,
             new ReservationPeriod(new DateTimeImmutable('+1 day'), new DateTimeImmutable('+4 days')),
-            'SUITE',
         );
 
         $this->assertSame($guestId, $reservation->guestId);

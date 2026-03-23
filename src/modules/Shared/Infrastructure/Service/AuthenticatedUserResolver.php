@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Shared\Infrastructure\Service;
 
-use Modules\User\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\Repository\UserRepository;
 
 final readonly class AuthenticatedUserResolver
 {

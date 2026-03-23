@@ -48,7 +48,7 @@ const logout = () => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+    <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30" :class="isImpersonating ? 'pt-10' : ''">
         <ImpersonationBanner />
 
         <nav
@@ -65,8 +65,11 @@ const logout = () => {
                             <a href="/portal" :class="navClass('/portal')">
                                 {{ $t('nav.home') }}
                             </a>
-                            <a href="/portal/hotels" :class="navClass('/portal/hotels')">
-                                {{ $t('nav.hotels') }}
+                            <a href="/portal/stays" :class="navClass('/portal/stays')">
+                                {{ $t('nav.stays') }}
+                            </a>
+                            <a href="/portal/billing" :class="navClass('/portal/billing')">
+                                {{ $t('billing.title') }}
                             </a>
                         </div>
                     </div>
@@ -127,6 +130,16 @@ const logout = () => {
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                             {{ $t('nav.my_reservations') }}
+                                        </a>
+                                        <a
+                                            href="/portal/billing"
+                                            class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            @click="userMenuOpen = false"
+                                        >
+                                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            {{ $t('billing.title') }}
                                         </a>
 
                                         <div class="border-t border-gray-100 my-1"></div>

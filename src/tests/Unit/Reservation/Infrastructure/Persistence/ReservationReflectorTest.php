@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Reservation\Infrastructure\Persistence;
 
 use DateTimeImmutable;
-use Modules\Reservation\Domain\Reservation;
-use Modules\Reservation\Domain\ReservationId;
-use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
-use Modules\Reservation\Domain\ValueObject\ReservationStatus;
-use Modules\Reservation\Infrastructure\Persistence\ReservationReflector;
+use Modules\Stay\Domain\Reservation;
+use Modules\Stay\Domain\ReservationId;
+use Modules\Stay\Domain\ValueObject\ReservationPeriod;
+use Modules\Stay\Domain\ValueObject\ReservationStatus;
+use Modules\Stay\Infrastructure\Persistence\ReservationReflector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,11 +31,13 @@ final class ReservationReflectorTest extends TestCase
             uuid: $uuid,
             guestId: 'guest-uuid-123',
             accountId: 'account-uuid-123',
-            hotelId: 'hotel-uuid-123',
+            stayId: 'stay-uuid-123',
             period: $period,
-            roomType: 'DOUBLE',
+            adults: 2,
+            children: 1,
+            babies: 0,
+            pets: 0,
             status: ReservationStatus::PENDING,
-            assignedRoomNumber: null,
             specialRequests: [],
             createdAt: $createdAt,
             confirmedAt: null,
@@ -43,15 +45,18 @@ final class ReservationReflectorTest extends TestCase
             checkedOutAt: null,
             cancelledAt: null,
             cancellationReason: null,
+            freeCancellationUntil: $period->checkIn->modify('-48 hours'),
         );
 
         $this->assertInstanceOf(Reservation::class, $reservation);
         $this->assertTrue($uuid->equals($reservation->uuid));
         $this->assertSame('guest-uuid-123', $reservation->guestId);
         $this->assertTrue($period->equals($reservation->period));
-        $this->assertSame('DOUBLE', $reservation->roomType);
+        $this->assertSame(2, $reservation->adults);
+        $this->assertSame(1, $reservation->children);
+        $this->assertSame(0, $reservation->babies);
+        $this->assertSame(0, $reservation->pets);
         $this->assertSame(ReservationStatus::PENDING, $reservation->status);
-        $this->assertNull($reservation->assignedRoomNumber);
         $this->assertEmpty($reservation->specialRequests);
         $this->assertSame($createdAt, $reservation->createdAt);
     }
@@ -66,14 +71,16 @@ final class ReservationReflectorTest extends TestCase
             uuid: ReservationId::generate(),
             guestId: 'guest-uuid-456',
             accountId: 'account-uuid-456',
-            hotelId: 'hotel-uuid-456',
+            stayId: 'stay-uuid-456',
             period: new ReservationPeriod(
                 new DateTimeImmutable('+1 day'),
                 new DateTimeImmutable('+5 days'),
             ),
-            roomType: 'SUITE',
+            adults: 1,
+            children: 0,
+            babies: 0,
+            pets: 0,
             status: ReservationStatus::CHECKED_IN,
-            assignedRoomNumber: '501',
             specialRequests: [],
             createdAt: new DateTimeImmutable('2026-01-15'),
             confirmedAt: $confirmedAt,
@@ -81,10 +88,10 @@ final class ReservationReflectorTest extends TestCase
             checkedOutAt: null,
             cancelledAt: null,
             cancellationReason: null,
+            freeCancellationUntil: null,
         );
 
         $this->assertSame(ReservationStatus::CHECKED_IN, $reservation->status);
-        $this->assertSame('501', $reservation->assignedRoomNumber);
         $this->assertSame($confirmedAt, $reservation->confirmedAt);
         $this->assertSame($checkedInAt, $reservation->checkedInAt);
     }
@@ -98,14 +105,16 @@ final class ReservationReflectorTest extends TestCase
             uuid: ReservationId::generate(),
             guestId: 'guest-uuid-789',
             accountId: 'account-uuid-789',
-            hotelId: 'hotel-uuid-789',
+            stayId: 'stay-uuid-789',
             period: new ReservationPeriod(
                 new DateTimeImmutable('+5 days'),
                 new DateTimeImmutable('+8 days'),
             ),
-            roomType: 'SINGLE',
+            adults: 1,
+            children: 0,
+            babies: 0,
+            pets: 0,
             status: ReservationStatus::CANCELLED,
-            assignedRoomNumber: null,
             specialRequests: [],
             createdAt: new DateTimeImmutable('2026-01-15'),
             confirmedAt: null,
@@ -113,6 +122,7 @@ final class ReservationReflectorTest extends TestCase
             checkedOutAt: null,
             cancelledAt: $cancelledAt,
             cancellationReason: 'Trip cancelled',
+            freeCancellationUntil: null,
         );
 
         $this->assertSame(ReservationStatus::CANCELLED, $reservation->status);
@@ -127,14 +137,16 @@ final class ReservationReflectorTest extends TestCase
             uuid: ReservationId::generate(),
             guestId: 'guest-uuid',
             accountId: 'account-uuid',
-            hotelId: 'hotel-uuid',
+            stayId: 'stay-uuid',
             period: new ReservationPeriod(
                 new DateTimeImmutable('+1 day'),
                 new DateTimeImmutable('+3 days'),
             ),
-            roomType: 'SINGLE',
+            adults: 1,
+            children: 0,
+            babies: 0,
+            pets: 0,
             status: ReservationStatus::PENDING,
-            assignedRoomNumber: null,
             specialRequests: [],
             createdAt: new DateTimeImmutable,
             confirmedAt: null,
@@ -142,6 +154,7 @@ final class ReservationReflectorTest extends TestCase
             checkedOutAt: null,
             cancelledAt: null,
             cancellationReason: null,
+            freeCancellationUntil: null,
         );
 
         $this->assertEmpty($reservation->pullDomainEvents());

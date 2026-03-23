@@ -10,6 +10,8 @@ const { t } = useI18n();
 
 const props = defineProps({
     guest: Object,
+    reservations: { type: Array, default: () => [] },
+    reservationsMeta: { type: Object, default: () => ({}) },
 });
 
 const g = props.guest;
@@ -26,6 +28,14 @@ const tierDot = {
     silver: 'bg-gray-400',
     gold: 'bg-yellow-400',
     platinum: 'bg-purple-400',
+};
+
+const reservationStatusColors = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    confirmed: 'bg-blue-100 text-blue-800',
+    checked_in: 'bg-green-100 text-green-800',
+    checked_out: 'bg-gray-100 text-gray-800',
+    cancelled: 'bg-red-100 text-red-800',
 };
 
 const showDeleteConfirm = ref(false);
@@ -113,6 +123,35 @@ const deleteGuest = () => {
                         </span>
                     </div>
                     <p v-else class="text-sm text-gray-500">{{ $t('guest.no_preferences') }}</p>
+                </div>
+
+                <!-- Reservation History -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide">{{ $t('guest.reservation_history') }} ({{ reservationsMeta.total ?? 0 }})</h2>
+                    </div>
+                    <div v-if="reservations.length === 0" class="text-sm text-gray-500">
+                        {{ $t('guest.no_reservations') }}
+                    </div>
+                    <div v-else class="space-y-3">
+                        <div
+                            v-for="res in reservations"
+                            :key="res.id"
+                            class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <a v-if="res.stay?.slug" :href="`/stays/${res.stay.slug}`" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline truncate">{{ res.stay?.name || '-' }}</a>
+                                    <span v-else class="text-sm font-medium text-gray-900 truncate">{{ res.stay?.name || '-' }}</span>
+                                    <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full capitalize shrink-0" :class="reservationStatusColors[res.status]">
+                                        {{ $t('status.' + res.status) }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-500">{{ res.period.check_in }} &rarr; {{ res.period.check_out }} ({{ res.period.nights }} {{ $t('reservation.nights') }})</p>
+                            </div>
+                            <a :href="`/reservations/${res.id}`" class="text-indigo-600 hover:text-indigo-800 text-xs font-medium shrink-0 ml-3">{{ $t('common.view') }}</a>
+                        </div>
+                    </div>
                 </div>
             </div>
 

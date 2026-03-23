@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\IAM;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\User\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\Repository\UserRepository;
 use Modules\IAM\Domain\Service\UserGateway;
 use Modules\IAM\Infrastructure\Integration\UserGatewayAdapter;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;

@@ -57,7 +57,7 @@ final class AuthenticationTest extends TestCase
         ]);
 
         // user_id in actors is a numeric FK, verify via the users table
-        $userNumericId = \Modules\User\Infrastructure\Persistence\Eloquent\UserModel::where('uuid', $guestUuid)->value('id');
+        $userNumericId = \Modules\IAM\Infrastructure\Persistence\Eloquent\UserModel::where('uuid', $guestUuid)->value('id');
         $this->assertDatabaseHas('actors', [
             'email' => 'john@hotel.com',
             'user_id' => $userNumericId,
@@ -238,6 +238,6 @@ final class AuthenticationTest extends TestCase
         $this->actingAs($guest)->get('/dashboard')->assertRedirect('/login');
         $this->actingAs($guest)->get('/reservations')->assertRedirect('/login');
         $this->actingAs($guest)->get('/guests')->assertRedirect('/login');
-        $this->actingAs($guest)->get('/hotels')->assertRedirect('/login');
+        $this->actingAs($guest)->get('/stays')->assertRedirect('/login');
     }
 }

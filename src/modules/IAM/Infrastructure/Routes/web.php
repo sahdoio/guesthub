@@ -1,12 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\IAM\Infrastructure\Http\View\HotelCreateView;
-use Modules\IAM\Infrastructure\Http\View\HotelEditView;
-use Modules\IAM\Infrastructure\Http\View\HotelListView;
-use Modules\IAM\Infrastructure\Http\View\HotelShowView;
-use Modules\IAM\Infrastructure\Http\View\HotelStoreView;
-use Modules\IAM\Infrastructure\Http\View\HotelUpdateView;
 use Modules\IAM\Infrastructure\Http\View\ImpersonateView;
 use Modules\IAM\Infrastructure\Http\View\LoginSubmitView;
 use Modules\IAM\Infrastructure\Http\View\ProfileEditView;
@@ -19,6 +13,13 @@ use Modules\IAM\Infrastructure\Http\View\RegisterHotelView;
 use Modules\IAM\Infrastructure\Http\View\RegisterSubmitView;
 use Modules\IAM\Infrastructure\Http\View\RegisterView;
 use Modules\IAM\Infrastructure\Http\View\StopImpersonationView;
+use Modules\IAM\Infrastructure\Http\View\UserCreateView;
+use Modules\IAM\Infrastructure\Http\View\UserDeleteView;
+use Modules\IAM\Infrastructure\Http\View\UserEditView;
+use Modules\IAM\Infrastructure\Http\View\UserListView;
+use Modules\IAM\Infrastructure\Http\View\UserShowView;
+use Modules\IAM\Infrastructure\Http\View\UserStoreView;
+use Modules\IAM\Infrastructure\Http\View\UserUpdateView;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', LoginView::class)->name('login');
@@ -44,11 +45,12 @@ Route::middleware(['auth', 'owner'])->prefix('profile')->group(function () {
     Route::put('/', ProfileUpdateView::class)->name('profile.update');
 });
 
-Route::middleware(['auth', 'owner'])->prefix('hotels')->group(function () {
-    Route::get('/', HotelListView::class)->name('hotels.index');
-    Route::get('/create', HotelCreateView::class)->name('hotels.create');
-    Route::post('/', HotelStoreView::class)->name('hotels.store');
-    Route::get('/{slug}', HotelShowView::class)->name('hotels.show');
-    Route::get('/{slug}/edit', HotelEditView::class)->name('hotels.edit');
-    Route::put('/{slug}', HotelUpdateView::class)->name('hotels.update');
+Route::middleware(['auth', 'owner'])->prefix('guests')->group(function () {
+    Route::get('/', UserListView::class)->name('guests.index');
+    Route::get('/create', UserCreateView::class)->name('guests.create');
+    Route::post('/', UserStoreView::class)->name('guests.store');
+    Route::get('/{id}', UserShowView::class)->name('guests.show');
+    Route::get('/{id}/edit', UserEditView::class)->name('guests.edit');
+    Route::put('/{id}', UserUpdateView::class)->name('guests.update');
+    Route::delete('/{id}', UserDeleteView::class)->name('guests.delete');
 });

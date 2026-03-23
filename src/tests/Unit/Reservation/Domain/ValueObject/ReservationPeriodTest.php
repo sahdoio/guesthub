@@ -6,7 +6,7 @@ namespace Tests\Unit\Reservation\Domain\ValueObject;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
-use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
+use Modules\Stay\Domain\ValueObject\ReservationPeriod;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

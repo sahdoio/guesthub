@@ -107,6 +107,9 @@ const requestStatusColors = {
                 <!-- Stay Details -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('reservation.stay_details') }}</h2>
+                    <div v-if="r.stay?.cover_image_url" class="mb-4 rounded-lg overflow-hidden">
+                        <img :src="r.stay.cover_image_url" :alt="r.stay?.name" class="w-full h-40 object-cover" />
+                    </div>
                     <div class="grid grid-cols-2 gap-4 text-sm">
                         <div>
                             <span class="text-gray-500">{{ $t('reservation.check_in') }}</span>
@@ -120,13 +123,28 @@ const requestStatusColors = {
                             <span class="text-gray-500">{{ $t('reservation.nights') }}</span>
                             <p class="font-medium text-gray-900">{{ r.period.nights }}</p>
                         </div>
-                        <div>
-                            <span class="text-gray-500">{{ $t('reservation.room_type') }}</span>
-                            <p class="font-medium text-gray-900">{{ $t('room_type.' + r.room_type.toLowerCase()) }}</p>
+                        <div v-if="r.stay">
+                            <span class="text-gray-500">{{ $t('reservation.stay') }}</span>
+                            <p class="font-medium text-gray-900">
+                                <a v-if="r.stay.slug" :href="`/stays/${r.stay.slug}`" class="text-indigo-600 hover:text-indigo-800 hover:underline">{{ r.stay.name }}</a>
+                                <span v-else>{{ r.stay.name }}</span>
+                            </p>
                         </div>
-                        <div v-if="r.assigned_room_number">
-                            <span class="text-gray-500">{{ $t('reservation.room_number') }}</span>
-                            <p class="font-medium text-gray-900">{{ r.assigned_room_number }}</p>
+                        <div v-if="r.stay?.type">
+                            <span class="text-gray-500">{{ $t('stay.type') }}</span>
+                            <p class="font-medium text-gray-900">{{ $t('stay.type_' + r.stay.type) }}</p>
+                        </div>
+                        <div v-if="r.stay?.category">
+                            <span class="text-gray-500">{{ $t('stay.category') }}</span>
+                            <p class="font-medium text-gray-900">{{ $t('stay.category_' + r.stay.category) }}</p>
+                        </div>
+                        <div v-if="r.stay?.price_per_night">
+                            <span class="text-gray-500">{{ $t('stay.price_per_night') }}</span>
+                            <p class="font-medium text-gray-900">${{ Number(r.stay.price_per_night).toFixed(2) }}{{ $t('stay.per_night') }}</p>
+                        </div>
+                        <div v-if="r.stay?.address">
+                            <span class="text-gray-500">{{ $t('stay.address') }}</span>
+                            <p class="font-medium text-gray-900">{{ r.stay.address }}</p>
                         </div>
                     </div>
                 </div>

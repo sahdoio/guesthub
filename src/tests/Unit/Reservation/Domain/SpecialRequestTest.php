@@ -6,10 +6,10 @@ namespace Tests\Unit\Reservation\Domain;
 
 use DateTimeImmutable;
 use DomainException;
-use Modules\Reservation\Domain\SpecialRequest;
-use Modules\Reservation\Domain\ValueObject\RequestStatus;
-use Modules\Reservation\Domain\ValueObject\RequestType;
-use Modules\Reservation\Domain\ValueObject\SpecialRequestId;
+use Modules\Stay\Domain\SpecialRequest;
+use Modules\Stay\Domain\ValueObject\RequestStatus;
+use Modules\Stay\Domain\ValueObject\RequestType;
+use Modules\Stay\Domain\ValueObject\SpecialRequestId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

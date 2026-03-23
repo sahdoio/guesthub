@@ -6,10 +6,10 @@ namespace Tests\Integration\IAM;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\User\Domain\User;
-use Modules\User\Domain\Repository\UserRepository;
-use Modules\User\Domain\ValueObject\LoyaltyTier;
-use Modules\User\Infrastructure\Persistence\Eloquent\UserModel;
+use Modules\IAM\Domain\User;
+use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\ValueObject\LoyaltyTier;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\UserModel;
 use Modules\IAM\Domain\Account;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;

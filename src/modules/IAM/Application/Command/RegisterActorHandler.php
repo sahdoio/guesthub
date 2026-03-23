@@ -19,7 +19,7 @@ use Modules\IAM\Domain\ValueObject\TypeName;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
 
-final readonly class RegisterActorHandler extends EventDispatchingHandler
+final class RegisterActorHandler extends EventDispatchingHandler
 {
     public function __construct(
         private ActorRepository $repository,

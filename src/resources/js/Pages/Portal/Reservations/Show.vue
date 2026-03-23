@@ -10,9 +10,12 @@ const { t } = useI18n();
 
 const props = defineProps({
     reservation: Object,
+    invoice: Object,
+    stripePublishableKey: String,
 });
 
 const r = computed(() => props.reservation);
+const inv = computed(() => props.invoice);
 
 const statusColors = {
     pending: 'bg-yellow-100 text-yellow-800',
@@ -23,6 +26,32 @@ const statusColors = {
 };
 
 const statusLabel = (status) => t('status.' + status);
+
+const formatMoney = (cents) => {
+    return '$' + (cents / 100).toFixed(2);
+};
+
+// Free cancellation logic
+const isFreeCancellation = computed(() => {
+    return r.value.free_cancellation_until && new Date() < new Date(r.value.free_cancellation_until);
+});
+
+const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
+
+// Payment form
+const payForm = useForm({});
+const processingPayment = ref(false);
+const payNow = () => {
+    processingPayment.value = true;
+    payForm.post(`/portal/billing/${inv.value.uuid}/pay`, {
+        onSuccess: () => { processingPayment.value = false; },
+        onError: () => { processingPayment.value = false; },
+    });
+};
 
 // Cancel form
 const showCancelForm = ref(false);
@@ -73,23 +102,31 @@ const requestStatusColors = {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Main Info -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- Hotel Info -->
-                <div v-if="r.hotel?.name" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('hotel.details') }}</h2>
+                <!-- Stay Info -->
+                <div v-if="r.stay?.name" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('stay.details') }}</h2>
                     <div class="flex items-start gap-3">
                         <div class="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center shrink-0">
                             <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                             </svg>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-900">{{ r.hotel.name }}</p>
-                            <p v-if="r.hotel.address" class="text-sm text-gray-500 mt-0.5 flex items-center gap-1">
+                            <p class="font-semibold text-gray-900">{{ r.stay.name }}</p>
+                            <div class="flex gap-1.5 mt-1">
+                                <span v-if="r.stay.type" class="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                    {{ $t('stay.type_' + r.stay.type) }}
+                                </span>
+                                <span v-if="r.stay.category" class="inline-flex px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800">
+                                    {{ $t('stay.category_' + r.stay.category) }}
+                                </span>
+                            </div>
+                            <p v-if="r.stay.address" class="text-sm text-gray-500 mt-1 flex items-center gap-1">
                                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                {{ r.hotel.address }}
+                                {{ r.stay.address }}
                             </p>
                         </div>
                     </div>
@@ -111,13 +148,52 @@ const requestStatusColors = {
                             <span class="text-gray-500">{{ $t('reservation.nights') }}</span>
                             <p class="font-medium text-gray-900">{{ r.period.nights }}</p>
                         </div>
-                        <div>
-                            <span class="text-gray-500">{{ $t('reservation.room_type') }}</span>
-                            <p class="font-medium text-gray-900">{{ $t('room_type.' + r.room_type.toLowerCase()) }}</p>
+                        <div v-if="r.stay">
+                            <span class="text-gray-500">{{ $t('reservation.stay') }}</span>
+                            <p class="font-medium text-gray-900">{{ r.stay.name }}</p>
                         </div>
-                        <div v-if="r.assigned_room_number">
-                            <span class="text-gray-500">{{ $t('reservation.room_number') }}</span>
-                            <p class="font-medium text-gray-900">{{ r.assigned_room_number }}</p>
+                    </div>
+                </div>
+
+                <!-- Invoice Summary (when invoice exists) -->
+                <div v-if="inv" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 pb-0">
+                        <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">{{ $t('billing.invoice_summary') }}</h2>
+                    </div>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('billing.description') }}</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('billing.unit_price') }}</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('billing.quantity') }}</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ $t('billing.total') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr v-for="item in inv.line_items" :key="item.id">
+                                <td class="px-6 py-4 text-sm text-gray-900">{{ item.description }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900 text-right">{{ formatMoney(item.unit_price_cents) }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900 text-right">{{ item.quantity }}</td>
+                                <td class="px-6 py-4 text-sm font-semibold text-gray-900 text-right">{{ formatMoney(item.total_cents) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="border-t border-gray-200 p-6">
+                        <div class="flex justify-end">
+                            <div class="w-64 space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500">{{ $t('billing.subtotal') }}</span>
+                                    <span class="font-medium text-gray-900">{{ formatMoney(inv.subtotal_cents) }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500">{{ $t('billing.tax') }}</span>
+                                    <span class="font-medium text-gray-900">{{ formatMoney(inv.tax_cents) }}</span>
+                                </div>
+                                <div class="flex justify-between border-t border-gray-200 pt-2">
+                                    <span class="font-semibold text-gray-900">{{ $t('billing.total') }}</span>
+                                    <span class="font-bold text-lg text-indigo-700">{{ formatMoney(inv.total_cents) }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -200,6 +276,67 @@ const requestStatusColors = {
 
             <!-- Sidebar -->
             <div class="space-y-6">
+                <!-- Payment Required (pending + invoice issued) -->
+                <div v-if="r.status === 'pending' && inv && inv.status === 'issued'" class="bg-white rounded-xl shadow-sm border-2 border-indigo-200 p-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        <h2 class="text-sm font-semibold text-indigo-900 uppercase tracking-wide">{{ $t('billing.payment_required') }}</h2>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4">{{ $t('billing.payment_required_description') }}</p>
+                    <div class="bg-indigo-50 rounded-lg p-3 mb-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-indigo-700 font-medium">{{ $t('billing.total') }}</span>
+                            <span class="text-xl font-bold text-indigo-700">{{ formatMoney(inv.total_cents) }}</span>
+                        </div>
+                    </div>
+                    <div v-if="processingPayment" class="text-center py-4">
+                        <div class="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                        <p class="text-sm text-gray-500">{{ $t('billing.processing_payment') }}</p>
+                    </div>
+                    <button
+                        v-else
+                        @click="payNow"
+                        :disabled="payForm.processing"
+                        class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg shadow-sm text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                    >
+                        {{ $t('billing.pay_to_confirm') }}
+                    </button>
+                </div>
+
+                <!-- Booking Confirmed & Paid -->
+                <div v-if="r.status === 'confirmed' && inv && inv.status === 'paid'" class="bg-green-50 rounded-xl shadow-sm border border-green-200 p-6 text-center">
+                    <svg class="w-10 h-10 text-green-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-sm font-semibold text-green-800">{{ $t('billing.booking_confirmed_paid') }}</p>
+                    <p class="text-xs text-green-600 mt-1">{{ formatMoney(inv.total_cents) }}</p>
+                </div>
+
+                <!-- Cancellation Policy -->
+                <div v-if="['pending', 'confirmed'].includes(r.status) && r.free_cancellation_until" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('billing.cancellation_policy') }}</h2>
+                    <div v-if="isFreeCancellation" class="flex items-start gap-2">
+                        <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-green-700">{{ $t('billing.within_free_cancellation') }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ $t('billing.free_cancellation_until') }} {{ formatDate(r.free_cancellation_until) }}</p>
+                        </div>
+                    </div>
+                    <div v-else class="flex items-start gap-2">
+                        <svg class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.07 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-amber-700">{{ $t('billing.past_free_cancellation') }}</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ $t('billing.cancellation_no_refund') }}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Actions -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">{{ $t('common.actions') }}</h2>
@@ -213,7 +350,10 @@ const requestStatusColors = {
                             >
                                 {{ $t('reservation.cancel') }}
                             </button>
-                            <form v-else @submit.prevent="submitCancel" class="space-y-2">
+                            <div v-if="!isFreeCancellation && r.status === 'confirmed' && !showCancelForm" class="mt-1">
+                                <p class="text-xs text-amber-600 text-center">{{ $t('billing.cancellation_no_refund') }}</p>
+                            </div>
+                            <form v-if="showCancelForm" @submit.prevent="submitCancel" class="space-y-2">
                                 <textarea
                                     v-model="cancelForm.reason"
                                     required

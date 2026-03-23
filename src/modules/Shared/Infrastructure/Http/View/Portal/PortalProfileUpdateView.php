@@ -6,8 +6,8 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Modules\User\Application\Command\UpdateUser;
-use Modules\User\Application\Command\UpdateUserHandler;
+use Modules\IAM\Application\Command\UpdateUser;
+use Modules\IAM\Application\Command\UpdateUserHandler;
 
 final class PortalProfileUpdateView
 {

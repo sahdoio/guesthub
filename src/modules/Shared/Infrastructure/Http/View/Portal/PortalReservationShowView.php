@@ -7,20 +7,21 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\IAM\Domain\HotelId;
-use Modules\IAM\Domain\Repository\HotelRepository;
-use Modules\Reservation\Domain\Exception\ReservationNotFoundException;
-use Modules\Reservation\Domain\Repository\ReservationRepository;
-use Modules\Reservation\Domain\ReservationId;
-use Modules\Reservation\Domain\Service\GuestGateway;
-use Modules\Reservation\Application\Query\ReservationReadModel;
+use Modules\Billing\Infrastructure\Persistence\Eloquent\InvoiceModel;
+use Modules\Stay\Domain\Exception\ReservationNotFoundException;
+use Modules\Stay\Domain\Repository\ReservationRepository;
+use Modules\Stay\Domain\ReservationId;
+use Modules\Stay\Domain\Service\GuestGateway;
+use Modules\Stay\Application\Query\ReservationReadModel;
+use Modules\Stay\Domain\StayId;
+use Modules\Stay\Domain\Repository\StayRepository;
 
 final class PortalReservationShowView
 {
     public function __construct(
         private ReservationRepository $repository,
         private GuestGateway $guestGateway,
-        private HotelRepository $hotelRepository,
+        private StayRepository $stayRepository,
     ) {}
 
     public function __invoke(Request $request, string $id): Response
@@ -49,17 +50,25 @@ final class PortalReservationShowView
             ]);
         }
 
-        $hotel = $this->hotelRepository->findByUuid(HotelId::fromString($reservation->hotelId));
-        if ($hotel) {
-            $readModel = $readModel->withHotel([
-                'hotel_id' => (string) $hotel->uuid,
-                'name' => $hotel->name,
-                'address' => $hotel->address,
+        $stay = $this->stayRepository->findByUuid(StayId::fromString($reservation->stayId));
+        if ($stay) {
+            $readModel = $readModel->withStay([
+                'stay_id' => (string) $stay->uuid,
+                'name' => $stay->name,
+                'address' => $stay->address,
             ]);
         }
 
+        $invoice = InvoiceModel::query()
+            ->withoutGlobalScopes()
+            ->with(['lineItems', 'payments'])
+            ->where('reservation_id', $id)
+            ->first();
+
         return Inertia::render('Portal/Reservations/Show', [
             'reservation' => $readModel,
+            'invoice' => $invoice?->toArray(),
+            'stripePublishableKey' => config('billing.stripe.publishable_key'),
         ]);
     }
 }

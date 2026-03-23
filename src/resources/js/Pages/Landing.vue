@@ -8,14 +8,14 @@ const { t } = useI18n();
 const features = [
     { key: 'reservations', icon: 'calendar', color: 'from-indigo-500 to-violet-500' },
     { key: 'guests', icon: 'users', color: 'from-emerald-500 to-teal-500' },
-    { key: 'rooms', icon: 'building', color: 'from-amber-500 to-orange-500' },
+    { key: 'stays', icon: 'building', color: 'from-amber-500 to-orange-500' },
     { key: 'multi', icon: 'globe', color: 'from-sky-500 to-blue-500' },
     { key: 'analytics', icon: 'chart', color: 'from-rose-500 to-pink-500' },
     { key: 'portal', icon: 'device', color: 'from-purple-500 to-fuchsia-500' },
 ];
 
 const stats = [
-    { key: 'hotels', value: '500+' },
+    { key: 'properties', value: '500+' },
     { key: 'reservations', value: '1M+' },
     { key: 'guests', value: '250K+' },
     { key: 'uptime', value: '99.9%' },

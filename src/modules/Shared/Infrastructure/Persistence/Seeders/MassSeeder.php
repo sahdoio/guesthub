@@ -12,8 +12,7 @@ use Illuminate\Support\Str;
 class MassSeeder extends Seeder
 {
     private const ACCOUNTS_COUNT = 20;
-    private const HOTELS_COUNT = 50;
-    private const ROOMS_TARGET = 500;
+    private const STAYS_COUNT = 500;
     private const GUESTS_COUNT = 500;
     private const RESERVATIONS_COUNT = 800;
 
@@ -47,18 +46,19 @@ class MassSeeder extends Seeder
         'Tanaka', 'Nakamura', 'Dubois', 'Müller', 'Rossi', 'Johansson', 'Svensson', 'Petrov',
     ];
 
-    private array $hotelPrefixes = [
+    private array $stayPrefixes = [
         'The Grand', 'Royal', 'Imperial', 'Majestic', 'The Ritz', 'Belvedere', 'The Plaza',
         'Prestige', 'The Crown', 'Golden', 'Silver', 'Diamond', 'Crystal', 'Emerald',
         'The Luxe', 'Pinnacle', 'The Savoy', 'Heritage', 'Paramount', 'Renaissance',
     ];
 
-    private array $hotelSuffixes = [
+    private array $staySuffixes = [
         'Hotel', 'Resort', 'Lodge', 'Inn', 'Suites', 'Palace', 'Boutique Hotel',
         'Beach Resort', 'Spa & Resort', 'Hotel & Spa', 'Retreat', 'Residence',
+        'Apartment', 'Villa', 'Cottage', 'Loft', 'Penthouse', 'Cabin',
     ];
 
-    private array $hotelThemes = [
+    private array $stayThemes = [
         'Sunset Beach', 'Mountain View', 'Harbor View', 'City Center', 'Oceanfront',
         'Lakeside', 'Garden', 'Skyline', 'Riverside', 'Hilltop', 'Coastal', 'Valley',
         'Forest', 'Bay', 'Parkside', 'Seaside', 'Downtown', 'Waterfront', 'Cliffside', 'Island',
@@ -109,11 +109,11 @@ class MassSeeder extends Seeder
 
         $this->command->info('Starting mass data seeding...');
 
-        $ownerTypeId = DB::table('types')->where('name', 'owner')->value('id');
-        $guestTypeId = DB::table('types')->where('name', 'guest')->value('id');
+        $ownerTypeId = DB::table('actor_types')->where('name', 'owner')->value('id');
+        $guestTypeId = DB::table('actor_types')->where('name', 'guest')->value('id');
 
         if (!$ownerTypeId || !$guestTypeId) {
-            $this->command->error('Required types (owner, guest) not found. Run TypeSeeder first.');
+            $this->command->error('Required types (owner, guest) not found. Run ActorTypeSeeder first.');
             return;
         }
 
@@ -127,27 +127,21 @@ class MassSeeder extends Seeder
         $accountIds = DB::table('accounts')->orderBy('id')->pluck('id', 'uuid')->toArray();
         $this->command->info(sprintf('  Created %d accounts.', count($accounts)));
 
-        // 2. Generate hotels
-        $this->command->info('Seeding hotels...');
-        $hotels = $this->generateHotels($accounts, $accountIds, $now);
-        $this->batchInsert('hotels', $hotels);
-        $hotelIds = DB::table('hotels')->orderBy('id')->pluck('id', 'uuid')->toArray();
-        $this->command->info(sprintf('  Created %d hotels.', count($hotels)));
+        // 2. Generate stays
+        $this->command->info('Seeding stays...');
+        $stays = $this->generateStays($accounts, $accountIds, $now);
+        $this->batchInsert('stays', $stays);
+        $stayIds = DB::table('stays')->orderBy('id')->pluck('id', 'uuid')->toArray();
+        $this->command->info(sprintf('  Created %d stays.', count($stays)));
 
-        // 3. Generate rooms
-        $this->command->info('Seeding rooms...');
-        $rooms = $this->generateRooms($hotels, $accountIds, $hotelIds, $now);
-        $this->batchInsert('rooms', $rooms);
-        $this->command->info(sprintf('  Created %d rooms.', count($rooms)));
-
-        // 4. Generate guest users
+        // 3. Generate guest users
         $this->command->info('Seeding guest users...');
         $guestUsers = $this->generateGuestUsers($now);
         $this->batchInsert('users', $guestUsers);
         $userIds = DB::table('users')->orderBy('id')->pluck('id', 'uuid')->toArray();
         $this->command->info(sprintf('  Created %d guest users.', count($guestUsers)));
 
-        // 5. Generate guest actors (one per guest user, each with their own personal account)
+        // 4. Generate guest actors (one per guest user, each with their own personal account)
         $this->command->info('Seeding guest actors...');
         $guestActorData = $this->generateGuestActors($guestUsers, $userIds, $hashedPassword, $now);
         $this->batchInsert('accounts', $guestActorData['personalAccounts']);
@@ -171,10 +165,10 @@ class MassSeeder extends Seeder
                 'type_id' => $guestTypeId,
             ];
         }
-        $this->batchInsert('actor_types', $guestActorTypePivots);
+        $this->batchInsert('actor_type_pivot', $guestActorTypePivots);
         $this->command->info(sprintf('  Created %d guest actors with personal accounts.', count($guestActorData['actors'])));
 
-        // 6. Generate owner actors (one per business account)
+        // 5. Generate owner actors (one per business account)
         $this->command->info('Seeding owner actors...');
         $ownerActors = $this->generateOwnerActors($accounts, $allAccountIds, $hashedPassword, $now);
         $this->batchInsert('actors', $ownerActors);
@@ -189,16 +183,35 @@ class MassSeeder extends Seeder
                 'type_id' => $ownerTypeId,
             ];
         }
-        $this->batchInsert('actor_types', $ownerActorTypePivots);
+        $this->batchInsert('actor_type_pivot', $ownerActorTypePivots);
         $this->command->info(sprintf('  Created %d owner actors.', count($ownerActors)));
 
-        // 7. Generate reservations
+        // 6. Generate reservations
         $this->command->info('Seeding reservations...');
-        $reservations = $this->generateReservations($guestUsers, $accounts, $hotels, $rooms, $now);
+        $reservations = $this->generateReservations($guestUsers, $accounts, $stays, $now);
         $this->batchInsert('reservations', $reservations);
         $this->command->info(sprintf('  Created %d reservations.', count($reservations)));
 
-        $totalRecords = count($accounts) + count($hotels) + count($rooms) + count($guestUsers)
+        // 7. Populate stay_guests from reservations
+        $this->command->info('Populating stay_guests...');
+        $stayGuests = [];
+        $seen = [];
+        foreach ($reservations as $r) {
+            $key = $r['account_id'] . ':' . $r['guest_id'];
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $stayGuests[] = [
+                'account_id' => $r['account_id'],
+                'guest_uuid' => $r['guest_id'],
+                'first_reservation_at' => $r['created_at'],
+            ];
+        }
+        $this->batchInsert('stay_guests', $stayGuests);
+        $this->command->info(sprintf('  Created %d stay_guest records.', count($stayGuests)));
+
+        $totalRecords = count($accounts) + count($stays) + count($guestUsers)
             + count($guestActorData['personalAccounts']) + count($guestActorData['actors'])
             + count($ownerActors) + count($reservations)
             + count($guestActorTypePivots) + count($ownerActorTypePivots);
@@ -234,25 +247,23 @@ class MassSeeder extends Seeder
         return $accounts;
     }
 
-    private function generateHotels(array $accounts, array $accountIds, string $now): array
+    private function generateStays(array $accounts, array $accountIds, string $now): array
     {
-        $hotels = [];
+        $stays = [];
         $usedNames = [];
-        $usedSlugs = DB::table('hotels')->pluck('slug')->all();
-        $hotelsPerAccount = [];
+        $usedSlugs = DB::table('stays')->pluck('slug')->all();
 
-        // Distribute hotels: 2-3 per account, totaling ~50
-        foreach ($accounts as $index => $account) {
-            $count = ($index < 10) ? 3 : 2; // First 10 accounts get 3 hotels, rest get 2
-            $hotelsPerAccount[$account['uuid']] = $count;
-        }
+        $types = ['room', 'entire_space'];
+        $categories = ['hotel_room', 'house', 'apartment'];
+
+        // Distribute ~500 stays across accounts
+        $staysPerAccount = (int) ceil(self::STAYS_COUNT / count($accounts));
 
         foreach ($accounts as $account) {
-            $count = $hotelsPerAccount[$account['uuid']];
             $accountId = $accountIds[$account['uuid']];
 
-            for ($i = 0; $i < $count; $i++) {
-                $name = $this->generateUniqueHotelName($usedNames, $usedSlugs);
+            for ($i = 0; $i < $staysPerAccount && count($stays) < self::STAYS_COUNT; $i++) {
+                $name = $this->generateUniqueStayName($usedNames, $usedSlugs);
                 $slug = Str::slug($name);
                 $usedNames[] = $name;
                 $usedSlugs[] = $slug;
@@ -264,39 +275,59 @@ class MassSeeder extends Seeder
                 $contactEmail = strtolower(str_replace(' ', '', $slug)) . '@' . Str::slug($account['name']) . '.com';
                 $phone = sprintf('+1-%03d-%03d-%04d', rand(200, 999), rand(200, 999), rand(1000, 9999));
 
-                $hotels[] = [
+                $type = $types[array_rand($types)];
+                $category = $categories[array_rand($categories)];
+
+                $typeRoll = rand(1, 100);
+                if ($typeRoll <= 40) {
+                    $price = rand(80, 200) + (rand(0, 99) / 100);
+                    $capacity = rand(1, 2);
+                } elseif ($typeRoll <= 80) {
+                    $price = rand(120, 350) + (rand(0, 99) / 100);
+                    $capacity = rand(2, 4);
+                } else {
+                    $price = rand(250, 800) + (rand(0, 99) / 100);
+                    $capacity = rand(2, 6);
+                }
+
+                $amenityCount = rand(3, 8);
+                $shuffled = $this->amenities;
+                shuffle($shuffled);
+                $selectedAmenities = array_slice($shuffled, 0, $amenityCount);
+
+                $stays[] = [
                     'uuid' => $uuid,
                     'account_id' => $accountId,
                     'name' => $name,
                     'slug' => $slug,
                     'description' => sprintf('Welcome to %s, a premier destination offering world-class hospitality in the heart of %s.', $name, $cityData['city']),
                     'address' => $address,
+                    'type' => $type,
+                    'category' => $category,
+                    'price_per_night' => round($price, 2),
+                    'capacity' => $capacity,
+                    'amenities' => json_encode($selectedAmenities),
+                    'status' => 'active',
                     'contact_email' => $contactEmail,
                     'contact_phone' => $phone,
-                    'status' => 'active',
                     'created_at' => $now,
                     'updated_at' => $now,
-                    '_account_uuid' => $account['uuid'],
                 ];
             }
         }
 
-        // Remove internal tracking field before insert
-        return array_map(function ($hotel) {
-            unset($hotel['_account_uuid']);
-            return $hotel;
-        }, $hotels);
+        return $stays;
     }
 
-    private function generateUniqueHotelName(array $usedNames, array $usedSlugs): string
+    private function generateUniqueStayName(array $usedNames, array $usedSlugs): string
     {
         $maxAttempts = 100;
         for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
             $style = rand(1, 3);
             $name = match ($style) {
-                1 => $this->hotelPrefixes[array_rand($this->hotelPrefixes)] . ' ' . $this->hotelSuffixes[array_rand($this->hotelSuffixes)],
-                2 => $this->hotelThemes[array_rand($this->hotelThemes)] . ' ' . $this->hotelSuffixes[array_rand($this->hotelSuffixes)],
-                3 => $this->hotelPrefixes[array_rand($this->hotelPrefixes)] . ' ' . $this->hotelThemes[array_rand($this->hotelThemes)] . ' ' . $this->hotelSuffixes[array_rand($this->hotelSuffixes)],
+                1 => $this->stayPrefixes[array_rand($this->stayPrefixes)] . ' ' . $this->staySuffixes[array_rand($this->staySuffixes)],
+                2 => $this->stayThemes[array_rand($this->stayThemes)] . ' ' . $this->staySuffixes[array_rand($this->staySuffixes)],
+                3 => $this->stayPrefixes[array_rand($this->stayPrefixes)] . ' ' . $this->stayThemes[array_rand($this->stayThemes)] . ' ' . $this->staySuffixes[array_rand($this->staySuffixes)],
             };
 
             $slug = Str::slug($name);
@@ -306,86 +337,7 @@ class MassSeeder extends Seeder
         }
 
         // Fallback with random suffix
-        return $this->hotelPrefixes[array_rand($this->hotelPrefixes)] . ' Hotel #' . rand(100, 999);
-    }
-
-    private function generateRooms(array $hotels, array $accountIds, array $hotelIds, string $now): array
-    {
-        $rooms = [];
-        $roomsPerHotel = [];
-        $totalHotels = count($hotels);
-
-        // Distribute ~500 rooms across hotels (8-15 per hotel)
-        $remaining = self::ROOMS_TARGET;
-        for ($i = 0; $i < $totalHotels; $i++) {
-            if ($i === $totalHotels - 1) {
-                $count = max(8, $remaining);
-            } else {
-                $count = rand(8, 15);
-                $remaining -= $count;
-                if ($remaining < 8 * ($totalHotels - $i - 1)) {
-                    $count = max(8, $count - (8 * ($totalHotels - $i - 1) - $remaining));
-                    $remaining = self::ROOMS_TARGET - array_sum($roomsPerHotel) - $count;
-                }
-            }
-            $roomsPerHotel[] = $count;
-        }
-
-        foreach ($hotels as $hIndex => $hotel) {
-            $hotelUuid = $hotel['uuid'];
-            $hotelId = $hotelIds[$hotelUuid];
-            $accountId = $hotel['account_id'];
-            $roomCount = $roomsPerHotel[$hIndex] ?? 10;
-
-            for ($r = 0; $r < $roomCount; $r++) {
-                $typeRoll = rand(1, 100);
-                if ($typeRoll <= 40) {
-                    $type = 'SINGLE';
-                    $price = rand(80, 200) + (rand(0, 99) / 100);
-                    $capacity = rand(1, 2);
-                } elseif ($typeRoll <= 80) {
-                    $type = 'DOUBLE';
-                    $price = rand(120, 350) + (rand(0, 99) / 100);
-                    $capacity = rand(2, 4);
-                } else {
-                    $type = 'SUITE';
-                    $price = rand(250, 800) + (rand(0, 99) / 100);
-                    $capacity = rand(2, 6);
-                }
-
-                $floor = rand(1, 10);
-                $roomNumber = ($floor * 100) + $r + 1;
-                $amenityCount = rand(3, 8);
-                $shuffled = $this->amenities;
-                shuffle($shuffled);
-                $selectedAmenities = array_slice($shuffled, 0, $amenityCount);
-
-                $statusRoll = rand(1, 100);
-                $status = match (true) {
-                    $statusRoll <= 70 => 'AVAILABLE',
-                    $statusRoll <= 85 => 'OCCUPIED',
-                    $statusRoll <= 95 => 'MAINTENANCE',
-                    default => 'OUT_OF_ORDER',
-                };
-
-                $rooms[] = [
-                    'uuid' => (string) Str::uuid(),
-                    'account_id' => $accountId,
-                    'hotel_id' => $hotelId,
-                    'number' => (string) $roomNumber,
-                    'type' => $type,
-                    'floor' => $floor,
-                    'capacity' => $capacity,
-                    'price_per_night' => round($price, 2),
-                    'status' => $status,
-                    'amenities' => json_encode($selectedAmenities),
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
-            }
-        }
-
-        return $rooms;
+        return $this->stayPrefixes[array_rand($this->stayPrefixes)] . ' Stay #' . rand(100, 999);
     }
 
     private function generateGuestUsers(string $now): array
@@ -418,7 +370,6 @@ class MassSeeder extends Seeder
             $loyaltyTier = $loyaltyDistribution[array_rand($loyaltyDistribution)];
 
             $preferences = json_encode([
-                'room_type' => ['SINGLE', 'DOUBLE', 'SUITE'][array_rand(['SINGLE', 'DOUBLE', 'SUITE'])],
                 'floor' => rand(1, 10) > 5 ? 'high' : 'low',
                 'smoking' => rand(1, 100) <= 15,
                 'newsletter' => rand(1, 100) <= 60,
@@ -504,7 +455,7 @@ class MassSeeder extends Seeder
         return $actors;
     }
 
-    private function generateReservations(array $guestUsers, array $accounts, array $hotels, array $rooms, string $now): array
+    private function generateReservations(array $guestUsers, array $accounts, array $stays, string $now): array
     {
         $reservations = [];
         $statusDistribution = array_merge(
@@ -515,34 +466,25 @@ class MassSeeder extends Seeder
             array_fill(0, 10, 'cancelled'),
         );
 
-        $roomTypes = ['SINGLE', 'DOUBLE', 'SUITE'];
-
         // Build lookup maps from DB
-        $dbHotels = DB::table('hotels')->get(['id', 'uuid', 'account_id'])->keyBy('uuid');
+        $dbStays = DB::table('stays')->get(['id', 'uuid', 'account_id'])->keyBy('uuid');
         $dbAccounts = DB::table('accounts')->get(['id', 'uuid'])->keyBy('id');
-
-        // Build hotel-to-rooms mapping for room number assignment
-        $hotelRooms = [];
-        foreach ($rooms as $room) {
-            $hotelRooms[$room['hotel_id']][] = $room;
-        }
 
         for ($i = 0; $i < self::RESERVATIONS_COUNT; $i++) {
             $guestUser = $guestUsers[array_rand($guestUsers)];
-            $hotel = $hotels[array_rand($hotels)];
-            $hotelDb = $dbHotels[$hotel['uuid']] ?? null;
+            $stay = $stays[array_rand($stays)];
+            $stayDb = $dbStays[$stay['uuid']] ?? null;
 
-            if (!$hotelDb) {
+            if (!$stayDb) {
                 continue;
             }
 
-            $accountDb = $dbAccounts[$hotelDb->account_id] ?? null;
-            $accountId = $hotelDb->account_id;
+            $accountDb = $dbAccounts[$stayDb->account_id] ?? null;
+            $accountId = $stayDb->account_id;
             $accountUuid = $accountDb->uuid ?? null;
-            $hotelDbId = $hotelDb->id;
+            $stayDbId = $stayDb->id;
 
             $status = $statusDistribution[array_rand($statusDistribution)];
-            $roomType = $roomTypes[array_rand($roomTypes)];
 
             // Generate dates spread across past 3 months and next 3 months
             $daysOffset = rand(-90, 90);
@@ -552,16 +494,6 @@ class MassSeeder extends Seeder
 
             $checkInStr = $checkIn->toDateTimeString();
             $checkOutStr = $checkOut->toDateTimeString();
-
-            // Assign room number from matching hotel rooms if possible
-            $assignedRoomNumber = null;
-            if (in_array($status, ['checked_in', 'checked_out', 'confirmed'], true)) {
-                $availableRooms = $hotelRooms[$hotelDbId] ?? [];
-                if (!empty($availableRooms)) {
-                    $selectedRoom = $availableRooms[array_rand($availableRooms)];
-                    $assignedRoomNumber = $selectedRoom['number'];
-                }
-            }
 
             $confirmedAt = null;
             $checkedInAt = null;
@@ -588,13 +520,11 @@ class MassSeeder extends Seeder
                 'guest_id' => $guestUser['uuid'],
                 'account_id' => $accountId,
                 'account_uuid' => $accountUuid,
-                'hotel_id' => $hotelDbId,
-                'hotel_uuid' => $hotel['uuid'],
+                'stay_id' => $stayDbId,
+                'stay_uuid' => $stay['uuid'],
                 'check_in' => $checkInStr,
                 'check_out' => $checkOutStr,
-                'room_type' => $roomType,
                 'status' => $status,
-                'assigned_room_number' => $assignedRoomNumber,
                 'created_at' => (clone $checkIn)->subDays(rand(15, 60))->toDateTimeString(),
                 'confirmed_at' => $confirmedAt,
                 'checked_in_at' => $checkedInAt,

@@ -18,6 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
             \Modules\Shared\Infrastructure\Http\Middleware\HandleInertiaRequests::class,
         ]);
 
+        $middleware->redirectUsersTo('/');
+
         $middleware->alias([
             'owner' => \Modules\Shared\Infrastructure\Http\Middleware\EnsureActorIsOwner::class,
             'portal' => \Modules\Shared\Infrastructure\Http\Middleware\EnsureActorIsGuest::class,

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit\Guest\Infrastructure\Persistence;
 
 use DateTimeImmutable;
-use Modules\User\Domain\User;
-use Modules\User\Domain\UserId;
-use Modules\User\Domain\ValueObject\LoyaltyTier;
-use Modules\User\Infrastructure\Persistence\UserReflector;
+use Modules\IAM\Domain\User;
+use Modules\IAM\Domain\UserId;
+use Modules\IAM\Domain\ValueObject\LoyaltyTier;
+use Modules\IAM\Infrastructure\Persistence\UserReflector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

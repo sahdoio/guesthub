@@ -5,23 +5,27 @@ declare(strict_types=1);
 namespace Modules\Shared\Infrastructure\Http\View\Portal;
 
 use DateTimeImmutable;
+use DateMalformedStringException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\IAM\Domain\Repository\HotelRepository;
-use Modules\Reservation\Application\Command\CreateReservation;
-use Modules\Reservation\Application\Command\CreateReservationHandler;
+use Modules\Stay\Application\Command\CreateReservation;
+use Modules\Stay\Application\Command\CreateReservationHandler;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
+use Modules\Stay\Domain\Repository\StayRepository;
 
 final class PortalReservationStoreView
 {
     public function __construct(
         private CreateReservationHandler $handler,
-        private HotelRepository $hotelRepository,
+        private StayRepository $stayRepository,
         private AccountRepository $accountRepository,
         private TenantContext $tenantContext,
     ) {}
 
+    /**
+     * @throws DateMalformedStringException
+     */
     public function __invoke(Request $request): RedirectResponse
     {
         $guestUuid = $request->attributes->get('guest_uuid');
@@ -29,28 +33,34 @@ final class PortalReservationStoreView
         $data = $request->validate([
             'check_in' => ['required', 'date', 'after_or_equal:today'],
             'check_out' => ['required', 'date', 'after:check_in'],
-            'room_type' => ['required', 'string', 'in:SINGLE,DOUBLE,SUITE'],
-            'hotel_slug' => ['required', 'string'],
+            'stay_uuid' => ['required', 'string'],
+            'adults' => ['sometimes', 'integer', 'min:1', 'max:20'],
+            'children' => ['sometimes', 'integer', 'min:0', 'max:20'],
+            'babies' => ['sometimes', 'integer', 'min:0', 'max:10'],
+            'pets' => ['sometimes', 'integer', 'min:0', 'max:5'],
         ]);
 
-        $hotel = $this->hotelRepository->findBySlug($data['hotel_slug']);
-        if (! $hotel) {
-            abort(404, 'Hotel not found.');
+        $stay = $this->stayRepository->findBySlug($data['stay_uuid']);
+        if (! $stay) {
+            abort(404, 'Stay not found.');
         }
 
-        // Set tenant context for the reservation's hotel account
-        $numericId = $this->accountRepository->resolveNumericId($hotel->accountId);
+        // Set tenant context for the reservation's stay account
+        $numericId = $this->accountRepository->resolveNumericId($stay->accountId);
         $this->tenantContext->set($numericId);
 
         $id = $this->handler->handle(new CreateReservation(
             guestId: $guestUuid,
-            accountId: (string) $hotel->accountId,
-            hotelId: (string) $hotel->uuid,
+            accountId: (string) $stay->accountId,
+            stayId: (string) $stay->uuid,
             checkIn: new DateTimeImmutable($data['check_in']),
             checkOut: new DateTimeImmutable($data['check_out']),
-            roomType: $data['room_type'],
+            adults: (int) ($data['adults'] ?? 1),
+            children: (int) ($data['children'] ?? 0),
+            babies: (int) ($data['babies'] ?? 0),
+            pets: (int) ($data['pets'] ?? 0),
         ));
 
-        return redirect("/portal/reservations/{$id}")->with('success', 'Reservation created.');
+        return redirect("/portal/reservations/{$id}/checkout");
     }
 }

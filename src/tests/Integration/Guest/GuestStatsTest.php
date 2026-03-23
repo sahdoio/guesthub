@@ -6,9 +6,9 @@ namespace Tests\Integration\Guest;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\User\Domain\User;
-use Modules\User\Domain\Repository\UserRepository;
-use Modules\User\Domain\ValueObject\LoyaltyTier;
+use Modules\IAM\Domain\User;
+use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use PHPUnit\Framework\Attributes\Test;

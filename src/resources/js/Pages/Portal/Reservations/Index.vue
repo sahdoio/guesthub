@@ -75,16 +75,6 @@ const goToPage = (page) => {
                 <option value="cancelled">{{ $t('status.cancelled') }}</option>
             </select>
 
-            <select
-                :value="filters.room_type || ''"
-                @change="applyFilter('room_type', $event.target.value)"
-                class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-                <option value="">{{ $t('common.all_room_types') }}</option>
-                <option value="SINGLE">{{ $t('room_type.single') }}</option>
-                <option value="DOUBLE">{{ $t('room_type.double') }}</option>
-                <option value="SUITE">{{ $t('room_type.suite') }}</option>
-            </select>
         </div>
 
         <!-- Empty State -->
@@ -96,7 +86,7 @@ const goToPage = (page) => {
             </div>
             <p class="text-gray-500 mb-4">{{ $t('reservation.no_reservations') }}</p>
             <a
-                href="/portal/hotels"
+                href="/portal/stays"
                 class="inline-flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
             >
                 {{ $t('reservation.book_first_stay') }}
@@ -113,19 +103,19 @@ const goToPage = (page) => {
                 :class="statusColors[r.status]"
             >
                 <div class="p-5">
-                    <!-- Top: Hotel + Status -->
+                    <!-- Top: Stay + Status -->
                     <div class="flex items-start justify-between mb-4">
                         <div class="flex items-start gap-3 min-w-0">
                             <div class="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center shrink-0">
                                 <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                 </svg>
                             </div>
                             <div class="min-w-0">
                                 <h3 class="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors truncate">
-                                    {{ r.hotel?.name || '-' }}
+                                    {{ r.stay?.name || '-' }}
                                 </h3>
-                                <p v-if="r.hotel?.address" class="text-xs text-gray-500 mt-0.5 truncate">{{ r.hotel.address }}</p>
+                                <p v-if="r.stay?.address" class="text-xs text-gray-500 mt-0.5 truncate">{{ r.stay.address }}</p>
                             </div>
                         </div>
                         <span
@@ -155,18 +145,15 @@ const goToPage = (page) => {
                         </div>
                     </div>
 
-                    <!-- Bottom: Room info + arrow -->
+                    <!-- Bottom: Stay type + arrow -->
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-4 text-sm">
-                            <div class="flex items-center gap-1.5">
+                            <div v-if="r.stay?.type" class="flex items-center gap-1.5">
                                 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                 </svg>
-                                <span class="text-gray-600 font-medium">{{ $t('room_type.' + r.room_type.toLowerCase()) }}</span>
+                                <span class="text-gray-600 font-medium">{{ $t('stay.type_' + r.stay.type) }}</span>
                             </div>
-                            <span v-if="r.assigned_room_number" class="text-gray-400">
-                                #{{ r.assigned_room_number }}
-                            </span>
                         </div>
                         <svg class="w-5 h-5 text-gray-300 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

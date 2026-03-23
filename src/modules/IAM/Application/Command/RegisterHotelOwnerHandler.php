@@ -18,7 +18,7 @@ use Modules\IAM\Domain\ValueObject\TypeName;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
 
-final readonly class RegisterHotelOwnerHandler extends EventDispatchingHandler
+final class RegisterHotelOwnerHandler extends EventDispatchingHandler
 {
     public function __construct(
         private ActorRepository $repository,

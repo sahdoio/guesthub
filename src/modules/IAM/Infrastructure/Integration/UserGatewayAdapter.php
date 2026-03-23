@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\IAM\Infrastructure\Integration;
 
-use Modules\User\Infrastructure\Integration\UserApi;
+use Modules\IAM\Infrastructure\Integration\UserApi;
 use Modules\IAM\Domain\Service\UserGateway;
 
 final readonly class UserGatewayAdapter implements UserGateway

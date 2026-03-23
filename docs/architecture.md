@@ -1,6 +1,6 @@
 # Architecture
 
-GuestHub is a hotel management system built with **Domain-Driven Design (DDD)** on Laravel. The codebase is organized into **Bounded Contexts (BCs)** under `src/modules/`, each with its own domain model, application layer, and infrastructure.
+GuestHub is a stay management platform built with **Domain-Driven Design (DDD)** on Laravel. The codebase is organized into **Bounded Contexts (BCs)** under `src/modules/`, each with its own domain model, application layer, and infrastructure.
 
 ## Table of Contents
 
@@ -19,66 +19,48 @@ GuestHub is a hotel management system built with **Domain-Driven Design (DDD)** 
 
 ## Bounded Contexts
 
-### User
-
-Manages user profiles and loyalty information. Guests and owners share a single `users` table — owners have a `null` loyalty tier.
-
-| Concept | Class |
-|---|---|
-| Aggregate | `User` |
-| Identity | `UserId` |
-| Value Object | `LoyaltyTier` (enum: BRONZE, SILVER, GOLD, PLATINUM) |
-
-Domain events: `UserCreated`, `UserContactInfoUpdated`, `UserLoyaltyTierChanged`.
-
 ### IAM (Identity & Access Management)
 
-Handles actors, accounts, hotels, types, authentication, and token management. See [IAM Deep Dive](#iam-deep-dive--actors--authentication) for the full explanation.
+Handles actors, accounts, users, types, authentication, and token management. The IAM module owns both the `actors` table and the `users` table (user profiles with loyalty tiers). See [IAM Deep Dive](#iam-deep-dive--actors--authentication) for the full explanation.
 
 | Concept | Class |
 |---|---|
-| Aggregates | `Actor`, `Account`, `Hotel` |
+| Aggregates | `Actor`, `Account`, `User` |
 | Entities | `Type` |
-| Identities | `ActorId`, `AccountId`, `TypeId` |
-| Value Objects | `TypeName` (enum: SUPERADMIN, OWNER, GUEST), `HashedPassword` |
-| Domain Services | `PasswordHasher`, `TokenManager`, `UserGateway` |
+| Identities | `ActorId`, `AccountId`, `UserId`, `TypeId` |
+| Value Objects | `TypeName` (enum: SUPERADMIN, OWNER, GUEST), `HashedPassword`, `LoyaltyTier` (enum: BRONZE, SILVER, GOLD, PLATINUM) |
+| Domain Services | `PasswordHasher`, `TokenManager`, `UserGateway`, `EmailUniquenessChecker` |
 
-Multi-tenant: `Account` serves as the tenant boundary. All actors belong to an account, and other BCs' tables (users, reservations, rooms) carry an `account_id` foreign key. The `actor_types` pivot table links actors to their types.
+Multi-tenant: `Account` serves as the tenant boundary. All actors belong to an account, and other BCs' tables (stays, reservations, invoices) carry an `account_id` foreign key. The `actor_type_pivot` table links actors to their types.
 
-### Inventory
+Domain events: `ActorRegistered`, `AccountCreated`, `UserCreated`, `UserContactInfoUpdated`, `UserLoyaltyTierChanged`.
 
-Manages the hotel's room inventory — room definitions, availability, status, and pricing.
+### Stay
 
-| Concept | Class |
-|---|---|
-| Aggregate | `Room` |
-| Identity | `RoomId` |
-| Value Objects | `RoomType` (enum: SINGLE, DOUBLE, SUITE), `RoomStatus` (enum: AVAILABLE, OCCUPIED, MAINTENANCE, OUT_OF_ORDER) |
-
-Room state machine:
-
-```
-AVAILABLE ──> OCCUPIED ──> AVAILABLE (release)
-    │
-    ├──> MAINTENANCE ──> AVAILABLE
-    └──> OUT_OF_ORDER ──> AVAILABLE
-```
-
-No domain events — state changes are managed through direct commands.
-
-### Reservation
-
-The richest BC. Manages the full reservation lifecycle, special requests, and emits domain/integration events.
+Manages stays (bookable properties) and the full reservation lifecycle. A Stay is an Airbnb-style property listing with a type and category. Reservations are linked to a stay and enforce a state machine for their lifecycle.
 
 | Concept | Class |
 |---|---|
-| Aggregate | `Reservation` |
+| Aggregates | `Stay`, `Reservation` |
 | Entity | `SpecialRequest` (child of Reservation) |
-| Identities | `ReservationId`, `SpecialRequestId` |
-| Value Objects | `ReservationStatus`, `ReservationPeriod`, `RequestType`, `RequestStatus` |
-| Policy | `ReservationPolicy` |
-| Domain Services | `GuestGateway`, `InventoryGateway` |
-| DTOs | `GuestInfo`, `RoomAvailability`, `RoomTypeInfo` |
+| Identities | `StayId`, `ReservationId`, `SpecialRequestId` |
+| Value Objects | `StayType` (enum: ROOM, ENTIRE_SPACE), `StayCategory` (enum: HOTEL_ROOM, HOUSE, APARTMENT), `ReservationStatus`, `ReservationPeriod`, `RequestType`, `RequestStatus` |
+| Specification | `ReservationCreationSpecification` |
+| Domain Services | `GuestGateway` |
+| DTOs | `GuestInfo` |
+
+Stay types and categories:
+
+| `StayType` | Purpose |
+|---|---|
+| `ROOM` | A single room within a larger property (e.g., hotel room) |
+| `ENTIRE_SPACE` | A complete standalone property (e.g., house, apartment) |
+
+| `StayCategory` | Purpose |
+|---|---|
+| `HOTEL_ROOM` | Room in a hotel |
+| `HOUSE` | Standalone house |
+| `APARTMENT` | Apartment unit |
 
 Reservation state machine:
 
@@ -88,37 +70,66 @@ PENDING ──> CONFIRMED ──> CHECKED_IN ──> CHECKED_OUT
   └──> CANCELLED <┘
 ```
 
+### Billing
+
+Manages invoices and payments for reservations. The Invoice aggregate contains line items and payments. Invoices are created automatically when Stay integration events fire (reservation confirmed). Payments are processed via Stripe.
+
+| Concept | Class |
+|---|---|
+| Aggregate | `Invoice` |
+| Entities | `LineItem`, `Payment` |
+| Identities | `InvoiceId`, `LineItemId`, `PaymentId` |
+| Value Objects | `Money`, `InvoiceStatus` (enum: DRAFT, ISSUED, PAID, VOID, REFUNDED), `PaymentStatus` (enum: PENDING, SUCCEEDED, FAILED, REFUNDED), `PaymentMethod` (enum: CARD, BANK_TRANSFER, OTHER) |
+| Domain Services | `ReservationGateway`, `PaymentGateway` |
+| DTOs | `ReservationInfo`, `PaymentGatewayResult` |
+
+Invoice state machine:
+
+```
+DRAFT ──> ISSUED ──> PAID ──> REFUNDED
+  │          │
+  └──> VOID <┘
+```
+
+Payment state machine:
+
+```
+PENDING ──> SUCCEEDED
+   │
+   └──> FAILED
+   └──> REFUNDED
+```
+
 ---
 
 ## Context Map
 
 ```
-┌──────────┐         UserApi              ┌──────────────┐        InventoryApi        ┌─────────────┐
-│  User    │  <────────────────────────── │ Reservation  │ ─────────────────────────> │  Inventory  │
-│          │   (GuestGateway adapter)     │              │  (InventoryGateway adapter)│             │
-│          │                              │              │                            │             │
-│          │         UserApi              │              │                            │             │
-│          │  <────────────────────────   │              │                            └─────────────┘
-└──────────┘   (UserGateway)              └──────────────┘
-     ▲
-     │  UserApi
-     │  (UserGateway adapter)
-┌──────────┐
-│   IAM    │
-│          │
-└──────────┘
+                                      UserApi                    StayApi
+┌──────────┐     UserApi          ┌──────────┐              ┌─────────────┐
+│   IAM    │ ──────────────────>  │   Stay   │ ◄─────────── │   Billing   │
+│          │  (exposes UserApi    │          │  ReservationGateway         │
+│ (actors, │   for cross-BC      │ (stays,  │  (reads reservation data)  │
+│  users,  │   user data)        │  reserv- │                            │
+│  auth)   │                     │  ations) │ ─── integration events ──> │
+└──────────┘                     └──────────┘                └────────────┘
+     │                                │
+     │  UserApi                       │  GuestGateway
+     │  (UserGateway adapter)         │  (reads user data via IAM's UserApi)
+     └────────────────────────────────┘
 ```
 
 **Relationships:**
 
 | Upstream | Downstream | Pattern | Purpose |
 |---|---|---|---|
-| User | Reservation | **Anti-Corruption Layer** (read-only via `UserApi`) | Reservation reads user data (name, email, VIP status) via `GuestGateway` |
-| User | IAM | **Anti-Corruption Layer** (write via `UserApi`) | IAM creates user profiles during registration via `UserGateway` |
-| Inventory | Reservation | **Anti-Corruption Layer** (via `InventoryApi`) | `InventoryGateway` checks room availability and pricing |
-| IAM | All BCs | **Sanctum middleware** | `auth:sanctum` protects User and Reservation API routes |
+| IAM (UserApi) | Stay | **Anti-Corruption Layer** (read-only via `UserApi`) | Stay reads user data (name, email, VIP status) via `GuestGateway` |
+| IAM (UserApi) | IAM (Actor) | **Internal gateway** (write via `UserGateway`) | IAM creates user profiles during actor registration |
+| Stay (StayApi) | Billing | **Anti-Corruption Layer** (via `ReservationGateway`) | Billing reads reservation and stay data for invoice creation |
+| Stay | Billing | **Integration Events** | Stay emits events (confirmed, checked out, cancelled) that Billing listens to |
+| IAM | All BCs | **Sanctum middleware** | `auth:sanctum` protects Stay and Billing routes |
 
-No BC calls another BC's repository directly. All cross-boundary data flows through Gateway adapters and the User BC's `UserApi`.
+No BC calls another BC's repository directly. All cross-boundary data flows through Gateway adapters, Integration APIs, and integration events.
 
 ---
 
@@ -131,13 +142,13 @@ modules/{BC}/
 ├── Domain/                     # Pure domain — no framework dependencies
 │   ├── {Aggregate}.php         # Aggregate root with private constructor + static factory
 │   ├── {Aggregate}Id.php       # Identity value object (UUID v7)
-│   ├── Entity/                 # Child entities (e.g. SpecialRequest)
+│   ├── Entity/                 # Child entities (e.g. SpecialRequest, LineItem, Payment)
 │   ├── ValueObject/            # Enums and value objects
 │   ├── Event/                  # Domain events (implements DomainEvent)
 │   ├── Exception/              # Domain exceptions
 │   ├── Repository/             # Repository interface (port)
 │   ├── Service/                # Domain service interfaces (ports)
-│   ├── Policies/               # Domain policies
+│   ├── Specification/          # Domain specifications / business rules
 │   └── Dto/                    # Read-only DTOs for cross-BC data
 │
 ├── Application/                # Use cases — orchestrates domain
@@ -145,15 +156,22 @@ modules/{BC}/
 │   ├── Listeners/              # Domain event listeners (transform → integration events)
 │   └── Query/                  # Query DTOs + Handlers (if any)
 │
-└── Infrastructure/             # Framework adapters
-    ├── Persistence/            # Repository implementations, Reflectors, Migrations, Eloquent models
-    ├── Http/                   # Inertia view classes, middleware
-    ├── Routes/                 # API and web route definitions
-    ├── Services/               # Framework service implementations (e.g. BcryptPasswordHasher)
-    ├── Integration/            # Anti-corruption layer adapters for other BCs
-    ├── IntegrationEvent/       # Integration event classes
-    ├── Messaging/              # Event publishers
-    └── Providers/              # Service provider (DI bindings, event wiring, migrations, routes)
+├── Infrastructure/             # Framework adapters
+│   ├── Persistence/            # Repository implementations, Reflectors, Migrations, Eloquent models, Seeders
+│   ├── Http/                   # Inertia view classes, HTTP actions, presenters
+│   ├── Routes/                 # API and web route definitions
+│   ├── Services/               # Framework service implementations (e.g. BcryptPasswordHasher)
+│   ├── Integration/            # Anti-corruption layer adapters and exposed APIs for other BCs
+│   ├── IntegrationEvent/       # Integration event classes
+│   ├── Messaging/              # Event publishers
+│   ├── Stripe/                 # Stripe webhook controller, payment gateway (Billing only)
+│   ├── Config/                 # Module-specific configuration
+│   └── Providers/              # Service provider (DI bindings, event wiring, migrations, routes)
+│
+└── Presentation/               # PSR-7 API actions, presenters (some BCs)
+    └── Http/
+        ├── Action/             # PSR-7 request handlers
+        └── Presenter/          # Response presenters
 ```
 
 ---
@@ -180,18 +198,28 @@ modules/{BC}/
 | `EventDispatcher` | Interface. Single method: `dispatch(object $event): void`. |
 | `EventDispatchingHandler` | Abstract base for command handlers that dispatch domain events after persistence. Provides `dispatchEvents(AggregateRoot)`. |
 | `IntegrationEvent` | Interface. Methods: `occurredAt(): DateTimeImmutable`, `toArray(): array`. |
+| `EventStore` | Interface for persisting domain events. |
+| `StoredEvent` | DTO representing a persisted domain event. |
 
 ### Infrastructure Layer
 
 | Class | Purpose |
 |---|---|
 | `LaravelEventDispatcher` | Implements `EventDispatcher` by delegating to Laravel's `Illuminate\Contracts\Events\Dispatcher`. |
+| `EventStoreRecorder` | Records domain events to the `stored_events` table. |
 | `TenantContext` | Singleton holding the current tenant (account) ID for multi-tenant scoping. |
 | `BelongsToTenant` | Eloquent global scope that filters queries by `account_id`. |
 | `HandleInertiaRequests` | Inertia middleware sharing auth/user data with all pages. |
 | `EnsureActorType` | Middleware that validates the authenticated actor has the required type(s). |
+| `EnsureActorIsOwner` | Middleware that validates actor is an owner type. |
+| `EnsureActorIsGuest` | Middleware that validates actor is a guest type. |
 | `SetTenantContext` | Middleware that sets the tenant context from the authenticated actor's account. |
+| `MapRouteParameters` | Middleware for mapping route parameters. |
 | `AuthenticatedUserResolver` | Service resolving the current user's UUID and type from the authenticated actor. |
+
+### Portal Views
+
+The Shared module also hosts the guest-facing portal views (`Infrastructure/Http/View/Portal/`), including dashboard, stay browsing, reservation management, profile, invoice viewing, and payment initiation. The portal routes are defined in `Infrastructure/Routes/portal.php`.
 
 ---
 
@@ -199,22 +227,36 @@ modules/{BC}/
 
 Domain events are recorded inside aggregates via `recordEvent()` and pulled by application-layer handlers after persistence.
 
-### Reservation Events
+### Stay Events
 
 | Event | Recorded When | Payload |
 |---|---|---|
+| `StayCreated` | `Stay::create()` | `stayId`, `name` |
 | `ReservationCreated` | `Reservation::create()` | `reservationId` |
 | `ReservationConfirmed` | `confirm()` | `reservationId` |
 | `ReservationCancelled` | `cancel()` | `reservationId`, `reason` |
-| `GuestCheckedIn` | `checkIn()` | `reservationId`, `roomNumber` |
+| `GuestCheckedIn` | `checkIn()` | `reservationId` |
 | `GuestCheckedOut` | `checkOut()` | `reservationId` |
 | `SpecialRequestAdded` | `addSpecialRequest()` | `reservationId`, `requestId` |
 | `SpecialRequestFulfilled` | `fulfillSpecialRequest()` | `reservationId`, `requestId` |
 
-### User Events
+### Billing Events
 
 | Event | Recorded When | Payload |
 |---|---|---|
+| `InvoiceCreated` | `Invoice::createForReservation()` | `invoiceId`, `reservationId` |
+| `InvoiceIssued` | `issue()` | `invoiceId` |
+| `InvoiceFullyPaid` | `markPaymentSucceeded()` (when total covered) | `invoiceId`, `reservationId` |
+| `InvoiceVoided` | `void()` | `invoiceId`, `reason` |
+| `InvoiceRefunded` | `refund()` | `invoiceId` |
+| `PaymentRecorded` | `recordPayment()` | `invoiceId`, `paymentId` |
+
+### IAM Events
+
+| Event | Recorded When | Payload |
+|---|---|---|
+| `ActorRegistered` | `Actor::register()` | `actorId` |
+| `AccountCreated` | `Account::create()` | `accountId` |
 | `UserCreated` | `User::create()` | `userId`, `email` |
 | `UserContactInfoUpdated` | `updateContactInfo()` | `userId` |
 | `UserLoyaltyTierChanged` | `changeLoyaltyTier()` | `userId`, `tier` |
@@ -225,20 +267,32 @@ Domain events are recorded inside aggregates via `recordEvent()` and pulled by a
 
 Integration events are enriched, serializable versions of domain events meant for cross-BC or external consumption. They carry all the context needed by consumers (no further lookups required).
 
+### Stay Integration Events
+
 | Integration Event | Source Domain Event | Extra Data |
 |---|---|---|
-| `ReservationConfirmedEvent` | `ReservationConfirmed` | guestEmail, roomType, checkIn, checkOut, isVip |
-| `ReservationCancelledEvent` | `ReservationCancelled` | roomType, checkIn, checkOut, reason |
-| `GuestCheckedInEvent` | `GuestCheckedIn` | roomNumber, guestEmail, isVip |
-| `GuestCheckedOutEvent` | `GuestCheckedOut` | roomNumber, guestEmail |
+| `ReservationConfirmedEvent` | `ReservationConfirmed` | guestEmail, stayId, checkIn, checkOut, isVip |
+| `ReservationCancelledEvent` | `ReservationCancelled` | stayId, checkIn, checkOut, reason |
+| `GuestCheckedInEvent` | `GuestCheckedIn` | guestEmail, isVip |
+| `GuestCheckedOutEvent` | `GuestCheckedOut` | guestEmail |
 
 All integration events implement `IntegrationEvent` (with `occurredAt()` and `toArray()`).
+
+### Consumer: Billing BC
+
+The Billing BC listens to Stay integration events:
+
+| Integration Event | Billing Listener | Action |
+|---|---|---|
+| `ReservationConfirmedEvent` | `OnReservationConfirmed` | Creates a draft invoice for the reservation |
+| `GuestCheckedOutEvent` | `OnGuestCheckedOut` | Triggers post-checkout billing logic |
+| `ReservationCancelledEvent` | `OnReservationCancelled` | Voids the associated invoice if applicable |
 
 ---
 
 ## Event Flow
 
-The full lifecycle of an event from aggregate to integration:
+The full lifecycle of an event from aggregate to integration to cross-BC consumption:
 
 ```
 1. Aggregate behavior method
@@ -253,95 +307,108 @@ The full lifecycle of an event from aggregate to integration:
 3. LaravelEventDispatcher
    │  Delegates to Laravel's event system
    ▼
-4. Listener (Application layer)
+4. Stay Listener (Application layer)
    │  OnReservationConfirmed::handle(ReservationConfirmed $event)
    │  - Fetches reservation from repository (for full context)
    │  - Fetches guest info via GuestGateway (for email, VIP status)
    │  - Creates ReservationConfirmedEvent (integration event)
    │  - Dispatches integration event
    ▼
-5. Integration event is dispatched
-   (Currently: logged. Future: message broker, webhooks, etc.)
+5. Integration event is dispatched via Laravel's event system
+   │
+   ├──> IntegrationEventPublisher (logs the event)
+   │
+   └──> Billing Listener (cross-BC consumer)
+        │  OnReservationConfirmed::handle(ReservationConfirmedEvent $event)
+        │  - Fetches reservation data via ReservationGateway
+        │  - Creates Invoice with line items
+        │  - Saves invoice
+        ▼
+6. Invoice aggregate records InvoiceCreated domain event
 ```
 
-**Event wiring** is done in `ReservationServiceProvider::boot()`:
+**Event wiring** is done in `StayServiceProvider::boot()`:
 
 ```php
+Event::listen(ReservationCreated::class, OnReservationCreated::class);
 Event::listen(ReservationConfirmed::class, OnReservationConfirmed::class);
 Event::listen(ReservationCancelled::class, OnReservationCancelled::class);
 Event::listen(GuestCheckedIn::class, OnGuestCheckedIn::class);
 Event::listen(GuestCheckedOut::class, OnGuestCheckedOut::class);
 ```
 
-Note: `ReservationCreated`, `SpecialRequestAdded`, and `SpecialRequestFulfilled` are recorded but have no listeners yet — they exist for future consumers.
+And in `BillingServiceProvider::boot()`:
+
+```php
+Event::listen(ReservationConfirmedEvent::class, OnReservationConfirmed::class);
+Event::listen(GuestCheckedOutEvent::class, OnGuestCheckedOut::class);
+Event::listen(ReservationCancelledEvent::class, OnReservationCancelled::class);
+```
 
 ---
 
 ## Inter-BC Communication
 
-### GuestGateway (Reservation → User)
+### GuestGateway (Stay → IAM)
 
-The Reservation BC needs user data (name, email, VIP status) but does not depend on the User domain model. Instead:
+The Stay BC needs user data (name, email, VIP status) but does not depend on the IAM domain model. Instead:
 
-1. **Port** — `Reservation/Domain/Service/GuestGateway` interface defines `findByUuid(string): ?GuestInfo`
-2. **DTO** — `GuestInfo` is a read-only DTO owned by the Reservation BC
-3. **Adapter** — `Reservation/Infrastructure/Integration/GuestGatewayAdapter` delegates to the User BC's `UserApi` and maps to `GuestInfo`
+1. **Port** — `Stay/Domain/Service/GuestGateway` interface defines `findByUuid(string): ?GuestInfo`
+2. **DTO** — `GuestInfo` is a read-only DTO owned by the Stay BC
+3. **Adapter** — `Stay/Infrastructure/Integration/GuestGatewayAdapter` delegates to IAM's `UserApi` and maps to `GuestInfo`
 
-This is an **Anti-Corruption Layer**: the Reservation BC translates User data into its own language (`isVip` is derived from `loyalty_tier`).
+This is an **Anti-Corruption Layer**: the Stay BC translates IAM user data into its own language (`isVip` is derived from `loyalty_tier`).
 
 **Used by:**
-- `CreateReservationHandler` — checks VIP status for booking policy
-- `OnReservationConfirmed` — enriches integration event with guest email
+- `OnReservationConfirmed` — enriches integration event with guest email and VIP status
 - `OnGuestCheckedIn` / `OnGuestCheckedOut` — same enrichment
-- `ReservationResource` — includes guest info in API response
 
-### UserGateway (IAM → User)
+### UserGateway (IAM internal)
 
-When an actor registers, the IAM BC creates a corresponding user profile:
+When an actor registers, IAM creates a corresponding user profile via the `UserGateway`:
 
 1. **Port** — `IAM/Domain/Service/UserGateway` interface defines `create(name, email, phone, document, ?loyaltyTier): int`
-2. **Adapter** — `IAM/Infrastructure/Integration/UserGatewayAdapter` delegates to the User BC's `UserApi`
+2. **Adapter** — `IAM/Infrastructure/Integration/UserGatewayAdapter` delegates to IAM's own `UserApi`
 
 The returned user `id` is stored on the Actor as `userId`.
 
-### User Integration API
+### UserApi (IAM Integration API)
 
-The User BC exposes a `UserApi` (in `Infrastructure/Integration/`) for other BCs to consume. It provides:
+IAM exposes a `UserApi` (in `Infrastructure/Integration/`) for other BCs to consume. It provides:
 
 - `create(name, email, phone, document, ?loyaltyTier): int` — creates a user profile, returns numeric ID
 - `findByUuid(string): ?UserData` — returns a `UserData` DTO with profile fields
-- `findById(int): ?UserData` — returns a `UserData` DTO by numeric ID
 
-This API is the single entry point for cross-BC access to user data. Both the Reservation and IAM adapters depend on it.
+This API is the single entry point for cross-BC access to user data. The Stay BC's `GuestGatewayAdapter` depends on it.
 
-### InventoryGateway (Reservation → Inventory)
+### StayApi (Stay Integration API)
 
-Same Anti-Corruption Layer pattern, now backed by the Inventory BC:
+The Stay BC exposes a `StayApi` (in `Infrastructure/Integration/`) for other BCs to query stay data:
 
-1. **Port** — `InventoryGateway` defines `checkAvailability()`, `getRoomTypeInfo()`, `listAvailableRooms()`, and `isRoomAvailable()`
-2. **DTOs** — `RoomAvailability`, `RoomTypeInfo`, `AvailableRoom` — owned by the Reservation BC
-3. **Adapter** — `InventoryGatewayAdapter` delegates to the Inventory BC's `InventoryApi` and maps to Reservation DTOs
+- `findByUuid(string): ?StayData` — returns stay details (name, slug, type, category, price, capacity, status)
+- `isAvailable(string): bool` — checks if a stay is active
 
-**Used by:**
-- `ReservationCreationSpecification` — validates room availability before creation
-- `ReservationShowView` — lists available rooms for check-in dropdown
-- `CheckInView` / `CheckInAction` — validates the selected room is available before check-in
+### ReservationGateway (Billing → Stay)
 
-### Inventory Integration API
+The Billing BC needs reservation and stay data (guest ID, stay name, price per night, check-in/check-out) for invoice creation:
 
-The Inventory BC exposes an `InventoryApi` (in `Infrastructure/Integration/`) for other BCs to consume. It provides:
+1. **Port** — `Billing/Domain/Service/ReservationGateway` interface defines `findReservation(string): ?ReservationInfo`
+2. **DTO** — `ReservationInfo` is a read-only DTO owned by the Billing BC with fields: `reservationId`, `guestId`, `stayId`, `stayName`, `accountId`, `checkIn`, `checkOut`, `nights`, `pricePerNight`
+3. **Adapter** — `Billing/Infrastructure/Integration/ReservationGatewayAdapter` queries the Stay BC's Eloquent models and maps to `ReservationInfo`
 
-- `findByUuid(string): ?RoomData` — returns room data by UUID
-- `findByNumber(string): ?RoomData` — returns room data by room number
-- `countAvailableByType(string): int` — counts available rooms of a given type
-- `listAvailableByType(string): RoomData[]` — lists available rooms of a given type
-- `isRoomAvailable(string): bool` — checks if a specific room number is available
+### PaymentGateway (Billing → Stripe)
+
+The Billing BC integrates with Stripe for payment processing:
+
+1. **Port** — `Billing/Domain/Service/PaymentGateway` interface
+2. **Adapter** — `Billing/Infrastructure/Stripe/StripePaymentGateway` handles Stripe API calls
+3. **Webhook** — `Billing/Infrastructure/Stripe/StripeWebhookController` processes payment success/failure callbacks
 
 ### No Direct Coupling
 
 - No BC imports another BC's domain classes
-- No BC calls another BC's repository
-- Cross-BC data flows through `UserApi`, `InventoryApi`, and Gateway adapters
+- No BC calls another BC's repository (except Billing's `ReservationGatewayAdapter` which uses Stay Eloquent models for pragmatic read access)
+- Cross-BC data flows through `UserApi`, `StayApi`, Gateway adapters, and integration events
 - IAM protects routes via Sanctum middleware (framework-level, not a domain dependency)
 
 ---
@@ -373,38 +440,49 @@ return $user;
 
 | Reflector | Reconstitutes | Used By |
 |---|---|---|
-| `RoomReflector` | `Room` | `EloquentRoomRepository` |
+| `StayReflector` | `Stay` | `EloquentStayRepository` |
+| `ReservationReflector` | `Reservation` (with nested `SpecialRequest[]`) | `EloquentReservationRepository` |
+| `SpecialRequestReflector` | `SpecialRequest` | `EloquentReservationRepository` (during deserialization) |
+| `InvoiceReflector` | `Invoice` (with nested `LineItem[]` and `Payment[]`) | `EloquentInvoiceRepository` |
 | `UserReflector` | `User` | `EloquentUserRepository` |
 | `ActorReflector` | `Actor` | `EloquentActorRepository` |
 | `AccountReflector` | `Account` | `EloquentAccountRepository` |
-| `ReservationReflector` | `Reservation` (with nested `SpecialRequest[]`) | `EloquentReservationRepository` |
-| `SpecialRequestReflector` | `SpecialRequest` | `EloquentReservationRepository` (during deserialization) |
 
 Reflectors are **unaffected by private constructors** — they use `ReflectionClass::newInstanceWithoutConstructor()`.
 
+### Event Store
+
+Domain events are persisted to the `stored_events` table via `EventStoreRecorder`. The `EventSerializer` handles serialization/deserialization. This provides an audit trail and enables future event replay capabilities.
+
 ---
 
-## IAM Deep Dive — Actors, Accounts, Types & Authentication
+## IAM Deep Dive — Actors, Accounts, Users & Authentication
 
 ### Multi-Tenancy: Accounts
 
-An **Account** is the IAM aggregate that represents a tenant. Each account is a hotel or organization. All actors belong to an account, and all main tables across BCs (users, reservations, rooms) carry an `account_id` foreign key for data isolation.
+An **Account** is the IAM aggregate that represents a tenant. Each account is a property owner or organization. All actors belong to an account, and all main tables across BCs (stays, reservations, invoices) carry an `account_id` foreign key for data isolation.
+
+### Users
+
+The **User** aggregate lives within the IAM BC. It manages user profiles — name, email, phone, document, loyalty tier. Guests and owners share a single `users` table; owners have a `null` loyalty tier. User profiles are created during actor registration and managed via CRUD operations in the owner dashboard.
+
+The `UserApi` exposes user data to other BCs (Stay uses it via `GuestGateway` to enrich integration events with guest email and VIP status).
 
 ### Types
 
-**Type** is a domain entity stored in the `types` table. Types are seeded (`superadmin`, `owner`, `guest`) and referenced by actors via the `actor_types` pivot table (many-to-many). The `TypeName` enum provides type-safe domain logic:
+**Type** is a domain entity stored in the `types` table. Types are seeded (`superadmin`, `owner`, `guest`) and referenced by actors via the `actor_type_pivot` table (many-to-many). The `TypeName` enum provides type-safe domain logic:
 
 | `TypeName` | Purpose |
 |---|---|
-| `SUPERADMIN` | System administrator. Can impersonate any hotel owner to manage their properties. |
-| `OWNER` | Hotel owner / property manager. Manages rooms, reservations, and guests for their hotel(s). |
-| `GUEST` | Hotel guest who accesses the guest portal for reservations and profile management. |
+| `SUPERADMIN` | System administrator. Can impersonate any owner to manage their properties. |
+| `OWNER` | Property owner / manager. Manages stays, reservations, invoices, and guests. |
+| `GUEST` | Guest who accesses the portal for stay browsing, reservations, and profile management. |
 
 ### What is an Actor?
 
 An **Actor** is the IAM aggregate — it represents any identity that can authenticate against the system. Actors have types (not roles) that control access levels.
 
-An Actor belongs to an Account (tenant) and has one or more Types. Each actor has a `userId` linking to a `User` in the User BC.
+An Actor belongs to an Account (tenant) and has one or more Types. Each actor has a `userId` linking to a `User` in the same IAM module.
 
 ### The Actor Aggregate
 
@@ -419,7 +497,7 @@ final class Actor extends AggregateRoot
         public readonly string $name,
         public readonly string $email,           // unique, used for login
         public private(set) HashedPassword $password,
-        public readonly ?int $userId,            // FK to users table in User BC
+        public readonly ?int $userId,            // FK to users table
         public readonly DateTimeImmutable $createdAt,
         public private(set) ?DateTimeImmutable $updatedAt = null,
     ) {}
@@ -435,12 +513,12 @@ Key design decisions:
 - **`readonly` properties** (uuid, accountId, name, email, userId, createdAt) — set once at registration, never change
 - **`private(set)` properties** (typeIds, password, updatedAt) — mutable only through behavior methods
 - **`register()` factory** — the only way to create an Actor (constructor is private)
-- **`userId` FK** — direct foreign key to `users` table, replacing the old polymorphic `subject_type`/`subject_id`
-- **Many-to-many types** — actors can have multiple types via the `actor_types` pivot table
+- **`userId` FK** — direct foreign key to `users` table
+- **Many-to-many types** — actors can have multiple types via the `actor_type_pivot` table
 
 ### Domain Service Ports
 
-The Actor aggregate never touches framework code. Three domain service interfaces define the ports:
+The Actor aggregate never touches framework code. Domain service interfaces define the ports:
 
 **`PasswordHasher`** — hashing and verification:
 ```php
@@ -462,14 +540,17 @@ interface TokenManager
 ```
 Implemented by `SanctumTokenManager` (in `Infrastructure/Services/`). This is the one place where the Eloquent `ActorModel` is used — Sanctum needs an Authenticatable model to issue tokens. The `ActorModel` exists solely for this infrastructure concern; the domain layer never sees it.
 
-**`UserGateway`** — cross-BC user profile creation:
+**`UserGateway`** — user profile creation:
 ```php
 interface UserGateway
 {
     public function create(string $name, string $email, string $phone, string $document, ?string $loyaltyTier = null): int;
 }
 ```
-Implemented by `UserGatewayAdapter` (in `Infrastructure/Integration/`) which delegates to the User BC's `UserApi`.
+Implemented by `UserGatewayAdapter` (in `Infrastructure/Integration/`) which delegates to IAM's own `UserApi`.
+
+**`EmailUniquenessChecker`** — validates email uniqueness during registration:
+Implemented by `EloquentEmailUniquenessChecker`.
 
 ### The Dual-Model Approach
 
@@ -482,7 +563,7 @@ IAM has two representations of an actor:
 | Created by | `Actor::register()` | Seeded or created alongside the domain actor |
 | Persistence | `EloquentActorRepository` writes to `actors` table | Reads from the same `actors` table |
 
-Both read/write the same `actors` table. The domain `Actor` is persisted via `EloquentActorRepository` (through `ActorReflector` for hydration). The `ActorModel` is only used by `SanctumTokenManager`, Laravel's `auth:sanctum` middleware, and the web login/register views. It has `BelongsToMany` relationship to `TypeModel` via the `actor_types` pivot table, and a `BelongsTo` relationship to `AccountModel`.
+Both read/write the same `actors` table. The domain `Actor` is persisted via `EloquentActorRepository` (through `ActorReflector` for hydration). The `ActorModel` is only used by `SanctumTokenManager`, Laravel's `auth:sanctum` middleware, and the web login/register views. It has `BelongsToMany` relationship to `ActorTypeModel` via the `actor_type_pivot` table, and a `BelongsTo` relationship to `AccountModel`.
 
 ### Token Expiration
 
@@ -490,7 +571,7 @@ Sanctum tokens are configured to expire after 24 hours (configurable via `SANCTU
 
 ### Use Cases (Command Handlers)
 
-**`RegisterActorHandler`** — Registration:
+**`RegisterActorHandler`** — Guest Registration:
 ```
 1. Check if email already exists → throw ActorAlreadyExistsException
 2. Create Account for the new guest
@@ -512,7 +593,6 @@ Sanctum tokens are configured to expire after 24 hours (configurable via `SANCTU
 6. Actor::register(...) → creates the aggregate with account, type, userId
 7. Save to repository
 ```
-Hotel creation is a separate step done after login inside the dashboard.
 
 **`AuthenticateActorHandler`** — Login:
 ```
@@ -534,19 +614,19 @@ Hotel creation is a separate step done after login inside the dashboard.
           ┌──────────────┐               ┌──────────────────────────────┐
           │              │               │                              │
 POST /auth/register      │    Token      │  GET  /users/*               │
-  → RegisterActorHandler │ ──────────>   │  POST /reservations/*        │
-          │              │  Bearer       │  POST /auth/logout           │
-POST /auth/login         │  header       │  ...all other endpoints      │
-  → AuthenticateActorHandler             │                              │
-          │              │               └──────────────────────────────┘
-          └──────────────┘
+  → RegisterActorHandler │ ──────────>   │  POST /stays/*               │
+          │              │  Bearer       │  POST /reservations/*        │
+POST /auth/login         │  header       │  GET  /invoices/*            │
+  → AuthenticateActorHandler             │  POST /auth/logout           │
+          │              │               │  ...all other endpoints      │
+          └──────────────┘               └──────────────────────────────┘
 ```
 
 1. **Register** — `POST /api/auth/register` with `{ name, email, password, phone, document }`. Creates an Account, a user profile (via `UserGateway`), and an Actor with `guest` type, returns the actor resource. Also available as web form at `/register`. Validates: email format, password min 8 chars, phone in E.164 format. Rejects duplicate emails.
 
 2. **Login** — `POST /api/auth/login` with `{ email, password }`. Verifies credentials against the domain aggregate, then issues a Sanctum token via `TokenManager`. Returns `{ token, actor_id }`.
 
-3. **Authenticated requests** — include `Authorization: Bearer {token}`. Laravel's `auth:sanctum` middleware validates the token against the `ActorModel` (Eloquent). All User and Reservation routes are protected this way.
+3. **Authenticated requests** — include `Authorization: Bearer {token}`. Laravel's `auth:sanctum` middleware validates the token against the `ActorModel` (Eloquent). All Stay, Billing, and User routes are protected this way.
 
 4. **Logout** — `POST /api/auth/logout` (authenticated). Revokes all tokens for the actor.
 
@@ -554,11 +634,12 @@ POST /auth/login         │  header       │  ...all other endpoints      │
 
 | Middleware | Purpose |
 |---|---|
+| `HandleInertiaRequests` | Shares auth data (actor, user, types) with all Inertia pages. |
 | `EnsureActorType` | Validates actor has required type(s). Used as `type:owner,superadmin` in route groups. |
 | `EnsureActorIsOwner` | Validates actor is an owner type. |
-| `EnsureActorIsGuest` | Validates actor is a guest type; sets `guest_uuid` on request. |
+| `EnsureActorIsGuest` | Validates actor is a guest type. |
 | `SetTenantContext` | Sets `TenantContext` from the authenticated actor's account. |
-| `HandleInertiaRequests` | Shares auth data (actor, user, types) with all Inertia pages. |
+| `MapRouteParameters` | Maps route parameters for controller resolution. |
 
 ### Exceptions
 
