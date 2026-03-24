@@ -6,7 +6,7 @@ namespace Modules\Shared\Application;
 
 use Modules\Shared\Domain\AggregateRoot;
 
-abstract readonly class EventDispatchingHandler
+abstract class EventDispatchingHandler
 {
     public function __construct(
         protected EventDispatcher $dispatcher,

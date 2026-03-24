@@ -6,9 +6,9 @@ namespace Modules\Shared\Infrastructure\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use Modules\User\Domain\Repository\UserRepository;
 use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\IAM\Domain\Repository\HotelRepository;
+use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\Stay\Domain\Repository\StayRepository;
 
 final class HandleInertiaRequests extends Middleware
 {
@@ -17,7 +17,7 @@ final class HandleInertiaRequests extends Middleware
     public function __construct(
         private readonly AccountRepository $accountRepository,
         private readonly UserRepository $userRepository,
-        private readonly HotelRepository $hotelRepository,
+        private readonly StayRepository $stayRepository,
     ) {}
 
     public function share(Request $request): array
@@ -41,8 +41,8 @@ final class HandleInertiaRequests extends Middleware
                     'name' => $ownerAccount->name,
                     'slug' => $ownerAccount->slug ?? '',
                 ];
-                $hotels = $this->hotelRepository->findByAccountId($ownerAccount->uuid);
-                $tenantData['hasHotels'] = count($hotels) > 0;
+                $stays = $this->stayRepository->findByAccountId($ownerAccount->uuid);
+                $tenantData['hasHotels'] = count($stays) > 0;
             }
         }
 

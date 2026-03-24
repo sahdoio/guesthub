@@ -7,17 +7,17 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\IAM\Domain\HotelId;
-use Modules\IAM\Domain\Repository\HotelRepository;
-use Modules\Reservation\Application\Query\ReservationReadModel;
-use Modules\Reservation\Domain\Repository\ReservationRepository;
-use Modules\Reservation\Domain\Reservation;
+use Modules\Stay\Application\Query\ReservationReadModel;
+use Modules\Stay\Domain\Repository\ReservationRepository;
+use Modules\Stay\Domain\Repository\StayRepository;
+use Modules\Stay\Domain\Reservation;
+use Modules\Stay\Domain\StayId;
 
 final class PortalReservationsView
 {
     public function __construct(
         private ReservationRepository $repository,
-        private HotelRepository $hotelRepository,
+        private StayRepository $stayRepository,
     ) {}
 
     public function __invoke(Request $request): Response
@@ -31,21 +31,21 @@ final class PortalReservationsView
             status: $request->query('status'),
         );
 
-        // Pre-fetch hotels to avoid N+1
-        $hotelCache = [];
-        $reservations = array_map(function (Reservation $r) use (&$hotelCache) {
+        // Pre-fetch stays to avoid N+1
+        $stayCache = [];
+        $reservations = array_map(function (Reservation $r) use (&$stayCache) {
             $readModel = ReservationReadModel::fromReservation($r);
 
-            if (! isset($hotelCache[$r->hotelId])) {
-                $hotel = $this->hotelRepository->findByUuid(HotelId::fromString($r->hotelId));
-                $hotelCache[$r->hotelId] = $hotel ? [
-                    'hotel_id' => (string) $hotel->uuid,
-                    'name' => $hotel->name,
-                    'address' => $hotel->address,
-                ] : ['hotel_id' => $r->hotelId, 'name' => null, 'address' => null];
+            if (! isset($stayCache[$r->stayId])) {
+                $stay = $this->stayRepository->findByUuid(StayId::fromString($r->stayId));
+                $stayCache[$r->stayId] = $stay ? [
+                    'stay_id' => (string) $stay->uuid,
+                    'name' => $stay->name,
+                    'address' => $stay->address,
+                ] : ['stay_id' => $r->stayId, 'name' => null, 'address' => null];
             }
 
-            return $readModel->withHotel($hotelCache[$r->hotelId])->jsonSerialize();
+            return $readModel->withStay($stayCache[$r->stayId])->jsonSerialize();
         }, $result->items);
 
         return Inertia::render('Portal/Reservations/Index', [

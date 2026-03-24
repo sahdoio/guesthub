@@ -8,12 +8,13 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
+use Modules\IAM\Domain\Repository\ActorRepository;
 
 final class SuperadminHomeView
 {
     public function __construct(
         private AccountRepository $accountRepository,
+        private ActorRepository $actorRepository,
     ) {}
 
     public function __invoke(Request $request): Response
@@ -21,22 +22,18 @@ final class SuperadminHomeView
         $accounts = array_map(function ($account) {
             $numericId = $this->accountRepository->resolveNumericId($account->uuid);
 
-            $actors = ActorModel::where('account_id', $numericId)
-                ->with('types')
-                ->get()
-                ->map(fn (ActorModel $actor) => [
-                    'id' => $actor->id,
-                    'name' => $actor->name,
-                    'email' => $actor->email,
-                    'roles' => $actor->types->pluck('name')->values()->toArray(),
-                ])
-                ->all();
+            $actors = $this->actorRepository->findActorsByAccountId($numericId);
 
             return [
                 'uuid' => (string) $account->uuid,
                 'name' => $account->name,
                 'slug' => $account->slug ?? '',
-                'actors' => $actors,
+                'actors' => array_map(fn (array $actor) => [
+                    'id' => $actor['id'],
+                    'name' => $actor['name'],
+                    'email' => $actor['email'],
+                    'roles' => $actor['type_names'],
+                ], $actors),
             ];
         }, $this->accountRepository->findAll());
 

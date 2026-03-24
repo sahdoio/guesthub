@@ -43,12 +43,7 @@ const submit = () => {
 
         <div class="relative z-10 flex flex-col justify-center px-16 text-white">
             <div class="mb-8">
-                <div class="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 shadow-lg">
-                    <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                        <polyline points="9 22 9 12 15 12 15 22" />
-                    </svg>
-                </div>
+                <img src="/logo.png" alt="GuestHub" class="h-12 brightness-0 invert object-contain mb-6" />
             </div>
             <h1 class="text-4xl font-bold mb-4 leading-tight">{{ $t('auth.join_title') }}<br/>GuestHub</h1>
             <p class="text-lg text-indigo-100 leading-relaxed max-w-md">
@@ -81,10 +76,14 @@ const submit = () => {
     <div class="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-50 to-white p-8 overflow-y-auto">
         <div class="w-full max-w-md">
             <div class="flex justify-center mb-8 lg:hidden">
-                <Logo size="lg" />
+                <a href="/"><Logo size="lg" /></a>
             </div>
 
             <div class="mb-8">
+                <a href="/" class="text-sm text-gray-400 hover:text-indigo-600 inline-flex items-center gap-1 mb-3 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    {{ $t('common.back_to_home') }}
+                </a>
                 <h2 class="text-2xl font-bold text-gray-900">{{ $t('auth.create_account_title') }}</h2>
                 <p class="mt-2 text-sm text-gray-500">{{ $t('auth.create_account_subtitle') }}</p>
             </div>

@@ -17,8 +17,8 @@ headers {
 
 body:json {
   {
-    "email": "jane@hotel.com",
-    "password": "password123"
+    "email": "john@hospitality.com",
+    "password": "password"
   }
 }
 
@@ -38,4 +38,21 @@ tests {
   test("should return actor_id", function() {
     expect(res.getBody().actor_id).to.be.a('string');
   });
+}
+
+docs {
+  Authenticates an actor and returns a Bearer token.
+
+  Seeded accounts (all use password "password"):
+  - superadmin@guesthub.com (superadmin)
+  - john@hospitality.com (owner - Johns Hospitality)
+  - maria@tourism.com (owner - Marias Tourism)
+  - alice@example.com (guest)
+  - bob.vip@example.com (guest - VIP/platinum)
+  - carol@example.com (guest)
+  - david.m@example.com (guest)
+  - eva.t@example.com (guest)
+
+  The authToken variable is automatically set from the response
+  and used by all subsequent authenticated requests.
 }

@@ -7,9 +7,9 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\User\Domain\UserId;
-use Modules\User\Domain\Repository\UserRepository;
-use Modules\User\Presentation\Http\Presenter\UserPresenter;
+use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\UserId;
+use Modules\IAM\Infrastructure\Http\Presenter\UserPresenter;
 
 final class PortalProfileView
 {

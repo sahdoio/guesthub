@@ -9,7 +9,6 @@ use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\CreatesGuest;
 use Tests\Concerns\SeedsRolesAndAccount;
-use Tests\Concerns\SeedsRooms;
 use Tests\TestCase;
 
 final class ReservationLifecycleTest extends TestCase
@@ -17,7 +16,6 @@ final class ReservationLifecycleTest extends TestCase
     use CreatesGuest;
     use RefreshDatabase;
     use SeedsRolesAndAccount;
-    use SeedsRooms;
 
     private string $guestId;
 
@@ -29,16 +27,15 @@ final class ReservationLifecycleTest extends TestCase
         Sanctum::actingAs($this->createOwnerActor());
 
         $this->guestId = $this->createGuest();
-        $this->seedRooms();
     }
 
     private function createReservation(array $overrides = []): string
     {
         $payload = array_merge([
             'guest_id' => $this->guestId,
+            'stay_id' => $this->stay->uuid,
             'check_in' => now()->addDay()->format('Y-m-d'),
             'check_out' => now()->addDays(4)->format('Y-m-d'),
-            'room_type' => 'DOUBLE',
         ], $overrides);
 
         $response = $this->postJson('/api/reservations', $payload);
@@ -83,15 +80,14 @@ final class ReservationLifecycleTest extends TestCase
 
         $this->assertDatabaseHas('reservations', ['uuid' => $id, 'status' => 'confirmed']);
 
-        // Check-in (room 102 is the DOUBLE room created by seedRooms)
-        $this->postJson("/api/reservations/{$id}/check-in", ['room_number' => '102'])
+        // Check-in
+        $this->postJson("/api/reservations/{$id}/check-in")
             ->assertOk()
             ->assertJsonPath('message', 'Guest checked in.');
 
         $this->assertDatabaseHas('reservations', [
             'uuid' => $id,
             'status' => 'checked_in',
-            'assigned_room_number' => '102',
         ]);
 
         // Check-out
@@ -173,29 +169,5 @@ final class ReservationLifecycleTest extends TestCase
             'description' => 'Something',
         ])->assertStatus(422)
             ->assertJsonValidationErrors(['type']);
-    }
-
-    // --- Check-in Validation ---
-
-    #[Test]
-    public function checkin_requires_room_number(): void
-    {
-        $id = $this->createReservation();
-        $this->postJson("/api/reservations/{$id}/confirm");
-
-        $this->postJson("/api/reservations/{$id}/check-in", [])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['room_number']);
-    }
-
-    #[Test]
-    public function checkin_validates_room_number_format(): void
-    {
-        $id = $this->createReservation();
-        $this->postJson("/api/reservations/{$id}/confirm");
-
-        $this->postJson("/api/reservations/{$id}/check-in", ['room_number' => 'INVALID!!'])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['room_number']);
     }
 }

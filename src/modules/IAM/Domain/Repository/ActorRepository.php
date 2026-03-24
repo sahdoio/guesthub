@@ -15,5 +15,13 @@ interface ActorRepository
 
     public function findByEmail(string $email): ?Actor;
 
+    public function findByNumericId(int $id): ?Actor;
+
+    /** @return list<array{id: int, uuid: string, name: string, email: string, type_names: list<string>}> */
+    public function findActorsByAccountId(int $accountId): array;
+
+    /** @return list<string> */
+    public function resolveTypeNames(ActorId $uuid): array;
+
     public function nextIdentity(): ActorId;
 }

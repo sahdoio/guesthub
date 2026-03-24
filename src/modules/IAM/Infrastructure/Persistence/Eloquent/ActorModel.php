@@ -50,6 +50,6 @@ final class ActorModel extends Authenticatable
 
     public function types(): BelongsToMany
     {
-        return $this->belongsToMany(TypeModel::class, 'actor_types', 'actor_id', 'type_id');
+        return $this->belongsToMany(ActorTypeModel::class, 'actor_type_pivot', 'actor_id', 'type_id');
     }
 }

@@ -30,11 +30,11 @@ final class EloquentActorRepository implements ActorRepository
         // Sync types via pivot table
         $actorId = $this->model->newQuery()->where('uuid', $actor->uuid->value)->value('id');
 
-        DB::table('actor_types')->where('actor_id', $actorId)->delete();
+        DB::table('actor_type_pivot')->where('actor_id', $actorId)->delete();
 
         foreach ($actor->typeIds() as $typeId) {
-            $dbTypeId = TypeModel::where('uuid', $typeId->value)->value('id');
-            DB::table('actor_types')->insert([
+            $dbTypeId = ActorTypeModel::where('uuid', $typeId->value)->value('id');
+            DB::table('actor_type_pivot')->insert([
                 'actor_id' => $actorId,
                 'type_id' => $dbTypeId,
             ]);
@@ -71,6 +71,56 @@ final class EloquentActorRepository implements ActorRepository
         return $this->toEntity($record, $typeIds);
     }
 
+    public function findByNumericId(int $id): ?Actor
+    {
+        $record = $this->model->newQuery()
+            ->where('id', $id)
+            ->first();
+
+        if (! $record) {
+            return null;
+        }
+
+        $typeIds = $this->loadTypeIds($record->id);
+
+        return $this->toEntity($record, $typeIds);
+    }
+
+    /** @return list<array{id: int, uuid: string, name: string, email: string, type_names: list<string>}> */
+    public function findActorsByAccountId(int $accountId): array
+    {
+        return $this->model->newQuery()
+            ->where('account_id', $accountId)
+            ->with('types')
+            ->get()
+            ->map(fn (ActorModel $actor) => [
+                'id' => $actor->id,
+                'uuid' => $actor->uuid,
+                'name' => $actor->name,
+                'email' => $actor->email,
+                'type_names' => $actor->types->pluck('name')->values()->toArray(),
+            ])
+            ->all();
+    }
+
+    /** @return list<string> */
+    public function resolveTypeNames(ActorId $uuid): array
+    {
+        $record = $this->model->newQuery()
+            ->where('uuid', $uuid->value)
+            ->first();
+
+        if (! $record) {
+            return [];
+        }
+
+        return DB::table('actor_type_pivot')
+            ->join('actor_types', 'actor_types.id', '=', 'actor_type_pivot.type_id')
+            ->where('actor_type_pivot.actor_id', $record->id)
+            ->pluck('actor_types.name')
+            ->all();
+    }
+
     public function nextIdentity(): ActorId
     {
         return ActorId::generate();
@@ -79,10 +129,10 @@ final class EloquentActorRepository implements ActorRepository
     /** @return list<TypeId> */
     private function loadTypeIds(int $actorId): array
     {
-        return DB::table('actor_types')
-            ->join('types', 'types.id', '=', 'actor_types.type_id')
-            ->where('actor_types.actor_id', $actorId)
-            ->pluck('types.uuid')
+        return DB::table('actor_type_pivot')
+            ->join('actor_types', 'actor_types.id', '=', 'actor_type_pivot.type_id')
+            ->where('actor_type_pivot.actor_id', $actorId)
+            ->pluck('actor_types.uuid')
             ->map(fn (string $uuid) => TypeId::fromString($uuid))
             ->all();
     }

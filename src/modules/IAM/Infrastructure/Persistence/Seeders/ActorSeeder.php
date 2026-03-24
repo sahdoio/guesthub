@@ -7,17 +7,16 @@ namespace Modules\IAM\Infrastructure\Persistence\Seeders;
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
-use Modules\User\Domain\UserId;
-use Modules\User\Domain\Repository\UserRepository;
-use Modules\User\Infrastructure\Persistence\Seeders\UserSeeder;
 use Modules\IAM\Domain\Account;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
 use Modules\IAM\Domain\Repository\TypeRepository;
+use Modules\IAM\Domain\Repository\UserRepository;
 use Modules\IAM\Domain\Service\EmailUniquenessChecker;
 use Modules\IAM\Domain\Service\PasswordHasher;
+use Modules\IAM\Domain\UserId;
 use Modules\IAM\Domain\ValueObject\TypeName;
 
 class ActorSeeder extends Seeder
@@ -123,8 +122,8 @@ class ActorSeeder extends Seeder
             $accountId = $this->accountRepository->nextIdentity();
             $account = Account::create(
                 uuid: $accountId,
-                name: $name . "'s Account",
-                slug: Str::slug($name) . '-' . Str::random(6),
+                name: $name."'s Account",
+                slug: Str::slug($name).'-'.Str::random(6),
                 createdAt: new DateTimeImmutable,
             );
             $this->accountRepository->save($account);

@@ -18,9 +18,10 @@ go: ## Start containers, install deps, and run migrations
 	@test -f src/.env || cp src/.env.example src/.env && echo "Created .env from .env.example"
 	make down
 	make up
-	sleep 2
+	sleep 1
 	make setup
 	make db-migrate
+	make storage-link
 	make vite
 
 go-hard: ## Full reset: remove volume, rebuild, seed database
@@ -28,10 +29,11 @@ go-hard: ## Full reset: remove volume, rebuild, seed database
 	make down
 	docker volume rm -f guesthub-db-volume
 	make up
-	sleep 2
+	sleep 1
 	make setup
 	make db-migrate
 	make db-seed
+	make storage-link
 	make vite
 
 up: ## Start containers in detached mode with build
@@ -68,6 +70,9 @@ db-reset: ## Rollback, migrate, and seed the database
 	make db-rollback
 	make db-migrate
 	make db-seed
+
+storage-link: ## Create storage symlink
+	$(DC) exec guesthub php artisan storage:link --force
 
 clear: ## Clear all Laravel caches
 	$(DC) exec guesthub php artisan cache:clear

@@ -45,7 +45,7 @@ const submit = () => {
             <h1 class="text-2xl font-bold text-gray-800">{{ $t('guest.edit_profile') }}</h1>
         </div>
 
-        <div class="bg-white rounded-lg shadow max-w-2xl">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 max-w-2xl">
             <form @submit.prevent="submit" class="p-6 space-y-5">
                 <div>
                     <label for="full_name" class="block text-sm font-medium text-gray-700 mb-1">{{ $t('guest.full_name') }}</label>
@@ -54,7 +54,7 @@ const submit = () => {
                         v-model="form.full_name"
                         type="text"
                         required
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         :class="{ 'border-red-500': form.errors.full_name }"
                     />
                     <p v-if="form.errors.full_name" class="mt-1 text-sm text-red-600">
@@ -69,7 +69,7 @@ const submit = () => {
                         v-model="form.email"
                         type="email"
                         required
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         :class="{ 'border-red-500': form.errors.email }"
                     />
                     <p v-if="form.errors.email" class="mt-1 text-sm text-red-600">
@@ -84,7 +84,7 @@ const submit = () => {
                         v-model="form.phone"
                         required
                         :placeholder="$t('auth.phone_placeholder')"
-                        input-class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        input-class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         :has-error="!!form.errors.phone"
                     />
                     <p v-if="form.errors.phone" class="mt-1 text-sm text-red-600">
@@ -116,12 +116,12 @@ const submit = () => {
                             type="text"
                             :placeholder="$t('guest.add_preference')"
                             @keydown.enter.prevent="addPreference"
-                            class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                         />
                         <button
                             type="button"
                             @click="addPreference"
-                            class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
+                            class="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50"
                         >
                             {{ $t('special_request.add') }}
                         </button>
@@ -135,7 +135,7 @@ const submit = () => {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg shadow-sm text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         <span v-if="form.processing">{{ $t('guest.saving') }}</span>
                         <span v-else>{{ $t('guest.save') }}</span>

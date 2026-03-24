@@ -8,11 +8,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\Reservation\Application\Command\AddSpecialRequest;
-use Modules\Reservation\Application\Command\AddSpecialRequestHandler;
-use Modules\Reservation\Domain\Repository\ReservationRepository;
-use Modules\Reservation\Domain\ReservationId;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
+use Modules\Stay\Application\Command\AddSpecialRequest;
+use Modules\Stay\Application\Command\AddSpecialRequestHandler;
+use Modules\Stay\Domain\Repository\ReservationRepository;
+use Modules\Stay\Domain\ReservationId;
 
 final readonly class PortalAddSpecialRequestView
 {

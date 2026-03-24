@@ -6,7 +6,7 @@ namespace Modules\Shared\Infrastructure\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Modules\User\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\Response;
 
 final class EnsureActorIsGuest

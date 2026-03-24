@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Integration\Guest;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\User\Domain\Repository\UserRepository;
-use Modules\User\Infrastructure\Integration\Dto\UserData;
-use Modules\User\Infrastructure\Integration\UserApi;
+use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Infrastructure\Integration\Dto\UserData;
+use Modules\IAM\Infrastructure\Integration\UserApi;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use PHPUnit\Framework\Attributes\CoversClass;

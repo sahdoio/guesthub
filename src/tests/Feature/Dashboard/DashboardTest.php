@@ -6,16 +6,13 @@ namespace Tests\Feature\Dashboard;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\User\Domain\User;
-use Modules\User\Domain\Repository\UserRepository;
-use Modules\User\Domain\ValueObject\LoyaltyTier;
+use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\User;
+use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
-use Modules\Inventory\Domain\Repository\RoomRepository;
-use Modules\Inventory\Domain\Room;
-use Modules\Inventory\Domain\ValueObject\RoomType;
-use Modules\Reservation\Domain\Repository\ReservationRepository;
-use Modules\Reservation\Domain\Reservation;
-use Modules\Reservation\Domain\ValueObject\ReservationPeriod;
+use Modules\Stay\Domain\Repository\ReservationRepository;
+use Modules\Stay\Domain\Reservation;
+use Modules\Stay\Domain\ValueObject\ReservationPeriod;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Concerns\SeedsRolesAndAccount;
 use Tests\TestCase;
@@ -62,24 +59,23 @@ final class DashboardTest extends TestCase
             uuid: $repository->nextIdentity(),
             guestId: $guestId,
             accountId: $this->account->uuid,
-            hotelId: $this->hotel->uuid,
+            stayId: $this->stay->uuid,
             period: new ReservationPeriod(
                 new DateTimeImmutable($overrides['check_in'] ?? '+1 day'),
                 new DateTimeImmutable($overrides['check_out'] ?? '+3 days'),
             ),
-            roomType: $overrides['room_type'] ?? 'DOUBLE',
         );
 
         if (isset($overrides['status'])) {
             match ($overrides['status']) {
                 'confirmed' => $reservation->confirm(),
-                'checked_in' => (function () use ($reservation, $overrides) {
+                'checked_in' => (function () use ($reservation) {
                     $reservation->confirm();
-                    $reservation->checkIn($overrides['room_number'] ?? '101');
+                    $reservation->checkIn();
                 })(),
-                'checked_out' => (function () use ($reservation, $overrides) {
+                'checked_out' => (function () use ($reservation) {
                     $reservation->confirm();
-                    $reservation->checkIn($overrides['room_number'] ?? '101');
+                    $reservation->checkIn();
                     $reservation->checkOut();
                 })(),
                 'cancelled' => $reservation->cancel('Test cancellation'),
@@ -90,24 +86,6 @@ final class DashboardTest extends TestCase
         $repository->save($reservation);
 
         return $reservation;
-    }
-
-    private function createRoom(string $number = '101', string $type = 'DOUBLE'): void
-    {
-        $repository = $this->app->make(RoomRepository::class);
-
-        $room = Room::create(
-            uuid: $repository->nextIdentity(),
-            number: $number,
-            type: RoomType::from($type),
-            floor: (int) substr($number, 0, 1),
-            capacity: 2,
-            pricePerNight: 250.00,
-            amenities: ['wifi'],
-            createdAt: new DateTimeImmutable,
-        );
-
-        $repository->save($room);
     }
 
     #[Test]
@@ -138,12 +116,14 @@ final class DashboardTest extends TestCase
             ->component('Dashboard')
             ->has('guestStats')
             ->has('reservationStats')
-            ->has('roomStats')
+            ->has('stayStats')
+            ->has('billingStats')
             ->where('guestStats.total', 0)
             ->where('reservationStats.total', 0)
             ->where('reservationStats.today_check_ins', 0)
             ->where('reservationStats.today_check_outs', 0)
-            ->where('roomStats.total', 0)
+            ->where('stayStats.total', 1)
+            ->where('billingStats.total', 0)
         );
     }
 
@@ -215,41 +195,14 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function it_shows_reservations_by_room_type(): void
+    public function it_shows_stay_stats(): void
     {
-        $guestId = $this->createGuest();
-        $this->createReservation($guestId, ['room_type' => 'SINGLE']);
-        $this->createReservation($guestId, ['room_type' => 'DOUBLE']);
-        $this->createReservation($guestId, ['room_type' => 'DOUBLE']);
-        $this->createReservation($guestId, ['room_type' => 'SUITE']);
-
         $response = $this->actingAs($this->actor)
             ->get('/dashboard');
 
         $response->assertInertia(fn ($page) => $page
-            ->where('reservationStats.by_room_type.SINGLE', 1)
-            ->where('reservationStats.by_room_type.DOUBLE', 2)
-            ->where('reservationStats.by_room_type.SUITE', 1)
-        );
-    }
-
-    #[Test]
-    public function it_shows_room_stats(): void
-    {
-        $this->createRoom('101', 'SINGLE');
-        $this->createRoom('201', 'DOUBLE');
-        $this->createRoom('202', 'DOUBLE');
-        $this->createRoom('301', 'SUITE');
-
-        $response = $this->actingAs($this->actor)
-            ->get('/dashboard');
-
-        $response->assertInertia(fn ($page) => $page
-            ->where('roomStats.total', 4)
-            ->where('roomStats.by_type.SINGLE', 1)
-            ->where('roomStats.by_type.DOUBLE', 2)
-            ->where('roomStats.by_type.SUITE', 1)
-            ->where('roomStats.by_status.available', 4)
+            ->has('stayStats')
+            ->where('stayStats.total', 1)
         );
     }
 }

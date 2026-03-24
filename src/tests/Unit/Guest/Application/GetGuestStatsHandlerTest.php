@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Guest\Application;
 
-use Modules\User\Application\Query\GetUserStats;
-use Modules\User\Application\Query\GetUserStatsHandler;
-use Modules\User\Application\Query\UserStatsResult;
-use Modules\User\Domain\Repository\UserRepository;
+use Modules\IAM\Application\Query\GetUserStats;
+use Modules\IAM\Application\Query\GetUserStatsHandler;
+use Modules\IAM\Application\Query\UserStatsResult;
+use Modules\IAM\Domain\Repository\UserRepository;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -19,7 +19,7 @@ use Modules\IAM\Domain\ValueObject\TypeName;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
 
-final readonly class RegisterActorHandler extends EventDispatchingHandler
+final class RegisterActorHandler extends EventDispatchingHandler
 {
     public function __construct(
         private ActorRepository $repository,
@@ -39,8 +39,8 @@ final readonly class RegisterActorHandler extends EventDispatchingHandler
         $accountId = $this->accountRepository->nextIdentity();
         $account = Account::create(
             uuid: $accountId,
-            name: $command->name . "'s Account",
-            slug: Str::slug($command->name) . '-' . Str::random(6),
+            name: $command->name."'s Account",
+            slug: Str::slug($command->name).'-'.Str::random(6),
             createdAt: new DateTimeImmutable,
         );
         $this->accountRepository->save($account);
@@ -55,13 +55,13 @@ final readonly class RegisterActorHandler extends EventDispatchingHandler
         );
 
         // 3. Create Actor with guest type linkage and account
-        $guestType = $this->typeRepository->findByName(TypeName::GUEST);
+        $actorType = $this->typeRepository->findByName(TypeName::GUEST);
         $id = $this->repository->nextIdentity();
 
         $actor = Actor::register(
             uuid: $id,
             accountId: $accountId,
-            typeIds: [$guestType->uuid],
+            typeIds: [$actorType->uuid],
             name: $command->name,
             email: $command->email,
             password: $this->hasher->hash($command->password),

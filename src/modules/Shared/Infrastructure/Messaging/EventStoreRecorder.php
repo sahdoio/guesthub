@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Modules\Shared\Infrastructure\Messaging;
 
-use DateTimeImmutable;
 use Modules\Shared\Application\EventStore;
 use Modules\Shared\Application\Messaging\IntegrationEvent;
 use Modules\Shared\Application\StoredEvent;

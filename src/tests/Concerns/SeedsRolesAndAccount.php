@@ -7,36 +7,36 @@ namespace Tests\Concerns;
 use Illuminate\Support\Facades\DB;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\HotelModel;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\TypeModel;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorTypeModel;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
+use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
 use Ramsey\Uuid\Uuid;
 
 trait SeedsRolesAndAccount
 {
-    private TypeModel $guestType;
+    private ActorTypeModel $guestType;
 
-    private TypeModel $superadminType;
+    private ActorTypeModel $superadminType;
 
-    private TypeModel $ownerType;
+    private ActorTypeModel $ownerType;
 
     private AccountModel $account;
 
-    private HotelModel $hotel;
+    private StayModel $stay;
 
     protected function seedRolesAndAccount(): void
     {
-        $this->guestType = TypeModel::create([
+        $this->guestType = ActorTypeModel::create([
             'uuid' => Uuid::uuid7()->toString(),
             'name' => 'guest',
         ]);
 
-        $this->superadminType = TypeModel::create([
+        $this->superadminType = ActorTypeModel::create([
             'uuid' => Uuid::uuid7()->toString(),
             'name' => 'superadmin',
         ]);
 
-        $this->ownerType = TypeModel::create([
+        $this->ownerType = ActorTypeModel::create([
             'uuid' => Uuid::uuid7()->toString(),
             'name' => 'owner',
         ]);
@@ -49,11 +49,15 @@ trait SeedsRolesAndAccount
             'created_at' => now(),
         ]);
 
-        $this->hotel = HotelModel::withoutGlobalScopes()->create([
+        $this->stay = StayModel::withoutGlobalScopes()->create([
             'uuid' => Uuid::uuid7()->toString(),
             'account_id' => $this->account->id,
-            'name' => 'Test Hotel',
-            'slug' => 'test-hotel',
+            'name' => 'Test Stay',
+            'slug' => 'test-stay',
+            'type' => 'room',
+            'category' => 'hotel_room',
+            'price_per_night' => 250.00,
+            'capacity' => 2,
             'status' => 'active',
             'created_at' => now(),
         ]);
@@ -66,13 +70,13 @@ trait SeedsRolesAndAccount
         $actor = ActorModel::create(array_merge([
             'uuid' => Uuid::uuid7()->toString(),
             'account_id' => $this->account->id,
-            'name' => 'Hotel Owner',
+            'name' => 'Stay Owner',
             'email' => 'owner@test.com',
             'password' => bcrypt('password'),
             'created_at' => now(),
         ], $overrides));
 
-        DB::table('actor_types')->insert([
+        DB::table('actor_type_pivot')->insert([
             'actor_id' => $actor->id,
             'type_id' => $this->ownerType->id,
         ]);
@@ -85,7 +89,7 @@ trait SeedsRolesAndAccount
         $guestAccount = AccountModel::create([
             'uuid' => Uuid::uuid7()->toString(),
             'name' => 'Guest Account',
-            'slug' => 'guest-' . Uuid::uuid7()->toString(),
+            'slug' => 'guest-'.Uuid::uuid7()->toString(),
             'status' => 'active',
             'created_at' => now(),
         ]);
@@ -99,7 +103,7 @@ trait SeedsRolesAndAccount
             'created_at' => now(),
         ], $overrides));
 
-        DB::table('actor_types')->insert([
+        DB::table('actor_type_pivot')->insert([
             'actor_id' => $actor->id,
             'type_id' => $this->guestType->id,
         ]);
@@ -118,7 +122,7 @@ trait SeedsRolesAndAccount
             'created_at' => now(),
         ], $overrides));
 
-        DB::table('actor_types')->insert([
+        DB::table('actor_type_pivot')->insert([
             'actor_id' => $actor->id,
             'type_id' => $this->superadminType->id,
         ]);

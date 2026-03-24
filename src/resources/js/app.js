@@ -1,8 +1,10 @@
 import './bootstrap';
 import '../css/app.css';
+import 'v-calendar/style.css';
 
 import { createApp, h } from 'vue';
 import { createInertiaApp, router } from '@inertiajs/vue3';
+import { setupCalendar } from 'v-calendar';
 import i18n from './i18n';
 
 router.on('invalid', (event) => {
@@ -21,6 +23,7 @@ createInertiaApp({
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(i18n)
+            .use(setupCalendar, {})
             .mount(el);
     },
 });
