@@ -7,7 +7,6 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use Symfony\Component\HttpFoundation\Response;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
 use Modules\Billing\Infrastructure\Http\Presenter\InvoicePresenter;
 use Modules\Stay\Application\Query\ReservationReadModel;
@@ -18,6 +17,7 @@ use Modules\Stay\Domain\ReservationId;
 use Modules\Stay\Domain\Service\GuestGateway;
 use Modules\Stay\Domain\StayId;
 use Modules\Stay\Domain\ValueObject\ReservationStatus;
+use Symfony\Component\HttpFoundation\Response;
 
 final class PortalReservationCheckoutView
 {
