@@ -8,6 +8,7 @@ use Modules\Billing\Domain\DTO\PaymentGatewayResult;
 use Modules\Billing\Domain\DTO\PaymentIntent;
 use Modules\Billing\Domain\Service\PaymentGateway;
 use Modules\Billing\Domain\ValueObject\Money;
+use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
 
 final class StripePaymentGateway implements PaymentGateway
@@ -49,7 +50,7 @@ final class StripePaymentGateway implements PaymentGateway
                 clientSecret: $paymentIntent->client_secret,
                 errorMessage: null,
             );
-        } catch (\Stripe\Exception\ApiErrorException $e) {
+        } catch (ApiErrorException $e) {
             return new PaymentGatewayResult(
                 success: false,
                 paymentIntentId: null,
@@ -76,7 +77,7 @@ final class StripePaymentGateway implements PaymentGateway
                 clientSecret: null,
                 errorMessage: null,
             );
-        } catch (\Stripe\Exception\ApiErrorException $e) {
+        } catch (ApiErrorException $e) {
             return new PaymentGatewayResult(
                 success: false,
                 paymentIntentId: $paymentIntentId,

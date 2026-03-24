@@ -54,52 +54,35 @@ final class PortalInitiatePaymentAction extends EventDispatchingHandler
             abort(403, 'Access denied.');
         }
 
-        // Try real Stripe PaymentIntent
-        try {
-            $result = $this->paymentGateway->createPaymentIntent(new PaymentIntent(
-                amount: $invoice->total,
-                metadata: ['invoice_id' => (string) $id],
-            ));
+        $result = $this->paymentGateway->createPaymentIntent(new PaymentIntent(
+            amount: $invoice->total,
+            metadata: ['invoice_id' => (string) $id],
+        ));
 
-            if ($result->success && $result->paymentIntentId !== null) {
-                // Record pending payment on invoice
-                $invoice->recordPayment(
-                    paymentId: PaymentId::generate(),
-                    amount: $invoice->total,
-                    method: PaymentMethod::CARD,
-                    stripePaymentIntentId: $result->paymentIntentId,
-                    createdAt: new DateTimeImmutable,
-                );
-
-                $this->repository->save($invoice);
-                $this->dispatchEvents($invoice);
-
-                return new JsonResponse([
-                    'client_secret' => $result->clientSecret,
-                    'payment_intent_id' => $result->paymentIntentId,
-                ]);
-            }
-
-            // Stripe call failed
+        if (! $result->success || $result->paymentIntentId === null) {
             return new JsonResponse(['error' => $result->errorMessage], 422);
-        } catch (\RuntimeException $e) {
-            // Stripe not configured — fall back to simulated payment
-            $paymentIntentId = 'sim_'.bin2hex(random_bytes(12));
-
-            $invoice->recordPayment(
-                paymentId: PaymentId::generate(),
-                amount: $invoice->total,
-                method: PaymentMethod::CARD,
-                stripePaymentIntentId: $paymentIntentId,
-                createdAt: new DateTimeImmutable,
-            );
-
-            $invoice->markPaymentSucceeded($paymentIntentId);
-
-            $this->repository->save($invoice);
-            $this->dispatchEvents($invoice);
-
-            return new JsonResponse(['simulated' => true]);
         }
+
+        $invoice->recordPayment(
+            paymentId: PaymentId::generate(),
+            amount: $invoice->total,
+            method: PaymentMethod::CARD,
+            stripePaymentIntentId: $result->paymentIntentId,
+            createdAt: new DateTimeImmutable,
+        );
+
+        // Simulated gateway payments succeed immediately
+        if ($result->clientSecret === null) {
+            $invoice->markPaymentSucceeded($result->paymentIntentId);
+        }
+
+        $this->repository->save($invoice);
+        $this->dispatchEvents($invoice);
+
+        return new JsonResponse([
+            'client_secret' => $result->clientSecret,
+            'payment_intent_id' => $result->paymentIntentId,
+            'simulated' => $result->clientSecret === null,
+        ]);
     }
 }

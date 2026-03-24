@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Support\Env;
 
 return [
+    'gateway' => Env::get('BILLING_GATEWAY', 'stripe'),
     'stripe' => [
         'secret_key' => Env::get('STRIPE_SECRET_KEY', ''),
         'publishable_key' => Env::get('STRIPE_PUBLISHABLE_KEY', ''),

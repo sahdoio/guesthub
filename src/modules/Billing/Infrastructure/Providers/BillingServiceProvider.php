@@ -17,6 +17,7 @@ use Modules\Billing\Domain\Service\PaymentGateway;
 use Modules\Billing\Domain\Service\ReservationGateway;
 use Modules\Billing\Infrastructure\Integration\ReservationGatewayAdapter;
 use Modules\Billing\Infrastructure\Persistence\Eloquent\EloquentInvoiceRepository;
+use Modules\Billing\Infrastructure\Simulated\SimulatedPaymentGateway;
 use Modules\Billing\Infrastructure\Stripe\StripePaymentGateway;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Infrastructure\Messaging\LaravelEventDispatcher;
@@ -31,7 +32,10 @@ final class BillingServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../Config/billing.php', 'billing');
 
         $this->app->bind(InvoiceRepository::class, EloquentInvoiceRepository::class);
-        $this->app->bind(PaymentGateway::class, StripePaymentGateway::class);
+        $this->app->bind(PaymentGateway::class, match (config('billing.gateway')) {
+            'simulated' => SimulatedPaymentGateway::class,
+            default => StripePaymentGateway::class,
+        });
         $this->app->bind(ReservationGateway::class, ReservationGatewayAdapter::class);
         $this->app->bindIf(EventDispatcher::class, LaravelEventDispatcher::class);
     }
