@@ -191,6 +191,15 @@ final class Invoice extends AggregateRoot
         throw PaymentNotFoundException::withId($stripePaymentIntentId);
     }
 
+    /** @return Payment[] */
+    public function succeededPayments(): array
+    {
+        return array_values(array_filter(
+            $this->payments,
+            fn (Payment $p) => $p->status === PaymentStatus::SUCCEEDED,
+        ));
+    }
+
     private function calculateSucceededPayments(): Money
     {
         $total = Money::zero($this->total->currency);

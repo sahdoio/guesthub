@@ -60,31 +60,31 @@ final class InvoiceModel extends Model
         'refunded_at',
     ];
 
-    /** @return HasMany<LineItemModel> */
+    /** @return HasMany<LineItemModel, $this> */
     public function lineItems(): HasMany
     {
         return $this->hasMany(LineItemModel::class, 'invoice_id');
     }
 
-    /** @return HasMany<PaymentModel> */
+    /** @return HasMany<PaymentModel, $this> */
     public function payments(): HasMany
     {
         return $this->hasMany(PaymentModel::class, 'invoice_id');
     }
 
-    /** @return BelongsTo<AccountModel, self> */
+    /** @return BelongsTo<AccountModel, $this> */
     public function account(): BelongsTo
     {
         return $this->belongsTo(AccountModel::class, 'account_id');
     }
 
-    /** @return BelongsTo<ReservationModel, self> */
+    /** @return BelongsTo<ReservationModel, $this> */
     public function reservation(): BelongsTo
     {
         return $this->belongsTo(ReservationModel::class, 'reservation_id', 'uuid');
     }
 
-    /** @return BelongsTo<UserModel, self> */
+    /** @return BelongsTo<UserModel, $this> */
     public function guest(): BelongsTo
     {
         return $this->belongsTo(UserModel::class, 'guest_id', 'uuid');

@@ -40,12 +40,12 @@ final class ReservationGatewayAdapter implements ReservationGateway
             reservationId: $reservation->uuid->value,
             guestId: $reservation->guestId,
             stayId: $reservation->stayId,
-            stayName: $stay?->name ?? '',
+            stayName: $stay !== null ? $stay->name : '',
             accountId: $reservation->accountId,
             checkIn: $checkIn->format('Y-m-d'),
             checkOut: $checkOut->format('Y-m-d'),
             nights: $nights,
-            pricePerNight: $stay?->pricePerNight ?? 0.0,
+            pricePerNight: $stay !== null ? $stay->pricePerNight : 0.0,
         );
     }
 }

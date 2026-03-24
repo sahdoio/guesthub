@@ -12,7 +12,7 @@ interface PaymentGateway
 {
     public function createPaymentIntent(PaymentIntent $intent): PaymentGatewayResult;
 
-    public function refundPayment(string $paymentIntentId, ?Money $amount): PaymentGatewayResult;
+    public function refundPayment(string $paymentIntentId, ?Money $amount = null): PaymentGatewayResult;
 
     public function createCustomer(string $email, string $name): string;
 }

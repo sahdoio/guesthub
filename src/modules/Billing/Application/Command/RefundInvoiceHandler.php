@@ -28,7 +28,7 @@ class RefundInvoiceHandler extends EventDispatchingHandler
             ?? throw InvoiceNotFoundException::withId($id);
 
         foreach ($invoice->succeededPayments() as $payment) {
-            $this->paymentGateway->refundPayment($payment->stripePaymentIntentId);
+            $this->paymentGateway->refundPayment(paymentIntentId: $payment->stripePaymentIntentId);
         }
 
         $invoice->refund();

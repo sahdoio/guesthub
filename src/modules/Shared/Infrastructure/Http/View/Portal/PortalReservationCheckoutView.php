@@ -6,7 +6,8 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
+use Inertia\Response as InertiaResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
 use Modules\Billing\Infrastructure\Http\Presenter\InvoicePresenter;
 use Modules\Stay\Application\Query\ReservationReadModel;
@@ -27,7 +28,7 @@ final class PortalReservationCheckoutView
         private InvoiceRepository $invoiceRepository,
     ) {}
 
-    public function __invoke(Request $request, string $id): Response
+    public function __invoke(Request $request, string $id): Response|InertiaResponse
     {
         $reservationId = ReservationId::fromString($id);
         $reservation = $this->repository->findByUuidGlobal($reservationId)

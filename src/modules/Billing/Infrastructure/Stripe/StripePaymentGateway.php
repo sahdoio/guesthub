@@ -59,7 +59,7 @@ final class StripePaymentGateway implements PaymentGateway
         }
     }
 
-    public function refundPayment(string $paymentIntentId, ?Money $amount): PaymentGatewayResult
+    public function refundPayment(string $paymentIntentId, ?Money $amount = null): PaymentGatewayResult
     {
         try {
             $params = ['payment_intent' => $paymentIntentId];

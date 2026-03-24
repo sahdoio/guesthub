@@ -41,16 +41,21 @@ final class StripeWebhookController
             return new JsonResponse(['status' => 'already_processed'], 200);
         }
 
+        /** @var \Stripe\PaymentIntent $paymentIntent */
+        $paymentIntent = $event->data->object;
+
         match ($event->type) {
             'payment_intent.succeeded' => $this->succeededHandler->handle(
                 new HandlePaymentSucceeded(
-                    stripePaymentIntentId: $event->data->object->id,
+                    stripePaymentIntentId: $paymentIntent->id,
                 ),
             ),
             'payment_intent.payment_failed' => $this->failedHandler->handle(
                 new HandlePaymentFailed(
-                    stripePaymentIntentId: $event->data->object->id,
-                    reason: $event->data->object->last_payment_error?->message ?? 'Unknown error',
+                    stripePaymentIntentId: $paymentIntent->id,
+                    reason: $paymentIntent->last_payment_error !== null
+                        ? ($paymentIntent->last_payment_error->message ?? 'Unknown error')
+                        : 'Unknown error',
                 ),
             ),
             default => null,

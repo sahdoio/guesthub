@@ -33,7 +33,7 @@ final class LineItemModel extends Model
         'created_at',
     ];
 
-    /** @return BelongsTo<InvoiceModel, self> */
+    /** @return BelongsTo<InvoiceModel, $this> */
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(InvoiceModel::class, 'invoice_id');
