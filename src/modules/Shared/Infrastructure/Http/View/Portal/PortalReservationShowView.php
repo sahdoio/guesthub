@@ -7,14 +7,15 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Billing\Infrastructure\Persistence\Eloquent\InvoiceModel;
+use Modules\Billing\Domain\Repository\InvoiceRepository;
+use Modules\Billing\Infrastructure\Http\Presenter\InvoicePresenter;
+use Modules\Stay\Application\Query\ReservationReadModel;
 use Modules\Stay\Domain\Exception\ReservationNotFoundException;
 use Modules\Stay\Domain\Repository\ReservationRepository;
+use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\ReservationId;
 use Modules\Stay\Domain\Service\GuestGateway;
-use Modules\Stay\Application\Query\ReservationReadModel;
 use Modules\Stay\Domain\StayId;
-use Modules\Stay\Domain\Repository\StayRepository;
 
 final class PortalReservationShowView
 {
@@ -22,6 +23,7 @@ final class PortalReservationShowView
         private ReservationRepository $repository,
         private GuestGateway $guestGateway,
         private StayRepository $stayRepository,
+        private InvoiceRepository $invoiceRepository,
     ) {}
 
     public function __invoke(Request $request, string $id): Response
@@ -59,15 +61,11 @@ final class PortalReservationShowView
             ]);
         }
 
-        $invoice = InvoiceModel::query()
-            ->withoutGlobalScopes()
-            ->with(['lineItems', 'payments'])
-            ->where('reservation_id', $id)
-            ->first();
+        $invoice = $this->invoiceRepository->findByReservationIdGlobal($id);
 
         return Inertia::render('Portal/Reservations/Show', [
             'reservation' => $readModel,
-            'invoice' => $invoice?->toArray(),
+            'invoice' => $invoice ? InvoicePresenter::toArray($invoice) : null,
             'stripePublishableKey' => config('billing.stripe.publishable_key'),
         ]);
     }

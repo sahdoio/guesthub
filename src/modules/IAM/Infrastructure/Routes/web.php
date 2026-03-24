@@ -3,11 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use Modules\IAM\Infrastructure\Http\View\ImpersonateView;
 use Modules\IAM\Infrastructure\Http\View\LoginSubmitView;
+use Modules\IAM\Infrastructure\Http\View\LoginView;
+use Modules\IAM\Infrastructure\Http\View\LogoutSubmitView;
 use Modules\IAM\Infrastructure\Http\View\ProfileEditView;
 use Modules\IAM\Infrastructure\Http\View\ProfileShowView;
 use Modules\IAM\Infrastructure\Http\View\ProfileUpdateView;
-use Modules\IAM\Infrastructure\Http\View\LoginView;
-use Modules\IAM\Infrastructure\Http\View\LogoutSubmitView;
 use Modules\IAM\Infrastructure\Http\View\RegisterHotelSubmitView;
 use Modules\IAM\Infrastructure\Http\View\RegisterHotelView;
 use Modules\IAM\Infrastructure\Http\View\RegisterSubmitView;

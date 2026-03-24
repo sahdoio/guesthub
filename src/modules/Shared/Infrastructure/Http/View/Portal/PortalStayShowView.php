@@ -9,8 +9,6 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Stay\Domain\Repository\StayRepository;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayImageModel;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
 
 final class PortalStayShowView
 {
@@ -28,24 +26,15 @@ final class PortalStayShowView
 
         $disk = Storage::disk(config('filesystems.stays_disk', 'public'));
 
-        $coverImageUrl = null;
-        if ($stay->coverImagePath !== null) {
-            $coverImageUrl = $disk->url($stay->coverImagePath);
-        }
+        $coverImageUrl = $stay->coverImagePath !== null
+            ? $disk->url($stay->coverImagePath)
+            : null;
 
-        $stayModel = StayModel::query()
-            ->withoutGlobalScopes()
-            ->where('uuid', $stay->uuid->value)
-            ->first();
-
-        $images = [];
-        if ($stayModel) {
-            $images = $stayModel->images->map(fn (StayImageModel $img) => [
-                'id' => $img->uuid,
-                'url' => $disk->url($img->path),
-                'position' => $img->position,
-            ])->all();
-        }
+        $images = array_map(fn (array $img) => [
+            'id' => $img['uuid'],
+            'url' => $disk->url($img['path']),
+            'position' => $img['position'],
+        ], $this->stayRepository->getImages($stay->uuid));
 
         return Inertia::render('Portal/Stays/Show', [
             'stay' => [

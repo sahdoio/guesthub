@@ -65,10 +65,14 @@ const submit = () => {
     <div class="flex-1 flex items-center justify-center bg-gradient-to-br from-slate-50 to-white p-8">
         <div class="w-full max-w-md">
             <div class="flex justify-center mb-8 lg:hidden">
-                <Logo size="lg" />
+                <a href="/"><Logo size="lg" /></a>
             </div>
 
             <div class="mb-8">
+                <a href="/" class="text-sm text-gray-400 hover:text-indigo-600 inline-flex items-center gap-1 mb-3 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                    {{ $t('common.back_to_home') }}
+                </a>
                 <h2 class="text-2xl font-bold text-gray-900">{{ $t('auth.sign_in_title') }}</h2>
                 <p class="mt-2 text-sm text-gray-500">{{ $t('auth.sign_in_subtitle') }}</p>
             </div>

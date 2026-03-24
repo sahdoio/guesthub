@@ -8,8 +8,8 @@ use Modules\Billing\Application\Command\RefundInvoice;
 use Modules\Billing\Application\Command\RefundInvoiceHandler;
 use Modules\Billing\Application\Command\VoidInvoice;
 use Modules\Billing\Application\Command\VoidInvoiceHandler;
-use Modules\Billing\Domain\ValueObject\InvoiceStatus;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
+use Modules\Billing\Domain\ValueObject\InvoiceStatus;
 use Modules\Stay\Infrastructure\IntegrationEvent\ReservationCancelledEvent;
 
 final readonly class OnReservationCancelled
@@ -41,7 +41,7 @@ final readonly class OnReservationCancelled
 
         if ($invoice->status === InvoiceStatus::PAID) {
             $withinWindow = $event->freeCancellationUntil !== null
-                && new \DateTimeImmutable() < new \DateTimeImmutable($event->freeCancellationUntil);
+                && new \DateTimeImmutable < new \DateTimeImmutable($event->freeCancellationUntil);
 
             if ($withinWindow) {
                 $this->refundHandler->handle(new RefundInvoice(

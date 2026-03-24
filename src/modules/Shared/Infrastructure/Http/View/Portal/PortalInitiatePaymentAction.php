@@ -6,7 +6,6 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 
 use DateTimeImmutable;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Modules\Billing\Domain\DTO\PaymentIntent;
 use Modules\Billing\Domain\InvoiceId;
@@ -14,7 +13,6 @@ use Modules\Billing\Domain\PaymentId;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
 use Modules\Billing\Domain\Service\PaymentGateway;
 use Modules\Billing\Domain\ValueObject\PaymentMethod;
-use Modules\Billing\Infrastructure\Persistence\Eloquent\InvoiceModel;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
@@ -30,32 +28,30 @@ final class PortalInitiatePaymentAction extends EventDispatchingHandler
         parent::__construct($dispatcher);
     }
 
-    public function __invoke(Request $request, string $uuid): JsonResponse|RedirectResponse
+    public function __invoke(Request $request, string $uuid): JsonResponse
     {
-        // Resolve tenant from invoice
-        $invoiceRecord = InvoiceModel::query()
-            ->withoutGlobalScopes()
-            ->where('uuid', $uuid)
-            ->first();
+        $id = InvoiceId::fromString($uuid);
 
-        if (! $invoiceRecord) {
+        // Resolve tenant from invoice
+        $accountNumericId = $this->repository->resolveAccountNumericId($id);
+
+        if ($accountNumericId === null) {
+            abort(404, 'Invoice not found.');
+        }
+
+        // Set tenant context so repository can find the invoice
+        $this->tenantContext->set($accountNumericId);
+
+        $invoice = $this->repository->findByUuid($id);
+
+        if (! $invoice) {
             abort(404, 'Invoice not found.');
         }
 
         // Enforce ownership
         $guestUuid = $request->attributes->get('guest_uuid');
-        if ($guestUuid && $invoiceRecord->guest_id !== $guestUuid) {
+        if ($guestUuid && $invoice->guestId !== $guestUuid) {
             abort(403, 'Access denied.');
-        }
-
-        // Set tenant context so repository can find the invoice
-        $this->tenantContext->set($invoiceRecord->account_id);
-
-        $id = InvoiceId::fromString($uuid);
-        $invoice = $this->repository->findByUuid($id);
-
-        if (! $invoice) {
-            abort(404, 'Invoice not found.');
         }
 
         // Try real Stripe PaymentIntent
@@ -72,7 +68,7 @@ final class PortalInitiatePaymentAction extends EventDispatchingHandler
                     amount: $invoice->total,
                     method: PaymentMethod::CARD,
                     stripePaymentIntentId: $result->paymentIntentId,
-                    createdAt: new DateTimeImmutable(),
+                    createdAt: new DateTimeImmutable,
                 );
 
                 $this->repository->save($invoice);
@@ -88,14 +84,14 @@ final class PortalInitiatePaymentAction extends EventDispatchingHandler
             return new JsonResponse(['error' => $result->errorMessage], 422);
         } catch (\RuntimeException $e) {
             // Stripe not configured — fall back to simulated payment
-            $paymentIntentId = 'sim_' . bin2hex(random_bytes(12));
+            $paymentIntentId = 'sim_'.bin2hex(random_bytes(12));
 
             $invoice->recordPayment(
                 paymentId: PaymentId::generate(),
                 amount: $invoice->total,
                 method: PaymentMethod::CARD,
                 stripePaymentIntentId: $paymentIntentId,
-                createdAt: new DateTimeImmutable(),
+                createdAt: new DateTimeImmutable,
             );
 
             $invoice->markPaymentSucceeded($paymentIntentId);

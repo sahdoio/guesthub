@@ -125,6 +125,10 @@
 │  │  • accountId: string                      (tenant reference)                       │ │
 │  │  • stayId: string                         (soft link to Stay)                      │ │
 │  │  • status: ReservationStatus                                                       │ │
+│  │  • adults: int (default 1)                (guest counts)                           │ │
+│  │  • children: int (default 0)                                                       │ │
+│  │  • babies: int (default 0)                                                         │ │
+│  │  • pets: int (default 0)                                                           │ │
 │  │  • createdAt, confirmedAt, checkedInAt, checkedOutAt, cancelledAt                  │ │
 │  │  • cancellationReason: ?string                                                     │ │
 │  │                                                                                    │ │

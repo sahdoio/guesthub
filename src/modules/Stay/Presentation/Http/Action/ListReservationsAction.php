@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Presentation\Http\Action;
 
-use Modules\Stay\Application\Query\ListReservations;
-use Modules\Stay\Application\Query\ListReservationsHandler;
 use Modules\Shared\Application\Query\Pagination;
 use Modules\Shared\Infrastructure\Service\AuthenticatedUserResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;
+use Modules\Stay\Application\Query\ListReservations;
+use Modules\Stay\Application\Query\ListReservationsHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 

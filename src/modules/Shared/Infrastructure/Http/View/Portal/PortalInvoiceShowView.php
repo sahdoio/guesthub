@@ -7,29 +7,31 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Billing\Infrastructure\Persistence\Eloquent\InvoiceModel;
+use Modules\Billing\Domain\InvoiceId;
+use Modules\Billing\Domain\Repository\InvoiceRepository;
+use Modules\Billing\Infrastructure\Http\Presenter\InvoicePresenter;
 
 final class PortalInvoiceShowView
 {
+    public function __construct(
+        private InvoiceRepository $repository,
+    ) {}
+
     public function __invoke(Request $request, string $uuid): Response
     {
-        $invoice = InvoiceModel::query()
-            ->withoutGlobalScopes()
-            ->with(['lineItems', 'payments'])
-            ->where('uuid', $uuid)
-            ->first();
+        $invoice = $this->repository->findByUuidGlobal(InvoiceId::fromString($uuid));
 
         if (! $invoice) {
             abort(404, 'Invoice not found.');
         }
 
         $guestUuid = $request->attributes->get('guest_uuid');
-        if ($guestUuid && $invoice->guest_id !== $guestUuid) {
+        if ($guestUuid && $invoice->guestId !== $guestUuid) {
             abort(403, 'Access denied.');
         }
 
         return Inertia::render('Portal/Billing/Show', [
-            'invoice' => $invoice->toArray(),
+            'invoice' => InvoicePresenter::toArray($invoice),
             'stripePublishableKey' => config('billing.stripe.publishable_key'),
         ]);
     }

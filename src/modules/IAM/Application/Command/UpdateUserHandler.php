@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Modules\IAM\Application\Command;
 
 use Modules\IAM\Domain\Exception\UserNotFoundException;
-use Modules\IAM\Domain\UserId;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\UserId;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 
 final readonly class UpdateUserHandler

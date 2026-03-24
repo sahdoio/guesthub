@@ -7,7 +7,6 @@ namespace Modules\Billing\Infrastructure\Persistence\Seeders;
 use Illuminate\Database\Seeder;
 use Modules\Billing\Infrastructure\Persistence\Eloquent\InvoiceModel;
 use Modules\Billing\Infrastructure\Persistence\Eloquent\LineItemModel;
-use Modules\Billing\Infrastructure\Persistence\Eloquent\PaymentModel;
 use Modules\Stay\Infrastructure\Persistence\Eloquent\ReservationModel;
 use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
 use Ramsey\Uuid\Uuid;

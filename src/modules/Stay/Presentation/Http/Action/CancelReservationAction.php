@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Presentation\Http\Action;
 
+use Modules\Shared\Infrastructure\Service\AuthenticatedUserResolver;
+use Modules\Shared\Presentation\Http\JsonResponder;
+use Modules\Shared\Presentation\Validation\InputValidator;
 use Modules\Stay\Application\Command\CancelReservation;
 use Modules\Stay\Application\Command\CancelReservationHandler;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\ReservationId;
-use Modules\Shared\Infrastructure\Service\AuthenticatedUserResolver;
-use Modules\Shared\Presentation\Http\JsonResponder;
-use Modules\Shared\Presentation\Validation\InputValidator;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 

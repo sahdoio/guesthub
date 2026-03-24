@@ -10,7 +10,6 @@ use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
 use Modules\IAM\Domain\Repository\TypeRepository;
 use Modules\IAM\Domain\Repository\UserRepository;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentUserRepository;
 use Modules\IAM\Domain\Service\EmailUniquenessChecker;
 use Modules\IAM\Domain\Service\PasswordHasher;
 use Modules\IAM\Domain\Service\TokenManager;
@@ -18,8 +17,9 @@ use Modules\IAM\Domain\Service\UserGateway;
 use Modules\IAM\Infrastructure\Integration\UserGatewayAdapter;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentAccountRepository;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentActorRepository;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentEmailUniquenessChecker;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentActorTypeRepository;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentEmailUniquenessChecker;
+use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentUserRepository;
 use Modules\IAM\Infrastructure\Services\BcryptPasswordHasher;
 use Modules\IAM\Infrastructure\Services\SanctumTokenManager;
 

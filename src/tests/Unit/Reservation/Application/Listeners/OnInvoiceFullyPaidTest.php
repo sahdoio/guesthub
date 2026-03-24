@@ -9,16 +9,15 @@ use Modules\Billing\Infrastructure\IntegrationEvent\InvoiceFullyPaidEvent;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Stay\Application\Listeners\OnInvoiceFullyPaid;
 use Modules\Stay\Domain\Event\ReservationConfirmed;
+use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\Reservation;
 use Modules\Stay\Domain\ReservationId;
-use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\ValueObject\ReservationPeriod;
 use Modules\Stay\Domain\ValueObject\ReservationStatus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
 
 #[CoversClass(OnInvoiceFullyPaid::class)]
 final class OnInvoiceFullyPaidTest extends TestCase
@@ -62,7 +61,7 @@ final class OnInvoiceFullyPaidTest extends TestCase
         $event = new InvoiceFullyPaidEvent(
             invoiceId: 'inv-123',
             reservationId: $reservationId,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new DateTimeImmutable,
         );
 
         $listener->handle($event);
@@ -91,7 +90,7 @@ final class OnInvoiceFullyPaidTest extends TestCase
         $event = new InvoiceFullyPaidEvent(
             invoiceId: 'inv-123',
             reservationId: (string) $reservation->uuid,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new DateTimeImmutable,
         );
 
         $listener->handle($event);
@@ -114,7 +113,7 @@ final class OnInvoiceFullyPaidTest extends TestCase
         $event = new InvoiceFullyPaidEvent(
             invoiceId: 'inv-123',
             reservationId: Uuid::uuid7()->toString(),
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new DateTimeImmutable,
         );
 
         $listener->handle($event);

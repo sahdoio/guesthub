@@ -7,7 +7,6 @@ namespace Modules\Stay\Application\Query;
 use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\ValueObject\StayCategory;
 use Modules\Stay\Domain\ValueObject\StayType;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
 
 final readonly class GetStayStatsHandler
 {
@@ -26,12 +25,12 @@ final readonly class GetStayStatsHandler
 
         $byType = [];
         foreach (StayType::cases() as $type) {
-            $byType[$type->value] = StayModel::query()->where('type', $type->value)->count();
+            $byType[$type->value] = $this->repository->countByType($type->value);
         }
 
         $byCategory = [];
         foreach (StayCategory::cases() as $category) {
-            $byCategory[$category->value] = StayModel::query()->where('category', $category->value)->count();
+            $byCategory[$category->value] = $this->repository->countByCategory($category->value);
         }
 
         return new StayStatsResult(

@@ -6,11 +6,11 @@ namespace Modules\Stay\Domain;
 
 use DateTimeImmutable;
 use Modules\IAM\Domain\AccountId;
+use Modules\Shared\Domain\AggregateRoot;
+use Modules\Shared\Domain\Identity;
 use Modules\Stay\Domain\Event\StayCreated;
 use Modules\Stay\Domain\ValueObject\StayCategory;
 use Modules\Stay\Domain\ValueObject\StayType;
-use Modules\Shared\Domain\AggregateRoot;
-use Modules\Shared\Domain\Identity;
 
 final class Stay extends AggregateRoot
 {

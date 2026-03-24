@@ -8,9 +8,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\IAM\Domain\Repository\AccountRepository;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Presentation\Http\Presenter\StayPresenter;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 final class StayListView
 {
@@ -18,6 +18,7 @@ final class StayListView
         private StayRepository $stayRepository,
         private AccountRepository $accountRepository,
         private TenantContext $tenantContext,
+        private StayPresenter $stayPresenter,
     ) {}
 
     public function __invoke(Request $request): Response
@@ -25,7 +26,7 @@ final class StayListView
         $account = $this->accountRepository->findByNumericId($this->tenantContext->id());
 
         $stays = array_map(
-            fn ($stay) => StayPresenter::fromDomain($stay),
+            fn ($stay) => $this->stayPresenter->toArray($stay),
             $this->stayRepository->findByAccountId($account->uuid),
         );
 

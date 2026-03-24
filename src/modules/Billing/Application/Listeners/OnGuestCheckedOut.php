@@ -6,8 +6,8 @@ namespace Modules\Billing\Application\Listeners;
 
 use Modules\Billing\Application\Command\IssueInvoice;
 use Modules\Billing\Application\Command\IssueInvoiceHandler;
-use Modules\Billing\Domain\ValueObject\InvoiceStatus;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
+use Modules\Billing\Domain\ValueObject\InvoiceStatus;
 use Modules\Stay\Infrastructure\IntegrationEvent\GuestCheckedOutEvent;
 
 final readonly class OnGuestCheckedOut

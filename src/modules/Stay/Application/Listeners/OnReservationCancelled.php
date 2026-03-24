@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Application\Listeners;
 
+use Modules\Shared\Application\EventDispatcher;
 use Modules\Stay\Domain\Event\ReservationCancelled;
 use Modules\Stay\Domain\Exception\ReservationNotFoundException;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Infrastructure\IntegrationEvent\ReservationCancelledEvent;
-use Modules\Shared\Application\EventDispatcher;
 
 final readonly class OnReservationCancelled
 {

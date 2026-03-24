@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Modules\IAM\Infrastructure\Http\Action;
 
-use Modules\IAM\Domain\Repository\UserRepository;
 use Modules\IAM\Application\Command\RegisterActor;
 use Modules\IAM\Application\Command\RegisterActorHandler;
 use Modules\IAM\Domain\Repository\ActorRepository;
 use Modules\IAM\Domain\Repository\TypeRepository;
+use Modules\IAM\Domain\Repository\UserRepository;
 use Modules\IAM\Infrastructure\Http\Presenter\ActorPresenter;
 use Modules\Shared\Presentation\Http\JsonResponder;
 use Modules\Shared\Presentation\Validation\InputValidator;

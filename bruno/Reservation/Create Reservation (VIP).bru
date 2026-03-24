@@ -21,10 +21,14 @@ auth:bearer {
 
 body:json {
   {
-    "guest_profile_id": "{{guestId}}",
+    "guest_id": "{{guestId}}",
+    "stay_id": "{{stayId}}",
     "check_in": "{{checkIn}}",
     "check_out": "{{checkOut}}",
-    "room_type": "SUITE"
+    "adults": 2,
+    "children": 0,
+    "babies": 0,
+    "pets": 1
   }
 }
 
@@ -46,8 +50,11 @@ script:pre-request {
 }
 
 docs {
-  Requires a VIP guest profile (platinum or gold loyalty tier).
-  Run IAM > Register, IAM > Login, then Guest > Create Guest (with loyalty_tier "platinum") before this request.
+  Creates a reservation for a VIP guest (platinum or gold loyalty tier).
+  The response will include guest.is_vip = true.
+
+  Run IAM > Login first with a VIP guest's credentials.
+  Set guestId to the VIP guest's user UUID and stayId to a valid stay UUID.
 }
 
 tests {
@@ -59,7 +66,9 @@ tests {
     expect(res.getBody().data.guest.is_vip).to.equal(true);
   });
 
-  test("room type should be SUITE", function() {
-    expect(res.getBody().data.room_type).to.equal('SUITE');
+  test("should have guest counts", function() {
+    const guests = res.getBody().data.guests;
+    expect(guests).to.be.an('object');
+    expect(guests.adults).to.be.a('number');
   });
 }

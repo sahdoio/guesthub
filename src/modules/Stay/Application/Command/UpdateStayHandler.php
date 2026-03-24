@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Application\Command;
 
-use Modules\Stay\Domain\StayId;
 use Modules\Stay\Domain\Repository\StayRepository;
+use Modules\Stay\Domain\StayId;
 
 final readonly class UpdateStayHandler
 {

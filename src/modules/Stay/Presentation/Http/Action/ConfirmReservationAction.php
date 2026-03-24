@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Presentation\Http\Action;
 
+use Modules\Shared\Presentation\Http\JsonResponder;
 use Modules\Stay\Application\Command\ConfirmReservation;
 use Modules\Stay\Application\Command\ConfirmReservationHandler;
-use Modules\Shared\Presentation\Http\JsonResponder;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 

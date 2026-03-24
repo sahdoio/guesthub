@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Modules\Stay\Application\Listeners;
 
 use Modules\Billing\Infrastructure\IntegrationEvent\InvoiceFullyPaidEvent;
-use Modules\Stay\Domain\Exception\ReservationNotFoundException;
+use Modules\Shared\Application\EventDispatcher;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\ReservationId;
 use Modules\Stay\Domain\ValueObject\ReservationStatus;
-use Modules\Shared\Application\EventDispatcher;
 
 final readonly class OnInvoiceFullyPaid
 {

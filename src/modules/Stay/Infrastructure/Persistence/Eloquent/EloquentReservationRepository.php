@@ -6,6 +6,8 @@ namespace Modules\Stay\Infrastructure\Persistence\Eloquent;
 
 use DateMalformedStringException;
 use DateTimeImmutable;
+use Modules\Shared\Domain\PaginatedResult;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\Reservation;
 use Modules\Stay\Domain\ReservationId;
@@ -17,9 +19,6 @@ use Modules\Stay\Domain\ValueObject\ReservationStatus;
 use Modules\Stay\Domain\ValueObject\SpecialRequestId;
 use Modules\Stay\Infrastructure\Persistence\ReservationReflector;
 use Modules\Stay\Infrastructure\Persistence\SpecialRequestReflector;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
-use Modules\Shared\Domain\PaginatedResult;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 final readonly class EloquentReservationRepository implements ReservationRepository
 {

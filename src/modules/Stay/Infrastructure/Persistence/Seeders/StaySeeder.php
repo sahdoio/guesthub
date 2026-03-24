@@ -9,11 +9,11 @@ use Illuminate\Database\Seeder;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Infrastructure\Persistence\Seeders\AccountSeeder;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\Stay;
 use Modules\Stay\Domain\ValueObject\StayCategory;
 use Modules\Stay\Domain\ValueObject\StayType;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 class StaySeeder extends Seeder
 {
@@ -131,6 +131,7 @@ class StaySeeder extends Seeder
                 if (self::$defaultStayUuid === null) {
                     self::$defaultStayUuid = (string) $existing->uuid;
                 }
+
                 continue;
             }
 

@@ -6,8 +6,8 @@ namespace Modules\IAM\Infrastructure\Persistence\Seeders;
 
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
-use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 
 class UserSeeder extends Seeder

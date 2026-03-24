@@ -7,8 +7,8 @@ namespace Modules\IAM\Infrastructure\Http\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Modules\IAM\Domain\Exception\UserNotFoundException;
-use Modules\IAM\Domain\UserId;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\UserId;
 
 final class UserDeleteView
 {

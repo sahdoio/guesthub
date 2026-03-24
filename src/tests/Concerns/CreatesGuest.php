@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Concerns;
 
 use DateTimeImmutable;
-use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 
 trait CreatesGuest

@@ -6,13 +6,13 @@ namespace Tests\Integration\Stay;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Domain\Service\GuestGateway;
 use Modules\Stay\Infrastructure\Integration\GuestGatewayAdapter;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Ramsey\Uuid\Uuid;

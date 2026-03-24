@@ -173,93 +173,33 @@
 
 ---
 
-## Bounded Context: Inventory (Room Management)
+## Bounded Context: Stay (Property & Reservation Management)
 
-### Flow: Room Creation
-
-🟨 **Actor:** Owner | SuperAdmin
-
-🟦 **Command:** Create Room
-> `number, type (SINGLE|DOUBLE|SUITE), floor, capacity, pricePerNight, amenities[]`
-
-◼️ **Invariant:** Room number must be unique
-
-🟧 **Event:** Room Created
-> `roomId, number, type, status=AVAILABLE`
-
----
-
-### Flow: Room Update
+### Flow: Stay Creation
 
 🟨 **Actor:** Owner | SuperAdmin
 
-🟩 **Read Model:** Room Detail (number, type, floor, capacity, price, amenities, status)
+🟦 **Command:** Create Stay
+> `accountId, name, slug, type, category, pricePerNight, capacity, description?, address?, contactEmail?, contactPhone?, amenities[]`
 
-🟦 **Command:** Update Room
-> `roomId, pricePerNight?, amenities?`
+◼️ **Invariant:** Slug must be unique within the account
+◼️ **Invariant:** Type must be ROOM or ENTIRE_SPACE
+◼️ **Invariant:** Category must be HOTEL_ROOM, HOUSE, or APARTMENT
 
-🟧 **Event:** Room Updated
-> `roomId`
-
----
-
-### Flow: Room Status Change
-
-🟨 **Actor:** Owner | SuperAdmin
-
-🟩 **Read Model:** Room Detail (current status)
-
-🟦 **Command:** Change Room Status
-> `roomId, newStatus`
-
-◼️ **Invariant:** Room state machine
-
-| From | To | Condition |
-|------|----|-----------|
-| AVAILABLE | OCCUPIED | only via check-in |
-| OCCUPIED | AVAILABLE | only via check-out/release |
-| AVAILABLE / MAINTENANCE / OUT_OF_ORDER | MAINTENANCE | — |
-| AVAILABLE / MAINTENANCE / OUT_OF_ORDER | OUT_OF_ORDER | — |
-| MAINTENANCE / OUT_OF_ORDER | AVAILABLE | — |
-| OCCUPIED | MAINTENANCE / OUT_OF_ORDER | **FORBIDDEN** |
-
-🟧 **Event:** Room Status Changed
-> `roomId, oldStatus, newStatus`
+🟧 **Event:** Stay Created
+> `stayId, name, type, category, status=active`
 
 ---
-
-### Read Models — Inventory
-
-🟩 **Room List** *(paginated, owner/superadmin only)*
-> `number, type, floor, capacity, pricePerNight, status, amenities`
-
-🟩 **Room Stats**
-> count by type (SINGLE, DOUBLE, SUITE) and by status (AVAILABLE, OCCUPIED, MAINTENANCE, OUT_OF_ORDER)
-
-🟩 **Room Availability** *(used by Reservation BC)*
-> `type, period, available count, price`
-
----
-
-### ⬜ Questions — Inventory
-
-- Is there a maintenance history for rooms?
-- Are amenities free-text or from a catalog?
-- Does the nightly rate vary by season?
-
----
-
-## Bounded Context: Reservation (Reservation Management)
 
 ### Flow: Reservation Creation
 
 🟨 **Actor:** Guest | Owner | SuperAdmin
 
-🟩 **Read Model:** Room Availability (type, period, availability)
-🟩 **Read Model:** User Data (loyalty tier -> VIP status)
+🟩 **Read Model:** Stay Detail (capacity, price, availability)
+🟩 **Read Model:** User Data (loyalty tier → VIP status)
 
 🟦 **Command:** Create Reservation
-> `guestId, checkIn, checkOut, roomType (SINGLE|DOUBLE|SUITE)`
+> `guestId, stayId, checkIn, checkOut, adults?, children?, babies?, pets?`
 
 ◼️ **Invariant:** Check-in cannot be in the past
 ◼️ **Invariant:** Minimum stay: 1 night
@@ -267,11 +207,10 @@
 ◼️ **Invariant:** Check-out must be after check-in
 ◼️ **Invariant:** VIP guest (PLATINUM): can book up to 90 days in advance
 ◼️ **Invariant:** Regular guest: can book up to 60 days in advance
-◼️ **Invariant:** Rooms of the requested type must be available for the period
-◼️ **Invariant:** No overlapping reservations on the same room
+◼️ **Invariant:** Adults must be at least 1
 
 🟧 **Event:** Reservation Created
-> `reservationId, guestId, roomType, period, status=PENDING`
+> `reservationId, guestId, stayId, period, guests={adults, children, babies, pets}, status=PENDING`
 
 ---
 
@@ -289,29 +228,33 @@
 🟧 **Event:** Reservation Confirmed
 > `reservationId, confirmedAt`
 
+🟪 **Policy:** Whenever Reservation Confirmed, then Create Invoice
+> Billing BC creates a draft invoice with line items based on stay price and nights
+
+🟧 **Event (Billing):** Invoice Created
+> `invoiceId, reservationId, status=DRAFT`
+
+🟪 **Policy:** Whenever Invoice Created, then Issue Invoice
+> Auto-issues the invoice for payment
+
+🟧 **Event (Billing):** Invoice Issued
+> `invoiceId, status=ISSUED`
+
 ---
 
 ### Flow: Check-In
 
 🟨 **Actor:** Owner | SuperAdmin
 
-🟩 **Read Model:** Reservation Detail (status, roomType)
-🟩 **Read Model:** Room Availability (available rooms of type)
+🟩 **Read Model:** Reservation Detail (status)
 
 🟦 **Command:** Check In Guest
-> `reservationId, roomNumber`
+> `reservationId`
 
 ◼️ **Invariant:** Reservation must be in CONFIRMED status
-◼️ **Invariant:** Room must be AVAILABLE
 
 🟧 **Event:** Guest Checked In
-> `reservationId, roomNumber, checkedInAt`
-
-🟪 **Policy:** Whenever Guest Checked In, then Occupy Room
-> `Room.status = OCCUPIED`
-
-🟧 **Event:** Room Status Changed
-> `roomId, AVAILABLE -> OCCUPIED`
+> `reservationId, checkedInAt`
 
 ---
 
@@ -319,7 +262,7 @@
 
 🟨 **Actor:** Owner | SuperAdmin
 
-🟩 **Read Model:** Reservation Detail (status, assigned room)
+🟩 **Read Model:** Reservation Detail (status)
 
 🟦 **Command:** Check Out Guest
 > `reservationId`
@@ -328,12 +271,6 @@
 
 🟧 **Event:** Guest Checked Out
 > `reservationId, checkedOutAt`
-
-🟪 **Policy:** Whenever Guest Checked Out, then Release Room
-> `Room.status = AVAILABLE`
-
-🟧 **Event:** Room Status Changed
-> `roomId, OCCUPIED -> AVAILABLE`
 
 ---
 
@@ -351,6 +288,12 @@
 
 🟧 **Event:** Reservation Cancelled
 > `reservationId, reason, cancelledAt`
+
+🟪 **Policy:** Whenever Reservation Cancelled, then Void Invoice
+> Billing BC voids the associated invoice if one exists
+
+🟧 **Event (Billing):** Invoice Voided
+> `invoiceId, reason`
 
 ---
 
@@ -390,6 +333,7 @@ stateDiagram-v2
     PENDING --> CONFIRMED
     PENDING --> CANCELLED
     CONFIRMED --> CHECKED_IN
+    CONFIRMED --> CANCELLED
     CHECKED_IN --> CHECKED_OUT
     CHECKED_OUT --> [*]
     CANCELLED --> [*]
@@ -408,26 +352,127 @@ stateDiagram-v2
 
 ---
 
-### Read Models — Reservation
+### Read Models — Stay & Reservation
+
+🟩 **Stay List** *(paginated, portal/public)*
+> `name, slug, type, category, address, pricePerNight, capacity, coverImageUrl`
+> Filterable by: `search query (name/address/description), guest counts (adults+children vs capacity)`
+
+🟩 **Stay Detail**
+> `name, slug, type, category, description, address, pricePerNight, capacity, amenities[], contactEmail, contactPhone, coverImageUrl, galleryImages[]`
 
 🟩 **Reservation List** *(paginated)*
-> Filterable by: `status, roomType, guestId`
-> Data: `id, guest, period, roomType, status, assignedRoom`
+> Filterable by: `status, guestId`
+> Data: `id, guest, stay, period, guests (adults/children/babies/pets), status, timestamps`
 
 🟩 **Reservation Detail**
-> `reservationId, guest (name, email, phone, isVip), period, roomType, assignedRoomNumber, status, specialRequests[], timestamps (created, confirmed, checkedIn, checkedOut, cancelled)`
-
-🟩 **Reservation Stats**
-> count by status, count by roomType, today's check-ins, today's check-outs
+> `reservationId, guest (name, email, phone, isVip), stay (name, slug, address), period (checkIn, checkOut, nights), guests (adults, children, babies, pets), status, specialRequests[], freeCancellationUntil, cancellationReason, timestamps`
 
 ---
 
-### ⬜ Questions — Reservation
+### ⬜ Questions — Stay & Reservation
 
-- Is there billing/payment associated with reservations?
-- Is there a cancellation policy (fees, deadlines)?
 - Are notifications sent to guests on status changes?
 - How does overbooking work? Is it allowed?
+- Should there be seasonal pricing on stays?
+
+---
+
+## Bounded Context: Billing (Invoice & Payment Management)
+
+### Flow: Invoice Creation (via integration event)
+
+🟪 **Policy:** Whenever Reservation Confirmed (Stay BC integration event), then Create Invoice
+
+🟦 **Command:** Create Invoice for Reservation
+> `reservationId, guestId, accountId, stayName, pricePerNight, nights`
+
+🟧 **Event:** Invoice Created
+> `invoiceId, reservationId, status=DRAFT`
+
+🟪 **Policy:** Whenever Invoice Created, then Issue Invoice
+
+🟧 **Event:** Invoice Issued
+> `invoiceId, status=ISSUED`
+
+---
+
+### Flow: Payment
+
+🟨 **Actor:** Guest (via portal checkout)
+
+🟩 **Read Model:** Invoice Detail (status, lineItems, total)
+
+🟦 **Command:** Initiate Payment
+> `invoiceId`
+
+🟧 **Event:** Payment Recorded
+> `invoiceId, paymentId, amount, method=CARD, status=PENDING`
+
+🟪 **Policy:** Whenever Payment Succeeded (Stripe webhook or simulated), then Mark Invoice Paid
+
+🟧 **Event:** Invoice Fully Paid
+> `invoiceId, reservationId, paidAt`
+
+---
+
+### Flow: Invoice Void (via cancellation)
+
+🟪 **Policy:** Whenever Reservation Cancelled (Stay BC integration event), then Void Invoice
+
+🟦 **Command:** Void Invoice
+> `invoiceId, reason`
+
+◼️ **Invariant:** Invoice must be in DRAFT or ISSUED status
+
+🟧 **Event:** Invoice Voided
+> `invoiceId, reason`
+
+---
+
+### State Machine — Invoice
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT
+    DRAFT --> ISSUED
+    DRAFT --> VOID
+    ISSUED --> PAID
+    ISSUED --> VOID
+    PAID --> REFUNDED
+    REFUNDED --> [*]
+    VOID --> [*]
+```
+
+### State Machine — Payment
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> SUCCEEDED
+    PENDING --> FAILED
+    SUCCEEDED --> REFUNDED
+    REFUNDED --> [*]
+    FAILED --> [*]
+```
+
+---
+
+### Read Models — Billing
+
+🟩 **Invoice List** *(paginated, guest or owner)*
+> `invoiceNumber, status, totalCents, createdAt, issuedAt, paidAt`
+
+🟩 **Invoice Detail**
+> `invoiceNumber, status, lineItems[], subtotalCents, taxCents, totalCents, payments[], timestamps`
+
+---
+
+### ⬜ Questions — Billing
+
+- What is the refund policy?
+- Are partial payments supported?
+- Is there a grace period for payment after invoice issuance?
 
 ---
 
@@ -435,19 +480,21 @@ stateDiagram-v2
 
 ```mermaid
 graph LR
-    IAM -- UserGateway --> User
-    Reservation -- GuestGateway --> User
-    Reservation -- InventoryGateway --> Inventory
+    IAM -- UserGateway --> IAM_User[User]
+    Stay -- GuestGateway --> IAM_User
+    Billing -- ReservationGateway --> Stay
+    Stay -- "Integration Events" --> Billing
 ```
 
 ### Integration Patterns
 
-| Source | Target | Gateway | Operation |
+| Source | Target | Pattern | Operation |
 |--------|---------|---------|----------|
-| IAM | User | UserGateway | Create user during actor registration |
-| Reservation | User | GuestGateway | Fetch user info (name, VIP status) |
-| Reservation | Inventory | InventoryGateway | Check room availability |
-| Reservation | Inventory | InventoryGateway | Occupy/release room (check-in/check-out) |
+| IAM | IAM (User) | UserGateway | Create user profile during actor registration |
+| Stay | IAM (User) | GuestGateway / UserApi | Fetch guest info (name, email, VIP status) for integration events |
+| Stay | Billing | Integration Events | ReservationConfirmed, GuestCheckedOut, ReservationCancelled |
+| Billing | Stay | ReservationGateway | Fetch reservation and stay data for invoice creation |
+| Billing | Stripe | PaymentGateway | Create payment intents, process webhooks |
 
 ---
 
@@ -457,10 +504,10 @@ graph LR
 > System administrator. No associated account. Full access to all bounded contexts. Can impersonate hotel owners.
 
 🟨 **Owner**
-> Hotel owner / property manager. Associated with an Account (tenant) and Hotel. Can: manage rooms, confirm/check-in/check-out reservations, manage users.
+> Property owner / manager. Associated with an Account (tenant). Can: manage stays, confirm/check-in/check-out reservations, manage users/guests, view invoices.
 
 🟨 **Guest**
-> Hotel guest. Associated with an Account + User entity (with loyalty tier). Can: view/create/cancel own reservations, add special requests, edit own profile via portal.
+> Guest user. Associated with an Account + User entity (with loyalty tier). Can: browse stays, create/cancel own reservations, add special requests, edit own profile, view and pay invoices via portal.
 
 ---
 
@@ -471,8 +518,8 @@ sequenceDiagram
     participant V as Visitor
     participant IAM
     participant U as User
-    participant R as Reservation
-    participant I as Inventory
+    participant S as Stay
+    participant B as Billing
 
     Note over V: Registration & Auth
     V->>IAM: Register Actor
@@ -483,24 +530,27 @@ sequenceDiagram
     IAM->>V: Actor Authenticated (token)
 
     Note over V: Booking (as Guest)
-    V->>R: Create Reservation
-    R->>U: Fetch User Info (VIP status)
-    U-->>R: Guest Info
-    R->>I: Check Availability
-    I-->>R: Available rooms
-    R->>R: Reservation Created (PENDING)
+    V->>S: Create Reservation (stayId, dates, guests)
+    S->>U: Fetch Guest Info (VIP status)
+    U-->>S: Guest Info
+    S->>S: Reservation Created (PENDING)
 
     Note over V: Operations (as Owner)
-    V->>R: Confirm Reservation
-    R->>R: Reservation Confirmed
+    V->>S: Confirm Reservation
+    S->>S: Reservation Confirmed
+    S->>B: ReservationConfirmedEvent
+    B->>B: Invoice Created & Issued
 
-    V->>R: Check In Guest (roomNumber)
-    R->>I: Occupy Room
-    I->>I: Room Status Changed (OCCUPIED)
-    R->>R: Guest Checked In
+    Note over V: Payment (as Guest)
+    V->>B: Initiate Payment
+    B->>B: Payment Recorded (PENDING)
+    B->>B: Invoice Fully Paid
 
-    V->>R: Check Out Guest
-    R->>I: Release Room
-    I->>I: Room Status Changed (AVAILABLE)
-    R->>R: Guest Checked Out
+    Note over V: Operations (as Owner)
+    V->>S: Check In Guest
+    S->>S: Guest Checked In
+
+    V->>S: Check Out Guest
+    S->>S: Guest Checked Out
+    S->>B: GuestCheckedOutEvent
 ```

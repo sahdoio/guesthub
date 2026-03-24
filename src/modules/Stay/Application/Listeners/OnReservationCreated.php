@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Modules\Stay\Application\Listeners;
 
 use Illuminate\Support\Facades\DB;
+use Modules\Shared\Application\EventDispatcher;
 use Modules\Stay\Domain\Event\ReservationCreated;
 use Modules\Stay\Domain\Exception\ReservationNotFoundException;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\Service\GuestGateway;
 use Modules\Stay\Infrastructure\IntegrationEvent\ReservationCreatedEvent;
-use Modules\Shared\Application\EventDispatcher;
 
 final readonly class OnReservationCreated
 {

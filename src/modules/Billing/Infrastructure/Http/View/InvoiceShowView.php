@@ -7,26 +7,24 @@ namespace Modules\Billing\Infrastructure\Http\View;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Billing\Infrastructure\Persistence\Eloquent\InvoiceModel;
+use Modules\Billing\Domain\Repository\InvoiceRepository;
 
 final class InvoiceShowView
 {
+    public function __construct(
+        private InvoiceRepository $repository,
+    ) {}
+
     public function __invoke(Request $request, string $uuid): Response
     {
-        $invoice = InvoiceModel::query()
-            ->with(['lineItems', 'payments', 'reservation.stay', 'guest'])
-            ->where('uuid', $uuid)
-            ->first();
+        $invoice = $this->repository->findForOwnerView($uuid);
 
         if (! $invoice) {
             abort(404, 'Invoice not found.');
         }
 
         return Inertia::render('Billing/Show', [
-            'invoice' => array_merge($invoice->toArray(), [
-                'line_items' => $invoice->lineItems->toArray(),
-                'payments' => $invoice->payments->toArray(),
-            ]),
+            'invoice' => $invoice,
         ]);
     }
 }

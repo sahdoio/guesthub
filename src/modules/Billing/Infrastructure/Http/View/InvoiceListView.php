@@ -7,33 +7,25 @@ namespace Modules\Billing\Infrastructure\Http\View;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Modules\Billing\Infrastructure\Persistence\Eloquent\InvoiceModel;
+use Modules\Billing\Domain\Repository\InvoiceRepository;
 
 final class InvoiceListView
 {
+    public function __construct(
+        private InvoiceRepository $repository,
+    ) {}
+
     public function __invoke(Request $request): Response
     {
-        $query = InvoiceModel::query()
-            ->with(['lineItems', 'payments', 'reservation.stay', 'guest']);
-
-        if ($status = $request->query('status')) {
-            $query->where('status', $status);
-        }
-
-        $paginator = $query->orderByDesc('created_at')
-            ->paginate(
-                perPage: (int) $request->query('per_page', 15),
-                page: (int) $request->query('page', 1),
-            );
+        $result = $this->repository->listForOwnerView(
+            page: (int) $request->query('page', 1),
+            perPage: (int) $request->query('per_page', 15),
+            status: $request->query('status'),
+        );
 
         return Inertia::render('Billing/Index', [
-            'invoices' => $paginator->items(),
-            'meta' => [
-                'current_page' => $paginator->currentPage(),
-                'last_page' => $paginator->lastPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-            ],
+            'invoices' => $result['items'],
+            'meta' => $result['meta'],
             'filters' => [
                 'status' => $request->query('status'),
             ],

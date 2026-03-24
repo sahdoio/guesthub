@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Domain\Repository;
 
+use Modules\Shared\Domain\PaginatedResult;
 use Modules\Stay\Domain\Reservation;
 use Modules\Stay\Domain\ReservationId;
-use Modules\Shared\Domain\PaginatedResult;
 
 interface ReservationRepository
 {

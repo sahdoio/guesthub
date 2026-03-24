@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Application\Command;
 
+use Modules\Shared\Application\EventDispatcher;
+use Modules\Shared\Application\EventDispatchingHandler;
 use Modules\Stay\Domain\Exception\ReservationNotFoundException;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\ReservationId;
-use Modules\Shared\Application\EventDispatcher;
-use Modules\Shared\Application\EventDispatchingHandler;
 
 final class CheckInGuestHandler extends EventDispatchingHandler
 {

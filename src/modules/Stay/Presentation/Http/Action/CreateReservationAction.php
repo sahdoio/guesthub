@@ -7,15 +7,16 @@ namespace Modules\Stay\Presentation\Http\Action;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\Stay\Application\Command\CreateReservation;
-use Modules\Stay\Application\Command\CreateReservationHandler;
-use Modules\Stay\Application\Query\GetReservation;
-use Modules\Stay\Application\Query\GetReservationHandler;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Shared\Infrastructure\Service\AuthenticatedUserResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;
 use Modules\Shared\Presentation\Validation\InputValidator;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
+use Modules\Stay\Application\Command\CreateReservation;
+use Modules\Stay\Application\Command\CreateReservationHandler;
+use Modules\Stay\Application\Query\GetReservation;
+use Modules\Stay\Application\Query\GetReservationHandler;
+use Modules\Stay\Domain\Repository\StayRepository;
+use Modules\Stay\Domain\StayId;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -29,6 +30,7 @@ final readonly class CreateReservationAction
         private JsonResponder $responder,
         private TenantContext $tenantContext,
         private AccountRepository $accountRepository,
+        private StayRepository $stayRepository,
     ) {}
 
     /**
@@ -51,15 +53,13 @@ final readonly class CreateReservationAction
 
         $account = $this->accountRepository->findByNumericId($this->tenantContext->id());
 
-        $stay = StayModel::query()
-            ->withoutGlobalScopes()
-            ->where('uuid', $data['stay_id'])
-            ->firstOrFail();
+        $stay = $this->stayRepository->findByUuid(StayId::fromString($data['stay_id']));
+        abort_if($stay === null, 404, 'Stay not found.');
 
         $id = $this->handler->handle(new CreateReservation(
             guestId: $data['guest_id'],
             accountId: (string) $account->uuid,
-            stayId: $stay->uuid,
+            stayId: (string) $stay->uuid,
             checkIn: new DateTimeImmutable($data['check_in']),
             checkOut: new DateTimeImmutable($data['check_out']),
             adults: (int) ($data['adults'] ?? 1),

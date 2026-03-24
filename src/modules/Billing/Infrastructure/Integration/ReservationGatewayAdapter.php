@@ -4,44 +4,48 @@ declare(strict_types=1);
 
 namespace Modules\Billing\Infrastructure\Integration;
 
-use DateTimeImmutable;
 use Modules\Billing\Domain\DTO\ReservationInfo;
 use Modules\Billing\Domain\Service\ReservationGateway;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\ReservationModel;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
+use Modules\Stay\Domain\Repository\ReservationRepository;
+use Modules\Stay\Domain\Repository\StayRepository;
+use Modules\Stay\Domain\ReservationId;
+use Modules\Stay\Domain\StayId;
 
 final class ReservationGatewayAdapter implements ReservationGateway
 {
+    public function __construct(
+        private ReservationRepository $reservationRepository,
+        private StayRepository $stayRepository,
+    ) {}
+
     public function findReservation(string $reservationId): ?ReservationInfo
     {
-        $reservation = ReservationModel::query()
-            ->withoutGlobalScopes()
-            ->where('uuid', $reservationId)
-            ->first();
+        $reservation = $this->reservationRepository->findByUuidGlobal(
+            ReservationId::fromString($reservationId),
+        );
 
         if ($reservation === null) {
             return null;
         }
 
-        $stay = StayModel::query()
-            ->withoutGlobalScopes()
-            ->where('uuid', $reservation->stay_uuid)
-            ->first();
+        $stay = $this->stayRepository->findByUuid(
+            StayId::fromString($reservation->stayId),
+        );
 
-        $checkIn = new DateTimeImmutable($reservation->check_in);
-        $checkOut = new DateTimeImmutable($reservation->check_out);
+        $checkIn = $reservation->period->checkIn;
+        $checkOut = $reservation->period->checkOut;
         $nights = (int) $checkIn->diff($checkOut)->days;
 
         return new ReservationInfo(
-            reservationId: $reservation->uuid,
-            guestId: $reservation->guest_id,
-            stayId: $reservation->stay_uuid,
+            reservationId: $reservation->uuid->value,
+            guestId: $reservation->guestId,
+            stayId: $reservation->stayId,
             stayName: $stay?->name ?? '',
-            accountId: $reservation->account_uuid ?? '',
-            checkIn: $reservation->check_in,
-            checkOut: $reservation->check_out,
+            accountId: $reservation->accountId,
+            checkIn: $checkIn->format('Y-m-d'),
+            checkOut: $checkOut->format('Y-m-d'),
             nights: $nights,
-            pricePerNight: $stay?->price_per_night ?? 0.0,
+            pricePerNight: $stay?->pricePerNight ?? 0.0,
         );
     }
 }

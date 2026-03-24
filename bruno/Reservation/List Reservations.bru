@@ -13,8 +13,7 @@ get {
 params:query {
   page: 1
   per_page: 2
-  ~status: 
-  ~room_type: 
+  ~status:
 }
 
 headers {
@@ -29,7 +28,7 @@ tests {
   test("should return 200", function() {
     expect(res.getStatus()).to.equal(200);
   });
-  
+
   test("should return paginated structure", function() {
     const body = res.getBody();
     expect(body.data).to.be.an('array');
@@ -39,7 +38,7 @@ tests {
     expect(body.meta.per_page).to.be.a('number');
     expect(body.meta.last_page).to.be.a('number');
   });
-  
+
   test("each item should have reservation structure", function() {
     const body = res.getBody();
     if (body.data.length > 0) {
@@ -47,9 +46,11 @@ tests {
       expect(item.id).to.be.a('string');
       expect(item.status).to.be.a('string');
       expect(item.guest).to.be.an('object');
+      expect(item.stay).to.be.an('object');
       expect(item.period).to.be.an('object');
       expect(item.period.nights).to.be.a('number');
-      expect(item.room_type).to.be.a('string');
+      expect(item.guests).to.be.an('object');
+      expect(item.guests.adults).to.be.a('number');
       expect(item.timestamps).to.be.an('object');
     }
   });
@@ -57,12 +58,11 @@ tests {
 
 docs {
   Lists reservations with pagination and optional filters.
-  
+
   Query parameters:
   - page: Page number (default: 1)
   - per_page: Items per page (default: 15, max: 100)
   - status: Filter by status (pending, confirmed, checked_in, checked_out, cancelled)
-  - room_type: Filter by room type (SINGLE, DOUBLE, SUITE)
-  
-  Enable the disabled query params (status, room_type) to test filtering.
+
+  Enable the disabled query params (status) to test filtering.
 }

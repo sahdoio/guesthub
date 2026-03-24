@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Modules\Stay\Domain;
 
 use DateTimeImmutable;
+use Modules\Shared\Domain\Entity;
 use Modules\Stay\Domain\Exception\InvalidReservationStateException;
 use Modules\Stay\Domain\ValueObject\RequestStatus;
 use Modules\Stay\Domain\ValueObject\RequestType;
 use Modules\Stay\Domain\ValueObject\SpecialRequestId;
-use Modules\Shared\Domain\Entity;
 
 final class SpecialRequest extends Entity
 {

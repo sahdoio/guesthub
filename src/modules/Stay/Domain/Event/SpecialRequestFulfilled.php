@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Modules\Stay\Domain\Event;
 
 use DateTimeImmutable;
+use Modules\Shared\Domain\DomainEvent;
 use Modules\Stay\Domain\ReservationId;
 use Modules\Stay\Domain\ValueObject\SpecialRequestId;
-use Modules\Shared\Domain\DomainEvent;
 
 final readonly class SpecialRequestFulfilled implements DomainEvent
 {

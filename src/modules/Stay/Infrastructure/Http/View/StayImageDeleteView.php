@@ -8,7 +8,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Modules\Stay\Domain\Repository\StayRepository;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayImageModel;
 
 final class StayImageDeleteView
 {
@@ -35,11 +34,10 @@ final class StayImageDeleteView
         }
 
         // Delete secondary image
-        $image = StayImageModel::where('uuid', $imageUuid)->first();
-        abort_if($image === null, 404);
+        $path = $this->stayRepository->deleteImageByUuid($imageUuid);
+        abort_if($path === null, 404);
 
-        $disk->delete($image->path);
-        $image->delete();
+        $disk->delete($path);
 
         return redirect()->back();
     }

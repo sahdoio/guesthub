@@ -157,6 +157,107 @@ final readonly class EloquentInvoiceRepository implements InvoiceRepository
             ->sum('total_cents');
     }
 
+    public function findByUuidGlobal(InvoiceId $uuid): ?Invoice
+    {
+        $record = $this->model->newQuery()
+            ->withoutGlobalScopes()
+            ->with(['lineItems', 'payments'])
+            ->where('uuid', $uuid->value)
+            ->first();
+
+        return $record ? $this->toEntity($record) : null;
+    }
+
+    public function findByReservationIdGlobal(string $reservationId): ?Invoice
+    {
+        $record = $this->model->newQuery()
+            ->withoutGlobalScopes()
+            ->with(['lineItems', 'payments'])
+            ->where('reservation_id', $reservationId)
+            ->first();
+
+        return $record ? $this->toEntity($record) : null;
+    }
+
+    /** @return Invoice[] */
+    public function findAllByGuestIdGlobal(string $guestId): array
+    {
+        return $this->model->newQuery()
+            ->withoutGlobalScopes()
+            ->with(['lineItems', 'payments'])
+            ->where('guest_id', $guestId)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn ($record) => $this->toEntity($record))
+            ->all();
+    }
+
+    public function resolveAccountNumericId(InvoiceId $uuid): ?int
+    {
+        $id = $this->model->newQuery()
+            ->withoutGlobalScopes()
+            ->where('uuid', $uuid->value)
+            ->value('account_id');
+
+        return $id !== null ? (int) $id : null;
+    }
+
+    public function listForOwnerView(int $page = 1, int $perPage = 15, ?string $status = null): array
+    {
+        $query = $this->model->newQuery()
+            ->with(['lineItems', 'payments', 'reservation.stay', 'guest']);
+
+        if ($status !== null) {
+            $query->where('status', $status);
+        }
+
+        $paginator = $query->orderByDesc('created_at')
+            ->paginate(perPage: $perPage, page: $page);
+
+        return [
+            'items' => collect($paginator->items())->map(fn ($inv) => $inv->toArray())->all(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+        ];
+    }
+
+    public function findForOwnerView(string $uuid): ?array
+    {
+        $invoice = $this->model->newQuery()
+            ->with(['lineItems', 'payments', 'reservation.stay', 'guest'])
+            ->where('uuid', $uuid)
+            ->first();
+
+        if (! $invoice) {
+            return null;
+        }
+
+        return array_merge($invoice->toArray(), [
+            'line_items' => $invoice->lineItems->toArray(),
+            'payments' => $invoice->payments->toArray(),
+        ]);
+    }
+
+    public function hasProcessedStripeEvent(string $stripeEventId): bool
+    {
+        return StripeWebhookEventModel::query()
+            ->where('stripe_event_id', $stripeEventId)
+            ->exists();
+    }
+
+    public function recordStripeEvent(string $stripeEventId, string $eventType): void
+    {
+        StripeWebhookEventModel::query()->create([
+            'stripe_event_id' => $stripeEventId,
+            'event_type' => $eventType,
+            'processed_at' => now()->format('Y-m-d H:i:s'),
+        ]);
+    }
+
     private function toEntity(object $record): Invoice
     {
         $lineItems = collect($record->lineItems)

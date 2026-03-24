@@ -37,7 +37,7 @@ Domain events: `ActorRegistered`, `AccountCreated`, `UserCreated`, `UserContactI
 
 ### Stay
 
-Manages stays (bookable properties) and the full reservation lifecycle. A Stay is an Airbnb-style property listing with a type and category. Reservations are linked to a stay and enforce a state machine for their lifecycle.
+Manages stays (bookable properties) and the full reservation lifecycle. A Stay is an Airbnb-style property listing with a type and category. Reservations are linked to a stay and enforce a state machine for their lifecycle. Each reservation tracks guest counts (adults, children, babies, pets).
 
 | Concept | Class |
 |---|---|
@@ -48,6 +48,15 @@ Manages stays (bookable properties) and the full reservation lifecycle. A Stay i
 | Specification | `ReservationCreationSpecification` |
 | Domain Services | `GuestGateway` |
 | DTOs | `GuestInfo` |
+
+Reservation guest counts:
+
+| Field | Default | Constraints |
+|---|---|---|
+| `adults` | 1 | min: 1, max: 20 |
+| `children` | 0 | min: 0, max: 20 |
+| `babies` | 0 | min: 0, max: 10 |
+| `pets` | 0 | min: 0, max: 5 |
 
 Stay types and categories:
 

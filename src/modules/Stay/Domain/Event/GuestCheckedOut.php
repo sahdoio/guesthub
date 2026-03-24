@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Modules\Stay\Domain\Event;
 
 use DateTimeImmutable;
-use Modules\Stay\Domain\ReservationId;
 use Modules\Shared\Domain\DomainEvent;
+use Modules\Stay\Domain\ReservationId;
 
 final readonly class GuestCheckedOut implements DomainEvent
 {

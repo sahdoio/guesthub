@@ -43,7 +43,7 @@ class CreateInvoiceForReservationHandler extends EventDispatchingHandler
             guestId: $command->guestId,
             lineItems: [$lineItem],
             taxRate: $command->taxRate,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         $this->repository->save($invoice);

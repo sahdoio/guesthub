@@ -8,12 +8,12 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\IAM\Domain\Exception\UserNotFoundException;
-use Modules\IAM\Domain\UserId;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\UserId;
 use Modules\IAM\Infrastructure\Http\Presenter\UserPresenter;
+use Modules\Shared\Application\Query\Pagination;
 use Modules\Stay\Application\Query\ListReservations;
 use Modules\Stay\Application\Query\ListReservationsHandler;
-use Modules\Shared\Application\Query\Pagination;
 
 final class UserShowView
 {

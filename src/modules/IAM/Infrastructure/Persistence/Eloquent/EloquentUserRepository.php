@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Modules\IAM\Infrastructure\Persistence\Eloquent;
 
 use DateTimeImmutable;
+use Modules\IAM\Domain\Repository\UserRepository;
 use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\UserId;
-use Modules\IAM\Domain\Repository\UserRepository;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\UserReflector;
 use Modules\Shared\Domain\PaginatedResult;

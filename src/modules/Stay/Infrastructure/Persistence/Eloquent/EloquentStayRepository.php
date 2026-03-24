@@ -7,13 +7,15 @@ namespace Modules\Stay\Infrastructure\Persistence\Eloquent;
 use DateTimeImmutable;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
+use Modules\Shared\Domain\PaginatedResult;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
+use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\Stay;
 use Modules\Stay\Domain\StayId;
-use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\ValueObject\StayCategory;
 use Modules\Stay\Domain\ValueObject\StayType;
 use Modules\Stay\Infrastructure\Persistence\StayReflector;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
+use Ramsey\Uuid\Uuid;
 
 final class EloquentStayRepository implements StayRepository
 {
@@ -93,12 +95,18 @@ final class EloquentStayRepository implements StayRepository
     }
 
     /** @return list<Stay> */
-    public function findAll(): array
+    public function findAll(?int $limit = null): array
     {
-        return $this->model->newQuery()
+        $query = $this->model->newQuery()
             ->withoutGlobalScopes()
             ->where('status', 'active')
-            ->get()
+            ->orderBy('name');
+
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->get()
             ->map(fn ($record) => $this->toEntity($record))
             ->all();
     }
@@ -130,6 +138,123 @@ final class EloquentStayRepository implements StayRepository
         return $this->model->newQuery()
             ->withoutGlobalScopes()
             ->where('status', $status)
+            ->count();
+    }
+
+    /** @return PaginatedResult<Stay> */
+    public function findActivePaginated(int $page = 1, int $perPage = 12, ?string $search = null, ?int $minCapacity = null): PaginatedResult
+    {
+        $query = $this->model->newQuery()
+            ->withoutGlobalScopes()
+            ->where('status', 'active')
+            ->orderBy('name');
+
+        if ($search !== null && $search !== '') {
+            $lower = mb_strtolower($search);
+            $query->where(function ($qb) use ($lower) {
+                $qb->whereRaw('LOWER(name) LIKE ?', ["%{$lower}%"])
+                    ->orWhereRaw('LOWER(address) LIKE ?', ["%{$lower}%"])
+                    ->orWhereRaw('LOWER(description) LIKE ?', ["%{$lower}%"]);
+            });
+        }
+
+        if ($minCapacity !== null && $minCapacity > 1) {
+            $query->where('capacity', '>=', $minCapacity);
+        }
+
+        $paginator = $query->paginate(perPage: $perPage, page: $page);
+
+        $items = collect($paginator->items())
+            ->map(fn ($record) => $this->toEntity($record))
+            ->all();
+
+        return new PaginatedResult(
+            items: $items,
+            total: $paginator->total(),
+            perPage: $paginator->perPage(),
+            currentPage: $paginator->currentPage(),
+            lastPage: $paginator->lastPage(),
+        );
+    }
+
+    /** @return list<array{uuid: string, path: string, position: int}> */
+    public function getImages(StayId $uuid): array
+    {
+        $stayId = $this->resolveNumericId($uuid);
+
+        if ($stayId === null) {
+            return [];
+        }
+
+        return StayImageModel::where('stay_id', $stayId)
+            ->orderBy('position')
+            ->get()
+            ->map(fn (StayImageModel $img) => [
+                'uuid' => $img->uuid,
+                'path' => $img->path,
+                'position' => $img->position,
+            ])
+            ->all();
+    }
+
+    public function addImage(StayId $uuid, string $path, int $position): void
+    {
+        $stayId = $this->resolveNumericId($uuid);
+
+        if ($stayId === null) {
+            return;
+        }
+
+        StayImageModel::create([
+            'uuid' => Uuid::uuid7()->toString(),
+            'stay_id' => $stayId,
+            'path' => $path,
+            'position' => $position,
+            'created_at' => now()->toDateTimeString(),
+        ]);
+    }
+
+    public function deleteImageByUuid(string $imageUuid): ?string
+    {
+        $image = StayImageModel::where('uuid', $imageUuid)->first();
+
+        if ($image === null) {
+            return null;
+        }
+
+        $path = $image->path;
+        $image->delete();
+
+        return $path;
+    }
+
+    public function countImages(StayId $uuid): int
+    {
+        $stayId = $this->resolveNumericId($uuid);
+
+        return $stayId !== null ? StayImageModel::where('stay_id', $stayId)->count() : 0;
+    }
+
+    public function maxImagePosition(StayId $uuid): int
+    {
+        $stayId = $this->resolveNumericId($uuid);
+
+        return $stayId !== null ? (int) (StayImageModel::where('stay_id', $stayId)->max('position') ?? 0) : 0;
+    }
+
+    public function countByType(string $type): int
+    {
+        return $this->model->newQuery()
+            ->withoutGlobalScopes()
+            ->where('type', $type)
+            ->count();
+    }
+
+    public function countByCategory(string $category): int
+    {
+        return $this->model->newQuery()
+            ->withoutGlobalScopes()
+            ->where('category', $category)
             ->count();
     }
 

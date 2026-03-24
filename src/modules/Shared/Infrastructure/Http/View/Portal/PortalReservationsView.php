@@ -9,9 +9,9 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Stay\Application\Query\ReservationReadModel;
 use Modules\Stay\Domain\Repository\ReservationRepository;
+use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\Reservation;
 use Modules\Stay\Domain\StayId;
-use Modules\Stay\Domain\Repository\StayRepository;
 
 final class PortalReservationsView
 {

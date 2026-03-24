@@ -6,38 +6,44 @@ namespace Modules\IAM\Infrastructure\Http\View;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
+use Illuminate\Support\Facades\Auth;
+use Modules\IAM\Domain\ActorId;
+use Modules\IAM\Domain\Repository\ActorRepository;
 
 final class ImpersonateView
 {
+    public function __construct(
+        private ActorRepository $actorRepository,
+    ) {}
+
     public function __invoke(Request $request, int $actorId): RedirectResponse
     {
-        $user = $request->user();
-        $user->load('types');
-        $typeNames = $user->types->pluck('name')->toArray();
+        $currentUser = $request->user();
+        $currentTypeNames = $this->actorRepository->resolveTypeNames(
+            ActorId::fromString($currentUser->uuid),
+        );
 
-        if (! in_array('superadmin', $typeNames, true)) {
+        if (! in_array('superadmin', $currentTypeNames, true)) {
             abort(403, 'Only superadmins can impersonate.');
         }
 
-        $target = ActorModel::find($actorId);
+        $target = $this->actorRepository->findByNumericId($actorId);
 
         if (! $target) {
             abort(404, 'User not found.');
         }
 
         // Store original user ID in session
-        $request->session()->put('impersonating_from', $user->getKey());
+        $request->session()->put('impersonating_from', $currentUser->getKey());
         $request->session()->forget('tenant_account_id');
 
         // Log in as the target user
-        auth()->login($target);
+        Auth::loginUsingId($actorId);
 
         // Redirect based on target's type
-        $target->load('types');
-        $targetTypes = $target->types->pluck('name')->toArray();
+        $targetTypeNames = $this->actorRepository->resolveTypeNames($target->uuid);
 
-        if (in_array('guest', $targetTypes, true)) {
+        if (in_array('guest', $targetTypeNames, true)) {
             return redirect('/portal');
         }
 

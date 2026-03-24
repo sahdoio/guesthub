@@ -8,12 +8,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
+use Modules\IAM\Domain\Repository\AccountRepository;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Application\Command\CreateStay;
 use Modules\Stay\Application\Command\CreateStayHandler;
 use Modules\Stay\Domain\ValueObject\StayCategory;
 use Modules\Stay\Domain\ValueObject\StayType;
-use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 final class StayStoreView
 {
@@ -40,7 +40,7 @@ final class StayStoreView
         ]);
 
         $account = $this->accountRepository->findByNumericId($this->tenantContext->id());
-        $slug = Str::slug($data['name']) . '-' . Str::random(6);
+        $slug = Str::slug($data['name']).'-'.Str::random(6);
 
         $this->handler->handle(new CreateStay(
             accountId: (string) $account->uuid,

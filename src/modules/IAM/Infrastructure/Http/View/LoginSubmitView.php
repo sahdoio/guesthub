@@ -31,13 +31,13 @@ final class LoginSubmitView
         $request->session()->regenerate();
 
         if (in_array('superadmin', $typeNames, true)) {
-            return redirect()->intended('/superadmin');
+            return redirect('/superadmin');
         }
 
         if (in_array('owner', $typeNames, true)) {
-            return redirect()->intended('/dashboard');
+            return redirect('/dashboard');
         }
 
-        return redirect()->intended('/portal');
+        return redirect('/portal');
     }
 }

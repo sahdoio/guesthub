@@ -44,7 +44,7 @@ final class OnReservationCancelledTest extends TestCase
             guestId: Uuid::uuid7()->toString(),
             lineItems: [$lineItem],
             taxRate: 0.10,
-            createdAt: new DateTimeImmutable(),
+            createdAt: new DateTimeImmutable,
         );
 
         if ($targetStatus === InvoiceStatus::DRAFT) {
@@ -58,13 +58,13 @@ final class OnReservationCancelledTest extends TestCase
         }
 
         if ($targetStatus === InvoiceStatus::PAID) {
-            $stripeId = 'pi_test_' . bin2hex(random_bytes(4));
+            $stripeId = 'pi_test_'.bin2hex(random_bytes(4));
             $invoice->recordPayment(
                 paymentId: PaymentId::generate(),
                 amount: $invoice->total,
                 method: PaymentMethod::CARD,
                 stripePaymentIntentId: $stripeId,
-                createdAt: new DateTimeImmutable(),
+                createdAt: new DateTimeImmutable,
             );
             $invoice->markPaymentSucceeded($stripeId);
         }
@@ -103,7 +103,7 @@ final class OnReservationCancelledTest extends TestCase
             checkOut: '2026-04-04',
             reason: 'Guest changed plans',
             freeCancellationUntil: null,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new DateTimeImmutable,
         );
 
         $listener->handle($event);
@@ -134,7 +134,7 @@ final class OnReservationCancelledTest extends TestCase
             checkOut: '2026-04-04',
             reason: 'Changed mind',
             freeCancellationUntil: null,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new DateTimeImmutable,
         );
 
         $listener->handle($event);
@@ -172,7 +172,7 @@ final class OnReservationCancelledTest extends TestCase
             checkOut: '2026-04-13',
             reason: 'Emergency',
             freeCancellationUntil: $freeCancellationUntil,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new DateTimeImmutable,
         );
 
         $listener->handle($event);
@@ -206,7 +206,7 @@ final class OnReservationCancelledTest extends TestCase
             checkOut: '2026-03-23',
             reason: 'Too late',
             freeCancellationUntil: $freeCancellationUntil,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new DateTimeImmutable,
         );
 
         $listener->handle($event);
@@ -235,7 +235,7 @@ final class OnReservationCancelledTest extends TestCase
             checkOut: '2026-04-04',
             reason: 'No invoice',
             freeCancellationUntil: null,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new DateTimeImmutable,
         );
 
         $listener->handle($event);

@@ -42,7 +42,7 @@ final class StayUpdateView
         ]);
 
         $newSlug = Str::slug($data['name']) !== Str::slug($stay->name)
-            ? Str::slug($data['name']) . '-' . Str::random(6)
+            ? Str::slug($data['name']).'-'.Str::random(6)
             : $stay->slug;
 
         $this->handler->handle(new UpdateStay(

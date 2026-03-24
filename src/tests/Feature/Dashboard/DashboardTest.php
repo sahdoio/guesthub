@@ -6,8 +6,8 @@ namespace Tests\Feature\Dashboard;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\ActorModel;
 use Modules\Stay\Domain\Repository\ReservationRepository;
@@ -69,11 +69,11 @@ final class DashboardTest extends TestCase
         if (isset($overrides['status'])) {
             match ($overrides['status']) {
                 'confirmed' => $reservation->confirm(),
-                'checked_in' => (function () use ($reservation, $overrides) {
+                'checked_in' => (function () use ($reservation) {
                     $reservation->confirm();
                     $reservation->checkIn();
                 })(),
-                'checked_out' => (function () use ($reservation, $overrides) {
+                'checked_out' => (function () use ($reservation) {
                     $reservation->confirm();
                     $reservation->checkIn();
                     $reservation->checkOut();

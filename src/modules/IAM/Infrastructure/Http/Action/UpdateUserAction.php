@@ -6,8 +6,8 @@ namespace Modules\IAM\Infrastructure\Http\Action;
 
 use Modules\IAM\Application\Command\UpdateUser;
 use Modules\IAM\Application\Command\UpdateUserHandler;
-use Modules\IAM\Domain\UserId;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\UserId;
 use Modules\IAM\Infrastructure\Http\Presenter\UserPresenter;
 use Modules\Shared\Infrastructure\Service\AuthenticatedUserResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;

@@ -102,7 +102,7 @@ final class InvoiceCrudTest extends TestCase
         $invoice = $this->createInvoiceModel();
 
         $response = $this->actingAs($this->actor)
-            ->get('/billing/' . $invoice->uuid);
+            ->get('/billing/'.$invoice->uuid);
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
@@ -117,7 +117,7 @@ final class InvoiceCrudTest extends TestCase
         $invoice = $this->createInvoiceModel();
 
         $response = $this->actingAs($this->actor)
-            ->post('/billing/' . $invoice->uuid . '/issue');
+            ->post('/billing/'.$invoice->uuid.'/issue');
 
         $response->assertRedirect();
 
@@ -133,7 +133,7 @@ final class InvoiceCrudTest extends TestCase
         $invoice = $this->createInvoiceModel();
 
         $response = $this->actingAs($this->actor)
-            ->post('/billing/' . $invoice->uuid . '/void', [
+            ->post('/billing/'.$invoice->uuid.'/void', [
                 'reason' => 'Created by mistake',
             ]);
 

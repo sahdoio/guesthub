@@ -7,16 +7,15 @@ namespace Modules\Stay\Infrastructure\Persistence\Seeders;
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Modules\IAM\Infrastructure\Persistence\Seeders\UserSeeder;
 use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Infrastructure\Persistence\Seeders\AccountSeeder;
-use Modules\Stay\Infrastructure\Persistence\Seeders\StaySeeder;
+use Modules\IAM\Infrastructure\Persistence\Seeders\UserSeeder;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\Reservation;
 use Modules\Stay\Domain\ValueObject\RequestType;
 use Modules\Stay\Domain\ValueObject\ReservationPeriod;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 class ReservationSeeder extends Seeder
 {

@@ -31,6 +31,7 @@ class StayImageSeeder extends Seeder
 
         if (count($poolPaths) === 0) {
             $this->command->warn('Could not download any images. Skipping.');
+
             return;
         }
 
@@ -44,7 +45,7 @@ class StayImageSeeder extends Seeder
 
             // Cover image
             $coverSrc = $poolPaths[$offset % $poolCount];
-            $coverPath = "{$stayDir}/cover-" . Str::random(8) . '.jpg';
+            $coverPath = "{$stayDir}/cover-".Str::random(8).'.jpg';
             $disk->copy($coverSrc, $coverPath);
             $stay->update(['cover_image_path' => $coverPath]);
 
@@ -55,7 +56,7 @@ class StayImageSeeder extends Seeder
 
             for ($i = 0; $i < 4; $i++) {
                 $gallerySrc = $poolPaths[($offset + $i + 1) % $poolCount];
-                $path = "{$stayDir}/gallery-{$i}-" . Str::random(8) . '.jpg';
+                $path = "{$stayDir}/gallery-{$i}-".Str::random(8).'.jpg';
                 $disk->copy($gallerySrc, $path);
 
                 StayImageModel::create([
@@ -90,7 +91,7 @@ class StayImageSeeder extends Seeder
         $faker = Faker::create();
         $faker->addProvider(new FakerPicsumImagesProvider($faker));
 
-        $tempDir = sys_get_temp_dir() . '/stay-seeder-pool';
+        $tempDir = sys_get_temp_dir().'/stay-seeder-pool';
         if (! is_dir($tempDir)) {
             mkdir($tempDir, 0755, true);
         }
@@ -105,7 +106,7 @@ class StayImageSeeder extends Seeder
                 $disk->put($poolPath, file_get_contents($tempFile));
                 @unlink($tempFile);
                 $paths[] = $poolPath;
-                $this->command->info("  Downloaded image " . ($i + 1) . "/" . self::POOL_SIZE);
+                $this->command->info('  Downloaded image '.($i + 1).'/'.self::POOL_SIZE);
             }
         }
 

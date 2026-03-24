@@ -20,7 +20,7 @@ final class InvoiceFullyPaidEventTest extends TestCase
         $event = new InvoiceFullyPaidEvent(
             invoiceId: 'inv-123',
             reservationId: 'res-456',
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new DateTimeImmutable,
         );
 
         $this->assertInstanceOf(IntegrationEvent::class, $event);

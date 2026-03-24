@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Modules\Stay\Domain;
 
 use DateTimeImmutable;
+use Modules\Shared\Domain\AggregateRoot;
+use Modules\Shared\Domain\Identity;
 use Modules\Stay\Domain\Event\GuestCheckedIn;
 use Modules\Stay\Domain\Event\GuestCheckedOut;
 use Modules\Stay\Domain\Event\ReservationCancelled;
@@ -18,8 +20,6 @@ use Modules\Stay\Domain\ValueObject\RequestType;
 use Modules\Stay\Domain\ValueObject\ReservationPeriod;
 use Modules\Stay\Domain\ValueObject\ReservationStatus;
 use Modules\Stay\Domain\ValueObject\SpecialRequestId;
-use Modules\Shared\Domain\AggregateRoot;
-use Modules\Shared\Domain\Identity;
 
 final class Reservation extends AggregateRoot
 {
@@ -183,7 +183,7 @@ final class Reservation extends AggregateRoot
 
     public function isWithinFreeCancellationWindow(): bool
     {
-        return $this->freeCancellationUntil !== null && new DateTimeImmutable() < $this->freeCancellationUntil;
+        return $this->freeCancellationUntil !== null && new DateTimeImmutable < $this->freeCancellationUntil;
     }
 
     private function findSpecialRequest(SpecialRequestId $requestId): SpecialRequest

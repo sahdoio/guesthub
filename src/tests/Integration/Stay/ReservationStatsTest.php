@@ -6,15 +6,15 @@ namespace Tests\Integration\Stay;
 
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\Reservation;
 use Modules\Stay\Domain\ValueObject\ReservationPeriod;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
+use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
 use PHPUnit\Framework\Attributes\Test;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
@@ -170,5 +170,4 @@ final class ReservationStatsTest extends TestCase
     {
         $this->assertSame([], $this->repository->countByStatus());
     }
-
 }

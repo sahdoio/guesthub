@@ -5,35 +5,29 @@ declare(strict_types=1);
 namespace Modules\Stay\Presentation\Http\Presenter;
 
 use Illuminate\Support\Facades\Storage;
+use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\Stay;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayImageModel;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
 
 final class StayPresenter
 {
+    public function __construct(
+        private StayRepository $stayRepository,
+    ) {}
+
     /** @return array<string, mixed> */
-    public static function fromDomain(Stay $stay): array
+    public function toArray(Stay $stay): array
     {
         $disk = Storage::disk(config('filesystems.stays_disk', 'public'));
 
-        $coverImageUrl = null;
-        if ($stay->coverImagePath !== null) {
-            $coverImageUrl = $disk->url($stay->coverImagePath);
-        }
+        $coverImageUrl = $stay->coverImagePath !== null
+            ? $disk->url($stay->coverImagePath)
+            : null;
 
-        $stayModel = StayModel::query()
-            ->withoutGlobalScopes()
-            ->where('uuid', $stay->uuid->value)
-            ->first();
-
-        $images = [];
-        if ($stayModel) {
-            $images = $stayModel->images->map(fn (StayImageModel $img) => [
-                'id' => $img->uuid,
-                'url' => $disk->url($img->path),
-                'position' => $img->position,
-            ])->all();
-        }
+        $images = array_map(fn (array $img) => [
+            'id' => $img['uuid'],
+            'url' => $disk->url($img['path']),
+            'position' => $img['position'],
+        ], $this->stayRepository->getImages($stay->uuid));
 
         return [
             'id' => (string) $stay->uuid,

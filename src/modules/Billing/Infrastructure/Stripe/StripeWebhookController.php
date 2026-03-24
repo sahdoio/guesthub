@@ -10,7 +10,7 @@ use Modules\Billing\Application\Command\HandlePaymentFailed;
 use Modules\Billing\Application\Command\HandlePaymentFailedHandler;
 use Modules\Billing\Application\Command\HandlePaymentSucceeded;
 use Modules\Billing\Application\Command\HandlePaymentSucceededHandler;
-use Modules\Billing\Infrastructure\Persistence\Eloquent\StripeWebhookEventModel;
+use Modules\Billing\Domain\Repository\InvoiceRepository;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\Webhook;
 
@@ -19,6 +19,7 @@ final class StripeWebhookController
     public function __construct(
         private readonly HandlePaymentSucceededHandler $succeededHandler,
         private readonly HandlePaymentFailedHandler $failedHandler,
+        private readonly InvoiceRepository $invoiceRepository,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -36,11 +37,7 @@ final class StripeWebhookController
         }
 
         // Idempotency check
-        $existing = StripeWebhookEventModel::query()
-            ->where('stripe_event_id', $event->id)
-            ->exists();
-
-        if ($existing) {
+        if ($this->invoiceRepository->hasProcessedStripeEvent($event->id)) {
             return new JsonResponse(['status' => 'already_processed'], 200);
         }
 
@@ -60,11 +57,7 @@ final class StripeWebhookController
         };
 
         // Record processed event
-        StripeWebhookEventModel::query()->create([
-            'stripe_event_id' => $event->id,
-            'event_type' => $event->type,
-            'processed_at' => now()->format('Y-m-d H:i:s'),
-        ]);
+        $this->invoiceRepository->recordStripeEvent($event->id, $event->type);
 
         return new JsonResponse(['status' => 'ok'], 200);
     }

@@ -7,9 +7,9 @@ namespace Modules\Stay\Infrastructure\Http\View;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Shared\Application\Query\Pagination;
 use Modules\Stay\Application\Query\ListReservations;
 use Modules\Stay\Application\Query\ListReservationsHandler;
-use Modules\Shared\Application\Query\Pagination;
 
 final class ReservationListView
 {

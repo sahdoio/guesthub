@@ -6,8 +6,8 @@ namespace Modules\Shared\Infrastructure\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use Modules\IAM\Domain\Repository\UserRepository;
 use Modules\IAM\Domain\Repository\AccountRepository;
+use Modules\IAM\Domain\Repository\UserRepository;
 use Modules\Stay\Domain\Repository\StayRepository;
 
 final class HandleInertiaRequests extends Middleware

@@ -8,10 +8,11 @@ use DateTimeImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Modules\IAM\Domain\Repository\AccountRepository;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Application\Command\CreateReservation;
 use Modules\Stay\Application\Command\CreateReservationHandler;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
+use Modules\Stay\Domain\Repository\StayRepository;
+use Modules\Stay\Domain\StayId;
 
 final class ReservationStoreView
 {
@@ -19,6 +20,7 @@ final class ReservationStoreView
         private CreateReservationHandler $handler,
         private TenantContext $tenantContext,
         private AccountRepository $accountRepository,
+        private StayRepository $stayRepository,
     ) {}
 
     public function __invoke(Request $request): RedirectResponse
@@ -32,15 +34,13 @@ final class ReservationStoreView
 
         $account = $this->accountRepository->findByNumericId($this->tenantContext->id());
 
-        $stay = StayModel::query()
-            ->withoutGlobalScopes()
-            ->where('uuid', $data['stay_id'])
-            ->firstOrFail();
+        $stay = $this->stayRepository->findByUuid(StayId::fromString($data['stay_id']));
+        abort_if($stay === null, 404, 'Stay not found.');
 
         $id = $this->handler->handle(new CreateReservation(
             guestId: $data['guest_id'],
             accountId: (string) $account->uuid,
-            stayId: $stay->uuid,
+            stayId: (string) $stay->uuid,
             checkIn: new DateTimeImmutable($data['check_in']),
             checkOut: new DateTimeImmutable($data['check_out']),
         ));

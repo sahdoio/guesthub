@@ -7,17 +7,18 @@ namespace Modules\Stay\Infrastructure\Http\View;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Shared\Application\Query\Pagination;
 use Modules\Stay\Application\Query\ListReservations;
 use Modules\Stay\Application\Query\ListReservationsHandler;
 use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Presentation\Http\Presenter\StayPresenter;
-use Modules\Shared\Application\Query\Pagination;
 
 final class StayShowView
 {
     public function __construct(
         private StayRepository $stayRepository,
         private ListReservationsHandler $listReservationsHandler,
+        private StayPresenter $stayPresenter,
     ) {}
 
     public function __invoke(Request $request, string $slug): Response
@@ -35,7 +36,7 @@ final class StayShowView
         );
 
         return Inertia::render('Stays/Show', [
-            'stay' => StayPresenter::fromDomain($stay),
+            'stay' => $this->stayPresenter->toArray($stay),
             'reservations' => $reservations->items,
             'reservationsMeta' => [
                 'current_page' => $reservations->currentPage,

@@ -39,8 +39,8 @@ final class RegisterActorHandler extends EventDispatchingHandler
         $accountId = $this->accountRepository->nextIdentity();
         $account = Account::create(
             uuid: $accountId,
-            name: $command->name . "'s Account",
-            slug: Str::slug($command->name) . '-' . Str::random(6),
+            name: $command->name."'s Account",
+            slug: Str::slug($command->name).'-'.Str::random(6),
             createdAt: new DateTimeImmutable,
         );
         $this->accountRepository->save($account);

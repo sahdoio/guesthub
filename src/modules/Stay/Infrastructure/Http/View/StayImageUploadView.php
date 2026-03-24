@@ -8,10 +8,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Modules\Stay\Domain\Repository\StayRepository;
-use Modules\Stay\Domain\StayId;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayImageModel;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\StayModel;
-use Ramsey\Uuid\Uuid;
 
 final class StayImageUploadView
 {
@@ -33,11 +29,10 @@ final class StayImageUploadView
         ]);
 
         $disk = Storage::disk(config('filesystems.stays_disk', 'public'));
-        $stayDir = 'stays/' . $stay->uuid->value;
+        $stayDir = 'stays/'.$stay->uuid->value;
 
         // Handle cover image
         if ($request->hasFile('cover')) {
-            // Delete old cover
             if ($stay->coverImagePath !== null) {
                 $disk->delete($stay->coverImagePath);
             }
@@ -49,28 +44,17 @@ final class StayImageUploadView
 
         // Handle secondary images
         if ($request->hasFile('images')) {
-            $stayModel = StayModel::query()
-                ->withoutGlobalScopes()
-                ->where('uuid', $stay->uuid->value)
-                ->first();
-
-            $currentCount = StayImageModel::where('stay_id', $stayModel->id)->count();
+            $currentCount = $this->stayRepository->countImages($stay->uuid);
             $maxNew = self::MAX_IMAGES - $currentCount;
 
             $files = array_slice($request->file('images'), 0, max(0, $maxNew));
-            $position = StayImageModel::where('stay_id', $stayModel->id)->max('position') ?? 0;
+            $position = $this->stayRepository->maxImagePosition($stay->uuid);
 
             foreach ($files as $file) {
                 $path = $disk->putFile($stayDir, $file);
                 $position++;
 
-                StayImageModel::create([
-                    'uuid' => Uuid::uuid7()->toString(),
-                    'stay_id' => $stayModel->id,
-                    'path' => $path,
-                    'position' => $position,
-                    'created_at' => now()->toDateTimeString(),
-                ]);
+                $this->stayRepository->addImage($stay->uuid, $path, $position);
             }
         }
 

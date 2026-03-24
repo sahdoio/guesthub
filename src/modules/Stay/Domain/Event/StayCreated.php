@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Modules\Stay\Domain\Event;
 
 use DateTimeImmutable;
-use Modules\Stay\Domain\StayId;
 use Modules\Shared\Domain\DomainEvent;
+use Modules\Stay\Domain\StayId;
 
 final readonly class StayCreated implements DomainEvent
 {

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit\Reservation\Infrastructure\IntegrationEvent;
 
 use DateTimeImmutable;
+use Modules\Shared\Application\Messaging\IntegrationEvent;
 use Modules\Stay\Infrastructure\IntegrationEvent\GuestCheckedInEvent;
 use Modules\Stay\Infrastructure\IntegrationEvent\GuestCheckedOutEvent;
 use Modules\Stay\Infrastructure\IntegrationEvent\ReservationCancelledEvent;
 use Modules\Stay\Infrastructure\IntegrationEvent\ReservationConfirmedEvent;
 use Modules\Stay\Infrastructure\IntegrationEvent\ReservationCreatedEvent;
-use Modules\Shared\Application\Messaging\IntegrationEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

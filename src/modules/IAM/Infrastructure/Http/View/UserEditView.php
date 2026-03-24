@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\IAM\Domain\Exception\UserNotFoundException;
-use Modules\IAM\Domain\UserId;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\UserId;
 use Modules\IAM\Infrastructure\Http\Presenter\UserPresenter;
 
 final class UserEditView

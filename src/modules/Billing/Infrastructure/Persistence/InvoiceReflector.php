@@ -25,7 +25,7 @@ final class InvoiceReflector
 {
     /**
      * @param  LineItem[]  $lineItems
-     * @param  Payment[]   $payments
+     * @param  Payment[]  $payments
      */
     public static function reconstruct(
         InvoiceId $uuid,

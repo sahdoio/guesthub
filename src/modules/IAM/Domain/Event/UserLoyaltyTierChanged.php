@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Modules\IAM\Domain\Event;
 
 use DateTimeImmutable;
-use Modules\Shared\Domain\DomainEvent;
 use Modules\IAM\Domain\UserId;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
+use Modules\Shared\Domain\DomainEvent;
 
 final readonly class UserLoyaltyTierChanged implements DomainEvent
 {

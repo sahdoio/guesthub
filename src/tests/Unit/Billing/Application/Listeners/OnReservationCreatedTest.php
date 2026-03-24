@@ -80,7 +80,7 @@ final class OnReservationCreatedTest extends TestCase
             checkIn: '2026-04-01',
             checkOut: '2026-04-04',
             isVip: false,
-            occurredAt: new DateTimeImmutable(),
+            occurredAt: new DateTimeImmutable,
         );
 
         $listener->handle($event);

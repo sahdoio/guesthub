@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Modules\Stay\Application\Command;
 
 use DomainException;
+use Modules\Shared\Application\EventDispatcher;
+use Modules\Shared\Application\EventDispatchingHandler;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\Reservation;
 use Modules\Stay\Domain\ReservationId;
 use Modules\Stay\Domain\Service\GuestGateway;
 use Modules\Stay\Domain\Specification\ReservationCreationSpecification;
 use Modules\Stay\Domain\ValueObject\ReservationPeriod;
-use Modules\Shared\Application\EventDispatcher;
-use Modules\Shared\Application\EventDispatchingHandler;
 
 final class CreateReservationHandler extends EventDispatchingHandler
 {

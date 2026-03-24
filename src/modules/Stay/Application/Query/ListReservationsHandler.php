@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Modules\Stay\Application\Query;
 
 use Illuminate\Support\Facades\Storage;
+use Modules\Shared\Application\Query\Pagination;
+use Modules\Shared\Domain\PaginatedResult;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\Reservation;
 use Modules\Stay\Domain\Service\GuestGateway;
 use Modules\Stay\Domain\StayId;
-use Modules\Shared\Application\Query\Pagination;
-use Modules\Shared\Domain\PaginatedResult;
 
 final readonly class ListReservationsHandler
 {

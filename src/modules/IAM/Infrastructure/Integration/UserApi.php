@@ -6,8 +6,8 @@ namespace Modules\IAM\Infrastructure\Integration;
 
 use Modules\IAM\Application\Command\CreateUser;
 use Modules\IAM\Application\Command\CreateUserHandler;
-use Modules\IAM\Domain\UserId;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\UserId;
 use Modules\IAM\Infrastructure\Integration\Dto\UserData;
 
 final readonly class UserApi

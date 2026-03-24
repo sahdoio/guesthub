@@ -24,7 +24,7 @@ final class Invoice extends AggregateRoot
 {
     /**
      * @param  LineItem[]  $lineItems
-     * @param  Payment[]   $payments
+     * @param  Payment[]  $payments
      */
     private function __construct(
         public readonly InvoiceId $uuid,

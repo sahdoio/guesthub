@@ -26,12 +26,29 @@ tests {
   test("should return 200", function() {
     expect(res.getStatus()).to.equal(200);
   });
-  
+
   test("should return reservation data", function() {
     const data = res.getBody().data;
     expect(data.id).to.equal(bru.getVar("reservationId"));
     expect(data.guest).to.be.an('object');
+    expect(data.stay).to.be.an('object');
     expect(data.period).to.be.an('object');
     expect(data.period.nights).to.be.a('number');
+    expect(data.guests).to.be.an('object');
+    expect(data.guests.adults).to.be.a('number');
   });
+}
+
+docs {
+  Returns a single reservation by UUID.
+
+  Response includes:
+  - id, status
+  - guest: { guest_id, name, email, is_vip }
+  - stay: { stay_id, name, slug }
+  - period: { check_in, check_out, nights }
+  - guests: { adults, children, babies, pets }
+  - special_requests: [{ id, type, description, status, fulfilled_at, created_at }]
+  - timestamps: { created_at, confirmed_at, checked_in_at, checked_out_at, cancelled_at }
+  - free_cancellation_until, cancellation_reason
 }

@@ -6,11 +6,11 @@ namespace Modules\Stay\Application\Command;
 
 use DateTimeImmutable;
 use Modules\IAM\Domain\AccountId;
-use Modules\Stay\Domain\Stay;
-use Modules\Stay\Domain\StayId;
-use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
+use Modules\Stay\Domain\Repository\StayRepository;
+use Modules\Stay\Domain\Stay;
+use Modules\Stay\Domain\StayId;
 
 final class CreateStayHandler extends EventDispatchingHandler
 {

@@ -21,15 +21,20 @@ auth:bearer {
 
 body:json {
   {
-    "guest_profile_id": "{{guestId}}",
+    "guest_id": "{{guestId}}",
+    "stay_id": "{{stayId}}",
     "check_in": "{{checkIn}}",
     "check_out": "{{checkOut}}",
-    "room_type": "DOUBLE"
+    "adults": 2,
+    "children": 1,
+    "babies": 0,
+    "pets": 0
   }
 }
 
 vars:pre-request {
   guestId: 019c52a2-20c7-726c-969f-f14b4fda4a7e
+  stayId: 019c52a2-20c7-726c-969f-f14b4fda4a7f
 }
 
 script:pre-request {
@@ -38,9 +43,9 @@ script:pre-request {
   checkIn.setDate(today.getDate() + 1);
   const checkOut = new Date(today);
   checkOut.setDate(today.getDate() + 5);
-  
+
   const fmt = (d) => d.toISOString().split('T')[0];
-  
+
   bru.setVar("checkIn", fmt(checkIn));
   bru.setVar("checkOut", fmt(checkOut));
 }
@@ -49,18 +54,39 @@ tests {
   test("should return 201", function() {
     expect(res.getStatus()).to.equal(201);
   });
-  
+
   test("should return reservation id", function() {
     expect(res.getBody().data.id).to.be.a('string');
   });
-  
+
   test("status should be pending", function() {
     expect(res.getBody().data.status).to.equal('pending');
+  });
+
+  test("should return guest counts", function() {
+    const guests = res.getBody().data.guests;
+    expect(guests.adults).to.equal(2);
+    expect(guests.children).to.equal(1);
+    expect(guests.babies).to.equal(0);
+    expect(guests.pets).to.equal(0);
   });
 }
 
 docs {
-  Requires a guest profile to exist first.
-  Run IAM > Register, IAM > Login, then Guest > Create Guest before this request.
-  The guestId variable is set by the Create Guest request.
+  Creates a new reservation for a guest at a specific stay.
+
+  Required fields:
+  - guest_id: UUID of the guest (user profile)
+  - stay_id: UUID of the stay/property
+  - check_in: Date (YYYY-MM-DD), must be today or later
+  - check_out: Date (YYYY-MM-DD), must be after check_in
+
+  Optional fields:
+  - adults: Number of adults (default: 1, min: 1, max: 20)
+  - children: Number of children (default: 0, min: 0, max: 20)
+  - babies: Number of babies (default: 0, min: 0, max: 10)
+  - pets: Number of pets (default: 0, min: 0, max: 5)
+
+  Run IAM > Login first to get the authToken.
+  Set guestId and stayId to valid UUIDs from your database.
 }

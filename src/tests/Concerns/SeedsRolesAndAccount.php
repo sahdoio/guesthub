@@ -89,7 +89,7 @@ trait SeedsRolesAndAccount
         $guestAccount = AccountModel::create([
             'uuid' => Uuid::uuid7()->toString(),
             'name' => 'Guest Account',
-            'slug' => 'guest-' . Uuid::uuid7()->toString(),
+            'slug' => 'guest-'.Uuid::uuid7()->toString(),
             'status' => 'active',
             'created_at' => now(),
         ]);

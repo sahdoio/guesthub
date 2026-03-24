@@ -16,6 +16,7 @@ final class StayEditView
 {
     public function __construct(
         private StayRepository $stayRepository,
+        private StayPresenter $stayPresenter,
     ) {}
 
     public function __invoke(Request $request, string $slug): Response
@@ -25,7 +26,7 @@ final class StayEditView
         abort_if($stay === null, 404);
 
         return Inertia::render('Stays/Edit', [
-            'stay' => StayPresenter::fromDomain($stay),
+            'stay' => $this->stayPresenter->toArray($stay),
             'types' => array_column(StayType::cases(), 'value'),
             'categories' => array_column(StayCategory::cases(), 'value'),
         ]);

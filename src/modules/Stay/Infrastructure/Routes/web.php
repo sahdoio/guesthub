@@ -1,14 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Stay\Infrastructure\Http\View\StayCreateView;
-use Modules\Stay\Infrastructure\Http\View\StayEditView;
-use Modules\Stay\Infrastructure\Http\View\StayListView;
-use Modules\Stay\Infrastructure\Http\View\StayShowView;
-use Modules\Stay\Infrastructure\Http\View\StayStoreView;
-use Modules\Stay\Infrastructure\Http\View\StayUpdateView;
-use Modules\Stay\Infrastructure\Http\View\StayImageUploadView;
-use Modules\Stay\Infrastructure\Http\View\StayImageDeleteView;
 use Modules\Stay\Infrastructure\Http\View\AddSpecialRequestView;
 use Modules\Stay\Infrastructure\Http\View\CancelReservationView;
 use Modules\Stay\Infrastructure\Http\View\CheckInView;
@@ -18,6 +10,14 @@ use Modules\Stay\Infrastructure\Http\View\ReservationCreateView;
 use Modules\Stay\Infrastructure\Http\View\ReservationListView;
 use Modules\Stay\Infrastructure\Http\View\ReservationShowView;
 use Modules\Stay\Infrastructure\Http\View\ReservationStoreView;
+use Modules\Stay\Infrastructure\Http\View\StayCreateView;
+use Modules\Stay\Infrastructure\Http\View\StayEditView;
+use Modules\Stay\Infrastructure\Http\View\StayImageDeleteView;
+use Modules\Stay\Infrastructure\Http\View\StayImageUploadView;
+use Modules\Stay\Infrastructure\Http\View\StayListView;
+use Modules\Stay\Infrastructure\Http\View\StayShowView;
+use Modules\Stay\Infrastructure\Http\View\StayStoreView;
+use Modules\Stay\Infrastructure\Http\View\StayUpdateView;
 
 Route::middleware(['auth', 'owner'])->prefix('stays')->group(function () {
     Route::get('/', StayListView::class)->name('stays.index');

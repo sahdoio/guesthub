@@ -7,26 +7,26 @@ namespace Modules\Stay\Infrastructure\Providers;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Billing\Infrastructure\IntegrationEvent\InvoiceFullyPaidEvent;
+use Modules\Shared\Application\EventDispatcher;
+use Modules\Shared\Infrastructure\Messaging\LaravelEventDispatcher;
 use Modules\Stay\Application\Listeners\OnGuestCheckedIn;
 use Modules\Stay\Application\Listeners\OnGuestCheckedOut;
-use Modules\Stay\Application\Listeners\OnReservationCancelled;
 use Modules\Stay\Application\Listeners\OnInvoiceFullyPaid;
+use Modules\Stay\Application\Listeners\OnReservationCancelled;
 use Modules\Stay\Application\Listeners\OnReservationConfirmed;
-use Modules\Billing\Infrastructure\IntegrationEvent\InvoiceFullyPaidEvent;
+use Modules\Stay\Application\Listeners\OnReservationCreated;
 use Modules\Stay\Domain\Event\GuestCheckedIn;
 use Modules\Stay\Domain\Event\GuestCheckedOut;
 use Modules\Stay\Domain\Event\ReservationCancelled;
 use Modules\Stay\Domain\Event\ReservationConfirmed;
 use Modules\Stay\Domain\Event\ReservationCreated;
-use Modules\Stay\Application\Listeners\OnReservationCreated;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\Service\GuestGateway;
 use Modules\Stay\Infrastructure\Integration\GuestGatewayAdapter;
 use Modules\Stay\Infrastructure\Persistence\Eloquent\EloquentReservationRepository;
 use Modules\Stay\Infrastructure\Persistence\Eloquent\EloquentStayRepository;
-use Modules\Shared\Application\EventDispatcher;
-use Modules\Shared\Infrastructure\Messaging\LaravelEventDispatcher;
 
 final class StayServiceProvider extends ServiceProvider
 {

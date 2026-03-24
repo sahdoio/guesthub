@@ -12,8 +12,11 @@ use Illuminate\Support\Str;
 class MassSeeder extends Seeder
 {
     private const ACCOUNTS_COUNT = 20;
+
     private const STAYS_COUNT = 500;
+
     private const GUESTS_COUNT = 500;
+
     private const RESERVATIONS_COUNT = 800;
 
     private array $firstNames = [
@@ -104,6 +107,7 @@ class MassSeeder extends Seeder
     {
         if (DB::table('accounts')->count() > 10) {
             $this->command->info('Mass data already exists. Skipping MassSeeder.');
+
             return;
         }
 
@@ -112,8 +116,9 @@ class MassSeeder extends Seeder
         $ownerTypeId = DB::table('actor_types')->where('name', 'owner')->value('id');
         $guestTypeId = DB::table('actor_types')->where('name', 'guest')->value('id');
 
-        if (!$ownerTypeId || !$guestTypeId) {
+        if (! $ownerTypeId || ! $guestTypeId) {
             $this->command->error('Required types (owner, guest) not found. Run ActorTypeSeeder first.');
+
             return;
         }
 
@@ -197,7 +202,7 @@ class MassSeeder extends Seeder
         $stayGuests = [];
         $seen = [];
         foreach ($reservations as $r) {
-            $key = $r['account_id'] . ':' . $r['guest_id'];
+            $key = $r['account_id'].':'.$r['guest_id'];
             if (isset($seen[$key])) {
                 continue;
             }
@@ -272,7 +277,7 @@ class MassSeeder extends Seeder
                 $streetNumber = rand(1, 9999);
                 $address = sprintf('%d %s, %s, %s', $streetNumber, $street, $cityData['city'], $cityData['state']);
                 $uuid = (string) Str::uuid();
-                $contactEmail = strtolower(str_replace(' ', '', $slug)) . '@' . Str::slug($account['name']) . '.com';
+                $contactEmail = strtolower(str_replace(' ', '', $slug)).'@'.Str::slug($account['name']).'.com';
                 $phone = sprintf('+1-%03d-%03d-%04d', rand(200, 999), rand(200, 999), rand(1000, 9999));
 
                 $type = $types[array_rand($types)];
@@ -325,19 +330,19 @@ class MassSeeder extends Seeder
         for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
             $style = rand(1, 3);
             $name = match ($style) {
-                1 => $this->stayPrefixes[array_rand($this->stayPrefixes)] . ' ' . $this->staySuffixes[array_rand($this->staySuffixes)],
-                2 => $this->stayThemes[array_rand($this->stayThemes)] . ' ' . $this->staySuffixes[array_rand($this->staySuffixes)],
-                3 => $this->stayPrefixes[array_rand($this->stayPrefixes)] . ' ' . $this->stayThemes[array_rand($this->stayThemes)] . ' ' . $this->staySuffixes[array_rand($this->staySuffixes)],
+                1 => $this->stayPrefixes[array_rand($this->stayPrefixes)].' '.$this->staySuffixes[array_rand($this->staySuffixes)],
+                2 => $this->stayThemes[array_rand($this->stayThemes)].' '.$this->staySuffixes[array_rand($this->staySuffixes)],
+                3 => $this->stayPrefixes[array_rand($this->stayPrefixes)].' '.$this->stayThemes[array_rand($this->stayThemes)].' '.$this->staySuffixes[array_rand($this->staySuffixes)],
             };
 
             $slug = Str::slug($name);
-            if (!in_array($name, $usedNames, true) && !in_array($slug, $usedSlugs, true)) {
+            if (! in_array($name, $usedNames, true) && ! in_array($slug, $usedSlugs, true)) {
                 return $name;
             }
         }
 
         // Fallback with random suffix
-        return $this->stayPrefixes[array_rand($this->stayPrefixes)] . ' Stay #' . rand(100, 999);
+        return $this->stayPrefixes[array_rand($this->stayPrefixes)].' Stay #'.rand(100, 999);
     }
 
     private function generateGuestUsers(string $now): array
@@ -354,13 +359,13 @@ class MassSeeder extends Seeder
         for ($i = 0; $i < self::GUESTS_COUNT; $i++) {
             $firstName = $this->firstNames[array_rand($this->firstNames)];
             $lastName = $this->lastNames[array_rand($this->lastNames)];
-            $fullName = $firstName . ' ' . $lastName;
+            $fullName = $firstName.' '.$lastName;
 
-            $baseEmail = strtolower($firstName . '.' . $lastName);
-            $email = $baseEmail . '@example.com';
+            $baseEmail = strtolower($firstName.'.'.$lastName);
+            $email = $baseEmail.'@example.com';
             $counter = 1;
             while (in_array($email, $usedEmails, true)) {
-                $email = $baseEmail . $counter . '@example.com';
+                $email = $baseEmail.$counter.'@example.com';
                 $counter++;
             }
             $usedEmails[] = $email;
@@ -398,11 +403,11 @@ class MassSeeder extends Seeder
 
         foreach ($guestUsers as $user) {
             $personalAccountUuid = (string) Str::uuid();
-            $personalAccountName = $user['full_name'] . ' Personal';
+            $personalAccountName = $user['full_name'].' Personal';
             $personalAccounts[] = [
                 'uuid' => $personalAccountUuid,
                 'name' => $personalAccountName,
-                'slug' => Str::slug($personalAccountName) . '-' . substr($personalAccountUuid, 0, 8),
+                'slug' => Str::slug($personalAccountName).'-'.substr($personalAccountUuid, 0, 8),
                 'status' => 'active',
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -436,8 +441,8 @@ class MassSeeder extends Seeder
         foreach ($accounts as $account) {
             $firstName = $this->firstNames[array_rand($this->firstNames)];
             $lastName = $this->lastNames[array_rand($this->lastNames)];
-            $fullName = $firstName . ' ' . $lastName;
-            $email = strtolower($firstName . '.' . $lastName) . '@' . Str::slug($account['name']) . '.com';
+            $fullName = $firstName.' '.$lastName;
+            $email = strtolower($firstName.'.'.$lastName).'@'.Str::slug($account['name']).'.com';
             $accountId = $accountIds[$account['uuid']];
 
             $actors[] = [
@@ -475,7 +480,7 @@ class MassSeeder extends Seeder
             $stay = $stays[array_rand($stays)];
             $stayDb = $dbStays[$stay['uuid']] ?? null;
 
-            if (!$stayDb) {
+            if (! $stayDb) {
                 continue;
             }
 
