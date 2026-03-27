@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Modules\Stay\Infrastructure\Persistence\Eloquent;
 
 use DateTimeImmutable;
-use Modules\IAM\Domain\AccountId;
+use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Shared\Domain\PaginatedResult;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;

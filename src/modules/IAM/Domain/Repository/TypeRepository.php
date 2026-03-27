@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Modules\IAM\Domain\Repository;
 
 use Modules\IAM\Domain\Type;
-use Modules\IAM\Domain\TypeId;
+use Modules\IAM\Domain\ValueObject\TypeId;
 use Modules\IAM\Domain\ValueObject\TypeName;
 
 interface TypeRepository

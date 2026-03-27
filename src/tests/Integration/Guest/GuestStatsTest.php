@@ -48,6 +48,9 @@ final class GuestStatsTest extends TestCase
             loyaltyTier: LoyaltyTier::from($loyaltyTier),
             preferences: [],
             createdAt: new DateTimeImmutable,
+            hashedPassword: 'hashed_default',
+            actorType: 'guest',
+            emailUniquenessChecker: $this->app->make(\Modules\IAM\Domain\Service\UserEmailUniquenessChecker::class),
         );
 
         $this->repository->save($profile);

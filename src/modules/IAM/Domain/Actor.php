@@ -8,7 +8,10 @@ use DateTimeImmutable;
 use Modules\IAM\Domain\Event\ActorRegistered;
 use Modules\IAM\Domain\Exception\ActorAlreadyExistsException;
 use Modules\IAM\Domain\Service\EmailUniquenessChecker;
+use Modules\IAM\Domain\ValueObject\AccountId;
+use Modules\IAM\Domain\ValueObject\ActorId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
+use Modules\IAM\Domain\ValueObject\TypeId;
 use Modules\Shared\Domain\AggregateRoot;
 use Modules\Shared\Domain\Identity;
 

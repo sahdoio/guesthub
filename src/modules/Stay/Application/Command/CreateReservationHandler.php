@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Stay\Application\Command;
 
 use DomainException;
+use Modules\IAM\Infrastructure\Integration\AccountApi;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
 use Modules\Stay\Domain\Repository\ReservationRepository;
@@ -20,6 +21,7 @@ final class CreateReservationHandler extends EventDispatchingHandler
         private ReservationRepository $repository,
         private ReservationCreationSpecification $specification,
         private GuestGateway $guestGateway,
+        private AccountApi $accountApi,
         EventDispatcher $dispatcher,
     ) {
         parent::__construct($dispatcher);
@@ -49,7 +51,7 @@ final class CreateReservationHandler extends EventDispatchingHandler
             $command->pets,
         );
 
-        $this->repository->save($reservation);
+        $this->repository->save($reservation, $this->accountApi->resolveNumericId($reservation->accountId));
         $this->dispatchEvents($reservation);
 
         return $id;

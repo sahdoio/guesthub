@@ -55,6 +55,9 @@ final class GuestGatewayAdapterTest extends TestCase
             loyaltyTier: $tier,
             preferences: [],
             createdAt: new DateTimeImmutable,
+            hashedPassword: 'hashed_default',
+            actorType: 'guest',
+            emailUniquenessChecker: $this->app->make(\Modules\IAM\Domain\Service\UserEmailUniquenessChecker::class),
         );
 
         $this->userRepo->save($user);

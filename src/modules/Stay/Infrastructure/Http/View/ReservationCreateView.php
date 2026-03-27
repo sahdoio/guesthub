@@ -9,7 +9,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\IAM\Application\Query\ListUsers;
 use Modules\IAM\Application\Query\ListUsersHandler;
-use Modules\IAM\Infrastructure\Http\Presenter\UserPresenter;
+use Modules\IAM\Presentation\Http\Presenter\UserPresenter;
 use Modules\Shared\Application\Query\Pagination;
 use Modules\Stay\Domain\Repository\StayRepository;
 

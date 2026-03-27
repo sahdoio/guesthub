@@ -6,6 +6,7 @@ namespace Modules\IAM\Domain;
 
 use DateTimeImmutable;
 use Modules\IAM\Domain\Event\AccountCreated;
+use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\Shared\Domain\AggregateRoot;
 use Modules\Shared\Domain\Identity;
 
@@ -13,11 +14,11 @@ final class Account extends AggregateRoot
 {
     private function __construct(
         public readonly AccountId $uuid,
-        public private(set) string $name,
-        public private(set) string $slug,
-        public private(set) string $status,
+        private(set) string $name,
+        private(set) string $slug,
+        private(set) string $status,
         public readonly DateTimeImmutable $createdAt,
-        public private(set) ?DateTimeImmutable $updatedAt = null,
+        private(set) ?DateTimeImmutable $updatedAt = null,
     ) {}
 
     public static function create(

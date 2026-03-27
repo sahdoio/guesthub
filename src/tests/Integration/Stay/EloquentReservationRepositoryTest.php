@@ -30,6 +30,8 @@ final class EloquentReservationRepositoryTest extends TestCase
 
     private string $accountUuid;
 
+    private int $accountNumericId;
+
     private string $stayUuid;
 
     protected function setUp(): void
@@ -44,6 +46,7 @@ final class EloquentReservationRepositoryTest extends TestCase
             'status' => 'active',
             'created_at' => now(),
         ]);
+        $this->accountNumericId = $account->id;
         $this->app->make(TenantContext::class)->set($account->id);
 
         $this->stayUuid = Uuid::uuid7()->toString();
@@ -81,7 +84,7 @@ final class EloquentReservationRepositoryTest extends TestCase
     public function it_saves_and_finds_by_uuid(): void
     {
         $reservation = $this->createReservation();
-        $this->repository->save($reservation);
+        $this->repository->save($reservation, $this->accountNumericId);
 
         $found = $this->repository->findByUuid($reservation->uuid);
 
@@ -101,10 +104,10 @@ final class EloquentReservationRepositoryTest extends TestCase
     public function it_persists_status_changes(): void
     {
         $reservation = $this->createReservation();
-        $this->repository->save($reservation);
+        $this->repository->save($reservation, $this->accountNumericId);
 
         $reservation->confirm();
-        $this->repository->save($reservation);
+        $this->repository->save($reservation, $this->accountNumericId);
 
         $found = $this->repository->findByUuid($reservation->uuid);
 
@@ -118,7 +121,7 @@ final class EloquentReservationRepositoryTest extends TestCase
         $reservation = $this->createReservation();
         $reservation->addSpecialRequest(RequestType::EARLY_CHECK_IN, 'Early arrival');
         $reservation->addSpecialRequest(RequestType::EXTRA_BED, 'For child');
-        $this->repository->save($reservation);
+        $this->repository->save($reservation, $this->accountNumericId);
 
         $found = $this->repository->findByUuid($reservation->uuid);
 
@@ -131,10 +134,10 @@ final class EloquentReservationRepositoryTest extends TestCase
     public function it_persists_cancellation(): void
     {
         $reservation = $this->createReservation();
-        $this->repository->save($reservation);
+        $this->repository->save($reservation, $this->accountNumericId);
 
         $reservation->cancel('Plans changed');
-        $this->repository->save($reservation);
+        $this->repository->save($reservation, $this->accountNumericId);
 
         $found = $this->repository->findByUuid($reservation->uuid);
 
@@ -147,7 +150,7 @@ final class EloquentReservationRepositoryTest extends TestCase
     public function it_lists_reservations(): void
     {
         for ($i = 0; $i < 3; $i++) {
-            $this->repository->save($this->createReservation(['guestId' => "guest-{$i}"]));
+            $this->repository->save($this->createReservation(['guestId' => "guest-{$i}"]), $this->accountNumericId);
         }
 
         $result = $this->repository->list(1, 2);
@@ -161,11 +164,11 @@ final class EloquentReservationRepositoryTest extends TestCase
     public function it_lists_filtered_by_status(): void
     {
         $pending = $this->createReservation();
-        $this->repository->save($pending);
+        $this->repository->save($pending, $this->accountNumericId);
 
         $confirmed = $this->createReservation(['guestId' => 'guest-confirmed']);
         $confirmed->confirm();
-        $this->repository->save($confirmed);
+        $this->repository->save($confirmed, $this->accountNumericId);
 
         $result = $this->repository->list(1, 15, status: 'confirmed');
 

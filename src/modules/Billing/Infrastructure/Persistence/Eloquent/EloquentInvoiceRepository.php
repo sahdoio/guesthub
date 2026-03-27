@@ -11,20 +11,18 @@ use Modules\Billing\Domain\Repository\InvoiceRepository;
 use Modules\Billing\Domain\ValueObject\InvoiceStatus;
 use Modules\Billing\Domain\ValueObject\Money;
 use Modules\Billing\Infrastructure\Persistence\InvoiceReflector;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
 
 final readonly class EloquentInvoiceRepository implements InvoiceRepository
 {
     public function __construct(
         private InvoiceModel $model,
-        private TenantContext $tenantContext,
     ) {}
 
-    public function save(Invoice $invoice): void
+    public function save(Invoice $invoice, int $accountNumericId): void
     {
         $invoiceData = [
             'uuid' => $invoice->uuid->value,
-            'account_id' => $this->tenantContext->id(),
+            'account_id' => $accountNumericId,
             'account_uuid' => $invoice->accountId,
             'reservation_id' => $invoice->reservationId,
             'guest_id' => $invoice->guestId,

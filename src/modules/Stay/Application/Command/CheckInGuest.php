@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Application\Command;
 
-final readonly class CheckInGuest
+use Modules\Shared\Application\BaseData;
+
+final readonly class CheckInGuest extends BaseData
 {
     public function __construct(
         public string $reservationId,

@@ -10,7 +10,7 @@ use Modules\Stay\Domain\ReservationId;
 
 interface ReservationRepository
 {
-    public function save(Reservation $reservation): void;
+    public function save(Reservation $reservation, int $accountNumericId): void;
 
     public function findByUuid(ReservationId $uuid): ?Reservation;
 

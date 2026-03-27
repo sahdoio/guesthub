@@ -9,7 +9,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Billing\Domain\InvoiceId;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
-use Modules\Billing\Infrastructure\Http\Presenter\InvoicePresenter;
+use Modules\Billing\Presentation\Http\Presenter\InvoicePresenter;
 
 final class PortalInvoiceShowView
 {

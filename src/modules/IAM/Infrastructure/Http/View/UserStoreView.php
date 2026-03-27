@@ -20,6 +20,7 @@ final class UserStoreView
         $data = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string', 'min:8'],
             'phone' => ['required', 'string', 'regex:/^[1-9]\d{6,14}$/'],
             'document' => ['required', 'string', 'max:50'],
         ], [
@@ -29,6 +30,7 @@ final class UserStoreView
         $id = $this->handler->handle(new CreateUser(
             fullName: $data['full_name'],
             email: $data['email'],
+            password: $data['password'],
             phone: $data['phone'],
             document: $data['document'],
         ));

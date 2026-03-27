@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Modules\IAM\Domain\Repository;
 
 use Modules\IAM\Domain\Account;
-use Modules\IAM\Domain\AccountId;
+use Modules\IAM\Domain\ValueObject\AccountId;
 
 interface AccountRepository
 {

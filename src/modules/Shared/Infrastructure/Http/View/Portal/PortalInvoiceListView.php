@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
-use Modules\Billing\Infrastructure\Http\Presenter\InvoicePresenter;
+use Modules\Billing\Presentation\Http\Presenter\InvoicePresenter;
 
 final class PortalInvoiceListView
 {

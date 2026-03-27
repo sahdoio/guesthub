@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Application\Query;
 
-final readonly class ListStays
+use Modules\Shared\Application\BaseData;
+
+final readonly class ListStays extends BaseData
 {
     public function __construct(
         public string $accountId,

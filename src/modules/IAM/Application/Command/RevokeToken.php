@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\IAM\Application\Command;
 
-final readonly class RevokeToken
+use Modules\Shared\Application\BaseData;
+
+final readonly class RevokeToken extends BaseData
 {
     public function __construct(
         public string $actorEmail,

@@ -18,10 +18,7 @@ final readonly class AuthenticateActorHandler
         private TokenManager $tokenManager,
     ) {}
 
-    /**
-     * @return array{token: string, actor_id: string}
-     */
-    public function handle(AuthenticateActor $command): array
+    public function handle(AuthenticateActor $command): AuthenticationResult
     {
         $actor = $this->repository->findByEmail($command->email)
             ?? throw ActorNotFoundException::withEmail($command->email);
@@ -32,9 +29,9 @@ final readonly class AuthenticateActorHandler
 
         $token = $this->tokenManager->createToken($command->email);
 
-        return [
-            'token' => $token,
-            'actor_id' => (string) $actor->uuid,
-        ];
+        return new AuthenticationResult(
+            token: $token,
+            actorId: (string) $actor->uuid,
+        );
     }
 }

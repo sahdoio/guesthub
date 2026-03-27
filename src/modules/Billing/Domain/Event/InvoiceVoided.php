@@ -4,23 +4,15 @@ declare(strict_types=1);
 
 namespace Modules\Billing\Domain\Event;
 
-use DateTimeImmutable;
 use Modules\Billing\Domain\InvoiceId;
 use Modules\Shared\Domain\DomainEvent;
 
-final readonly class InvoiceVoided implements DomainEvent
+final class InvoiceVoided extends DomainEvent
 {
-    public DateTimeImmutable $occurredOn;
-
     public function __construct(
-        public InvoiceId $invoiceId,
-        public string $reason,
+        public readonly InvoiceId $invoiceId,
+        public readonly string $reason,
     ) {
-        $this->occurredOn = new DateTimeImmutable;
-    }
-
-    public function occurredOn(): DateTimeImmutable
-    {
-        return $this->occurredOn;
+        parent::__construct();
     }
 }

@@ -11,6 +11,7 @@ use Modules\Billing\Domain\DTO\PaymentIntent;
 use Modules\Billing\Domain\InvoiceId;
 use Modules\Billing\Domain\PaymentId;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
+use Modules\Billing\Domain\Service\AccountGateway;
 use Modules\Billing\Domain\Service\PaymentGateway;
 use Modules\Billing\Domain\ValueObject\PaymentMethod;
 use Modules\Shared\Application\EventDispatcher;
@@ -21,6 +22,7 @@ final class PortalInitiatePaymentAction extends EventDispatchingHandler
 {
     public function __construct(
         private InvoiceRepository $repository,
+        private AccountGateway $accountGateway,
         private PaymentGateway $paymentGateway,
         private TenantContext $tenantContext,
         EventDispatcher $dispatcher,
@@ -76,7 +78,7 @@ final class PortalInitiatePaymentAction extends EventDispatchingHandler
             $invoice->markPaymentSucceeded($result->paymentIntentId);
         }
 
-        $this->repository->save($invoice);
+        $this->repository->save($invoice, $this->accountGateway->resolveNumericId($invoice->accountId));
         $this->dispatchEvents($invoice);
 
         return new JsonResponse([

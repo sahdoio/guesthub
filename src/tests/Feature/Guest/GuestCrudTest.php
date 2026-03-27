@@ -40,6 +40,9 @@ final class GuestCrudTest extends TestCase
             loyaltyTier: LoyaltyTier::from($overrides['loyalty_tier'] ?? 'bronze'),
             preferences: $overrides['preferences'] ?? ['late_checkout', 'high_floor'],
             createdAt: new DateTimeImmutable,
+            hashedPassword: 'hashed_default',
+            actorType: 'guest',
+            emailUniquenessChecker: $this->app->make(\Modules\IAM\Domain\Service\UserEmailUniquenessChecker::class),
         );
 
         $repository->save($profile);

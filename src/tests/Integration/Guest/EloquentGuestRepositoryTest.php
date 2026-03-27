@@ -8,8 +8,8 @@ use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\IAM\Domain\Repository\UserRepository;
 use Modules\IAM\Domain\User;
-use Modules\IAM\Domain\UserId;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
+use Modules\IAM\Domain\ValueObject\UserId;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentUserRepository;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
@@ -52,6 +52,9 @@ final class EloquentGuestRepositoryTest extends TestCase
             loyaltyTier: $overrides['loyaltyTier'] ?? LoyaltyTier::BRONZE,
             preferences: $overrides['preferences'] ?? [],
             createdAt: $overrides['createdAt'] ?? new DateTimeImmutable,
+            hashedPassword: $overrides['hashedPassword'] ?? 'hashed_default',
+            actorType: $overrides['actorType'] ?? 'guest',
+            emailUniquenessChecker: $this->app->make(\Modules\IAM\Domain\Service\UserEmailUniquenessChecker::class),
         );
     }
 

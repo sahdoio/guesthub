@@ -6,12 +6,12 @@ namespace Modules\IAM\Infrastructure\Persistence\Eloquent;
 
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
-use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
-use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Repository\ActorRepository;
-use Modules\IAM\Domain\TypeId;
+use Modules\IAM\Domain\ValueObject\AccountId;
+use Modules\IAM\Domain\ValueObject\ActorId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
+use Modules\IAM\Domain\ValueObject\TypeId;
 use Modules\IAM\Infrastructure\Persistence\ActorReflector;
 
 final class EloquentActorRepository implements ActorRepository

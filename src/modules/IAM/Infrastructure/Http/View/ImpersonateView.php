@@ -7,8 +7,8 @@ namespace Modules\IAM\Infrastructure\Http\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Repository\ActorRepository;
+use Modules\IAM\Domain\ValueObject\ActorId;
 
 final class ImpersonateView
 {

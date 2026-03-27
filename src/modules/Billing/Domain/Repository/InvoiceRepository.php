@@ -9,7 +9,7 @@ use Modules\Billing\Domain\InvoiceId;
 
 interface InvoiceRepository
 {
-    public function save(Invoice $invoice): void;
+    public function save(Invoice $invoice, int $accountNumericId): void;
 
     public function findByUuid(InvoiceId $uuid): ?Invoice;
 

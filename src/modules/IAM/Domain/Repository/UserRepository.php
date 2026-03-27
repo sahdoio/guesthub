@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Modules\IAM\Domain\Repository;
 
 use Modules\IAM\Domain\User;
-use Modules\IAM\Domain\UserId;
+use Modules\IAM\Domain\ValueObject\UserId;
 use Modules\Shared\Domain\PaginatedResult;
 
 interface UserRepository

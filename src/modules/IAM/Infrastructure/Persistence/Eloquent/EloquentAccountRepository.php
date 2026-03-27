@@ -6,8 +6,8 @@ namespace Modules\IAM\Infrastructure\Persistence\Eloquent;
 
 use DateTimeImmutable;
 use Modules\IAM\Domain\Account;
-use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Repository\AccountRepository;
+use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\IAM\Infrastructure\Persistence\AccountReflector;
 
 final class EloquentAccountRepository implements AccountRepository

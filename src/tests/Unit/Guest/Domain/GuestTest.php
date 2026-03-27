@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit\Guest\Domain;
 
 use DateTimeImmutable;
+use Modules\IAM\Domain\Service\UserEmailUniquenessChecker;
 use Modules\IAM\Domain\User;
-use Modules\IAM\Domain\UserId;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
+use Modules\IAM\Domain\ValueObject\UserId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -15,6 +16,17 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(User::class)]
 final class GuestTest extends TestCase
 {
+    private function emailChecker(): UserEmailUniquenessChecker
+    {
+        return new class implements UserEmailUniquenessChecker
+        {
+            public function isEmailTaken(string $email): bool
+            {
+                return false;
+            }
+        };
+    }
+
     private function createProfile(array $overrides = []): User
     {
         return User::create(
@@ -26,6 +38,9 @@ final class GuestTest extends TestCase
             loyaltyTier: $overrides['loyaltyTier'] ?? LoyaltyTier::BRONZE,
             preferences: $overrides['preferences'] ?? [],
             createdAt: $overrides['createdAt'] ?? new DateTimeImmutable,
+            hashedPassword: $overrides['hashedPassword'] ?? 'hashed_default',
+            actorType: $overrides['actorType'] ?? 'guest',
+            emailUniquenessChecker: $this->emailChecker(),
         );
     }
 
@@ -43,6 +58,9 @@ final class GuestTest extends TestCase
             loyaltyTier: LoyaltyTier::BRONZE,
             preferences: ['late_checkout', 'high_floor'],
             createdAt: new DateTimeImmutable,
+            hashedPassword: 'hashed_default',
+            actorType: 'guest',
+            emailUniquenessChecker: $this->emailChecker(),
         );
 
         $this->assertTrue($profile->id()->equals($id));

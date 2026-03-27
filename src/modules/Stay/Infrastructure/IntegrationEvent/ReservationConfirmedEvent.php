@@ -4,24 +4,19 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Infrastructure\IntegrationEvent;
 
-use DateTimeImmutable;
-use Modules\Shared\Application\Messaging\IntegrationEvent;
+use Modules\Shared\Infrastructure\Messaging\IntegrationEvent;
 
-final readonly class ReservationConfirmedEvent implements IntegrationEvent
+final class ReservationConfirmedEvent extends IntegrationEvent
 {
     public function __construct(
-        public string $reservationId,
-        public string $guestEmail,
-        public string $stayId,
-        public string $checkIn,
-        public string $checkOut,
-        public bool $isVip,
-        public DateTimeImmutable $occurredAt,
-    ) {}
-
-    public function occurredAt(): DateTimeImmutable
-    {
-        return $this->occurredAt;
+        public readonly string $reservationId,
+        public readonly string $guestEmail,
+        public readonly string $stayId,
+        public readonly string $checkIn,
+        public readonly string $checkOut,
+        public readonly bool $isVip,
+    ) {
+        parent::__construct();
     }
 
     public function toArray(): array

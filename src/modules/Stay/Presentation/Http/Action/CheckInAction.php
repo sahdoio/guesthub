@@ -12,6 +12,7 @@ use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\ReservationId;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 final readonly class CheckInAction
 {
@@ -26,7 +27,9 @@ final readonly class CheckInAction
     {
         $id = $request->getAttribute('id');
 
-        $this->enforceReservationOwnership($id);
+        if (! $this->isAuthorizedForReservation($id)) {
+            return $this->responder->error(['message' => 'Access denied.'], Response::HTTP_FORBIDDEN);
+        }
 
         $this->handler->handle(new CheckInGuest(
             reservationId: $id,
@@ -35,18 +38,19 @@ final readonly class CheckInAction
         return $this->responder->ok(['message' => 'Guest checked in.']);
     }
 
-    private function enforceReservationOwnership(string $reservationUuid): void
+    private function isAuthorizedForReservation(string $reservationUuid): bool
     {
         if ($this->userResolver->isOwnerOrSuperAdmin()) {
-            return;
+            return true;
         }
 
         $ownGuestUuid = $this->userResolver->resolveUserUuid();
-        if ($ownGuestUuid !== null) {
-            $reservation = $this->reservationRepository->findByUuid(ReservationId::fromString($reservationUuid));
-            if ($reservation === null || $ownGuestUuid !== $reservation->guestId) {
-                abort(403, 'Access denied.');
-            }
+        if ($ownGuestUuid === null) {
+            return true;
         }
+
+        $reservation = $this->reservationRepository->findByUuid(ReservationId::fromString($reservationUuid));
+
+        return $reservation !== null && $ownGuestUuid === $reservation->guestId;
     }
 }

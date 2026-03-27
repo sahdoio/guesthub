@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Billing\Application\Listeners;
 
-use DateTimeImmutable;
 use Modules\Billing\Application\Command\CreateInvoiceForReservation;
 use Modules\Billing\Application\Command\CreateInvoiceForReservationHandler;
 use Modules\Billing\Application\Command\IssueInvoice;
 use Modules\Billing\Application\Command\IssueInvoiceHandler;
-use Modules\Billing\Application\Listeners\OnReservationCreated;
 use Modules\Billing\Domain\DTO\ReservationInfo;
 use Modules\Billing\Domain\InvoiceId;
 use Modules\Billing\Domain\Service\ReservationGateway;
+use Modules\Billing\Infrastructure\Listeners\OnReservationCreated;
 use Modules\Stay\Infrastructure\IntegrationEvent\ReservationCreatedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -80,7 +79,6 @@ final class OnReservationCreatedTest extends TestCase
             checkIn: '2026-04-01',
             checkOut: '2026-04-04',
             isVip: false,
-            occurredAt: new DateTimeImmutable,
         );
 
         $listener->handle($event);

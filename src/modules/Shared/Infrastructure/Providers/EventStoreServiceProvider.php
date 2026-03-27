@@ -7,10 +7,10 @@ namespace Modules\Shared\Infrastructure\Providers;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Modules\Shared\Application\EventStore;
-use Modules\Shared\Application\Messaging\IntegrationEvent;
 use Modules\Shared\Domain\DomainEvent;
 use Modules\Shared\Infrastructure\Messaging\EventSerializer;
 use Modules\Shared\Infrastructure\Messaging\EventStoreRecorder;
+use Modules\Shared\Infrastructure\Messaging\IntegrationEvent;
 use Modules\Shared\Infrastructure\Persistence\Eloquent\EloquentEventStore;
 
 final class EventStoreServiceProvider extends ServiceProvider

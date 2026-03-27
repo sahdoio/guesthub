@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\IAM\Domain\Repository\UserRepository;
-use Modules\IAM\Domain\UserId;
-use Modules\IAM\Infrastructure\Http\Presenter\UserPresenter;
+use Modules\IAM\Domain\ValueObject\UserId;
+use Modules\IAM\Presentation\Http\Presenter\UserPresenter;
 
 final class PortalProfileView
 {

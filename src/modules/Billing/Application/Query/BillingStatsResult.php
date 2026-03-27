@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Billing\Application\Query;
 
-final readonly class BillingStatsResult
+use Modules\Shared\Application\BaseData;
+
+final readonly class BillingStatsResult extends BaseData
 {
     /**
      * @param  array<string, int>  $byStatus

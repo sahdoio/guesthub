@@ -6,7 +6,12 @@ namespace Modules\Shared\Domain;
 
 use DateTimeImmutable;
 
-interface DomainEvent
+abstract class DomainEvent
 {
-    public function occurredOn(): DateTimeImmutable;
+    public readonly DateTimeImmutable $occurredOn;
+
+    public function __construct()
+    {
+        $this->occurredOn = new DateTimeImmutable;
+    }
 }

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit\IAM\Domain;
 
 use DateTimeImmutable;
-use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
-use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Service\EmailUniquenessChecker;
-use Modules\IAM\Domain\TypeId;
+use Modules\IAM\Domain\ValueObject\AccountId;
+use Modules\IAM\Domain\ValueObject\ActorId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
+use Modules\IAM\Domain\ValueObject\TypeId;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

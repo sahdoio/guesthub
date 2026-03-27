@@ -1,10 +1,10 @@
 # [GuestHub](https://github.com/sahdoio/guesthub)
 
-[![Watch the video](https://img.youtube.com/vi/dwifp5zka0g/maxresdefault.jpg)](https://youtu.be/dwifp5zka0g)
-
 A stay management platform built to explore Domain-Driven Design with Laravel. The goal is to model real hospitality operations — stays, reservations, billing, user profiles — as isolated bounded contexts that communicate through well-defined boundaries. Think Airbnb-style: stays can be hotel rooms, houses, or apartments.
 
 This is a learning project. The focus is on getting the architecture right: aggregates with real invariants, value objects, domain events, and repositories that don't leak infrastructure into the domain.
+
+![website](docs/website.png)
 
 ## Documentation
 

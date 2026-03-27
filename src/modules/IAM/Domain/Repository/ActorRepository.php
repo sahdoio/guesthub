@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Modules\IAM\Domain\Repository;
 
 use Modules\IAM\Domain\Actor;
-use Modules\IAM\Domain\ActorId;
+use Modules\IAM\Domain\ValueObject\ActorId;
 
 interface ActorRepository
 {

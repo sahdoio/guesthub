@@ -24,12 +24,12 @@ class DatabaseSeeder extends Seeder
             ActorTypeSeeder::class,
             AccountSeeder::class,
             StaySeeder::class,
-            StayImageSeeder::class,
             UserSeeder::class,
             ActorSeeder::class,
             ReservationSeeder::class,
             InvoiceSeeder::class,
             MassSeeder::class,
+            StayImageSeeder::class,
         ]);
     }
 }

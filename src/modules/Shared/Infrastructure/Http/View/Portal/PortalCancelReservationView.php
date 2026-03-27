@@ -39,7 +39,7 @@ final class PortalCancelReservationView
 
         // Set tenant context for the reservation's hotel so save() works
         $account = $this->accountRepository->findByUuid(
-            \Modules\IAM\Domain\AccountId::fromString($reservation->accountId)
+            \Modules\IAM\Domain\ValueObject\AccountId::fromString($reservation->accountId)
         );
         if ($account) {
             $numericId = $this->accountRepository->resolveNumericId($account->uuid);

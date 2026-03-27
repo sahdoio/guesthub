@@ -6,7 +6,7 @@ namespace Modules\IAM\Infrastructure\Persistence;
 
 use DateTimeImmutable;
 use Modules\IAM\Domain\Account;
-use Modules\IAM\Domain\AccountId;
+use Modules\IAM\Domain\ValueObject\AccountId;
 use ReflectionClass;
 
 final class AccountReflector

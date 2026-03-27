@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit\Billing\Application\Listeners;
 
 use DateTimeImmutable;
+use Modules\Billing\Application\Command\CancelReservationBilling;
+use Modules\Billing\Application\Command\CancelReservationBillingHandler;
 use Modules\Billing\Application\Command\RefundInvoice;
 use Modules\Billing\Application\Command\RefundInvoiceHandler;
 use Modules\Billing\Application\Command\VoidInvoice;
 use Modules\Billing\Application\Command\VoidInvoiceHandler;
-use Modules\Billing\Application\Listeners\OnReservationCancelled;
 use Modules\Billing\Domain\Invoice;
 use Modules\Billing\Domain\InvoiceId;
 use Modules\Billing\Domain\LineItem;
@@ -19,13 +20,12 @@ use Modules\Billing\Domain\Repository\InvoiceRepository;
 use Modules\Billing\Domain\ValueObject\InvoiceStatus;
 use Modules\Billing\Domain\ValueObject\Money;
 use Modules\Billing\Domain\ValueObject\PaymentMethod;
-use Modules\Stay\Infrastructure\IntegrationEvent\ReservationCancelledEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 
-#[CoversClass(OnReservationCancelled::class)]
+#[CoversClass(CancelReservationBillingHandler::class)]
 final class OnReservationCancelledTest extends TestCase
 {
     private function createInvoice(InvoiceStatus $targetStatus = InvoiceStatus::ISSUED): Invoice
@@ -94,19 +94,13 @@ final class OnReservationCancelledTest extends TestCase
         $refundHandler = $this->createMock(RefundInvoiceHandler::class);
         $refundHandler->expects($this->never())->method('handle');
 
-        $listener = new OnReservationCancelled($repository, $voidHandler, $refundHandler);
+        $handler = new CancelReservationBillingHandler($repository, $voidHandler, $refundHandler);
 
-        $event = new ReservationCancelledEvent(
+        $handler->handle(new CancelReservationBilling(
             reservationId: 'res-uuid-1',
-            stayId: 'stay-uuid-1',
-            checkIn: '2026-04-01',
-            checkOut: '2026-04-04',
             reason: 'Guest changed plans',
             freeCancellationUntil: null,
-            occurredAt: new DateTimeImmutable,
-        );
-
-        $listener->handle($event);
+        ));
     }
 
     #[Test]
@@ -125,19 +119,13 @@ final class OnReservationCancelledTest extends TestCase
         $refundHandler = $this->createMock(RefundInvoiceHandler::class);
         $refundHandler->expects($this->never())->method('handle');
 
-        $listener = new OnReservationCancelled($repository, $voidHandler, $refundHandler);
+        $handler = new CancelReservationBillingHandler($repository, $voidHandler, $refundHandler);
 
-        $event = new ReservationCancelledEvent(
+        $handler->handle(new CancelReservationBilling(
             reservationId: 'res-uuid-1',
-            stayId: 'stay-uuid-1',
-            checkIn: '2026-04-01',
-            checkOut: '2026-04-04',
             reason: 'Changed mind',
             freeCancellationUntil: null,
-            occurredAt: new DateTimeImmutable,
-        );
-
-        $listener->handle($event);
+        ));
     }
 
     #[Test]
@@ -160,22 +148,15 @@ final class OnReservationCancelledTest extends TestCase
                 return $cmd->invoiceId === (string) $invoice->uuid;
             }));
 
-        $listener = new OnReservationCancelled($repository, $voidHandler, $refundHandler);
+        $handler = new CancelReservationBillingHandler($repository, $voidHandler, $refundHandler);
 
-        // Free cancellation window is in the future
         $freeCancellationUntil = (new DateTimeImmutable('+7 days'))->format('c');
 
-        $event = new ReservationCancelledEvent(
+        $handler->handle(new CancelReservationBilling(
             reservationId: 'res-uuid-1',
-            stayId: 'stay-uuid-1',
-            checkIn: '2026-04-10',
-            checkOut: '2026-04-13',
             reason: 'Emergency',
             freeCancellationUntil: $freeCancellationUntil,
-            occurredAt: new DateTimeImmutable,
-        );
-
-        $listener->handle($event);
+        ));
     }
 
     #[Test]
@@ -194,22 +175,15 @@ final class OnReservationCancelledTest extends TestCase
         $refundHandler = $this->createMock(RefundInvoiceHandler::class);
         $refundHandler->expects($this->never())->method('handle');
 
-        $listener = new OnReservationCancelled($repository, $voidHandler, $refundHandler);
+        $handler = new CancelReservationBillingHandler($repository, $voidHandler, $refundHandler);
 
-        // Free cancellation window is in the past
         $freeCancellationUntil = (new DateTimeImmutable('-1 day'))->format('c');
 
-        $event = new ReservationCancelledEvent(
+        $handler->handle(new CancelReservationBilling(
             reservationId: 'res-uuid-1',
-            stayId: 'stay-uuid-1',
-            checkIn: '2026-03-20',
-            checkOut: '2026-03-23',
             reason: 'Too late',
             freeCancellationUntil: $freeCancellationUntil,
-            occurredAt: new DateTimeImmutable,
-        );
-
-        $listener->handle($event);
+        ));
     }
 
     #[Test]
@@ -226,18 +200,12 @@ final class OnReservationCancelledTest extends TestCase
         $refundHandler = $this->createMock(RefundInvoiceHandler::class);
         $refundHandler->expects($this->never())->method('handle');
 
-        $listener = new OnReservationCancelled($repository, $voidHandler, $refundHandler);
+        $handler = new CancelReservationBillingHandler($repository, $voidHandler, $refundHandler);
 
-        $event = new ReservationCancelledEvent(
+        $handler->handle(new CancelReservationBilling(
             reservationId: 'res-nonexistent',
-            stayId: 'stay-uuid-1',
-            checkIn: '2026-04-01',
-            checkOut: '2026-04-04',
             reason: 'No invoice',
             freeCancellationUntil: null,
-            occurredAt: new DateTimeImmutable,
-        );
-
-        $listener->handle($event);
+        ));
     }
 }

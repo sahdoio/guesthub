@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Modules\Stay\Application\Command;
 
 use DateTimeImmutable;
-use Modules\IAM\Domain\AccountId;
+use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
 use Modules\Stay\Domain\Repository\StayRepository;

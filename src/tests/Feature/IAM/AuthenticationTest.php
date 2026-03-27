@@ -125,7 +125,7 @@ final class AuthenticationTest extends TestCase
         ]);
 
         $response->assertOk()
-            ->assertJsonStructure(['token', 'actor_id']);
+            ->assertJsonStructure(['token', 'actorId']);
 
         $this->assertNotEmpty($response->json('token'));
     }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Domain\Repository;
 
-use Modules\IAM\Domain\AccountId;
+use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\Shared\Domain\PaginatedResult;
 use Modules\Stay\Domain\Stay;
 use Modules\Stay\Domain\StayId;

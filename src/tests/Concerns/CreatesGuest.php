@@ -6,6 +6,7 @@ namespace Tests\Concerns;
 
 use DateTimeImmutable;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\Service\UserEmailUniquenessChecker;
 use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 
@@ -14,6 +15,7 @@ trait CreatesGuest
     protected function createGuest(array $overrides = []): string
     {
         $repository = $this->app->make(UserRepository::class);
+        $emailChecker = $this->app->make(UserEmailUniquenessChecker::class);
 
         $guest = User::create(
             uuid: $repository->nextIdentity(),
@@ -24,6 +26,9 @@ trait CreatesGuest
             loyaltyTier: LoyaltyTier::from($overrides['loyalty_tier'] ?? 'bronze'),
             preferences: $overrides['preferences'] ?? [],
             createdAt: new DateTimeImmutable,
+            hashedPassword: $overrides['hashed_password'] ?? 'hashed_default',
+            actorType: $overrides['actor_type'] ?? 'guest',
+            emailUniquenessChecker: $emailChecker,
         );
 
         $repository->save($guest);

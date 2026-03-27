@@ -6,8 +6,8 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Repository\AccountRepository;
+use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Application\Command\AddSpecialRequest;
 use Modules\Stay\Application\Command\AddSpecialRequestHandler;

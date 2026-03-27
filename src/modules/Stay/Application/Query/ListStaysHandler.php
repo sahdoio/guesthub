@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Application\Query;
 
-use Modules\IAM\Domain\AccountId;
+use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\Stay;
 

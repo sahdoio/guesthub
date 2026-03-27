@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Shared\Presentation\Http;
 
+use JsonException;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 
@@ -24,6 +25,9 @@ final readonly class JsonResponder
         return new Response(204);
     }
 
+    /**
+     * @throws JsonException
+     */
     public function error(array $errors, int $status): ResponseInterface
     {
         return $this->respond(['errors' => $errors], $status);

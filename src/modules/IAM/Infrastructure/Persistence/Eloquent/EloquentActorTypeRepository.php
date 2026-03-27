@@ -6,7 +6,7 @@ namespace Modules\IAM\Infrastructure\Persistence\Eloquent;
 
 use Modules\IAM\Domain\Repository\TypeRepository;
 use Modules\IAM\Domain\Type;
-use Modules\IAM\Domain\TypeId;
+use Modules\IAM\Domain\ValueObject\TypeId;
 use Modules\IAM\Domain\ValueObject\TypeName;
 
 final class EloquentActorTypeRepository implements TypeRepository

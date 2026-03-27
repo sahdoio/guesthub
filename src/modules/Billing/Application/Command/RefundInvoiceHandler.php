@@ -7,6 +7,7 @@ namespace Modules\Billing\Application\Command;
 use Modules\Billing\Domain\Exception\InvoiceNotFoundException;
 use Modules\Billing\Domain\InvoiceId;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
+use Modules\Billing\Domain\Service\AccountGateway;
 use Modules\Billing\Domain\Service\PaymentGateway;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
@@ -15,6 +16,7 @@ class RefundInvoiceHandler extends EventDispatchingHandler
 {
     public function __construct(
         private InvoiceRepository $repository,
+        private AccountGateway $accountGateway,
         private PaymentGateway $paymentGateway,
         EventDispatcher $dispatcher,
     ) {
@@ -33,7 +35,7 @@ class RefundInvoiceHandler extends EventDispatchingHandler
 
         $invoice->refund();
 
-        $this->repository->save($invoice);
+        $this->repository->save($invoice, $this->accountGateway->resolveNumericId($invoice->accountId));
         $this->dispatchEvents($invoice);
     }
 }

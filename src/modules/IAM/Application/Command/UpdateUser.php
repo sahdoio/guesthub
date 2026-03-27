@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\IAM\Application\Command;
 
-final readonly class UpdateUser
+use Modules\Shared\Application\BaseData;
+
+final readonly class UpdateUser extends BaseData
 {
     /**
      * @param  string[]|null  $preferences

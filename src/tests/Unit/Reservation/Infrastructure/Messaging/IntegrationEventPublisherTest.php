@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Reservation\Infrastructure\Messaging;
 
-use DateTimeImmutable;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\Log;
 use Modules\Stay\Infrastructure\IntegrationEvent\ReservationConfirmedEvent;
@@ -28,7 +27,6 @@ final class IntegrationEventPublisherTest extends TestCase
             checkIn: '2026-02-01',
             checkOut: '2026-02-05',
             isVip: true,
-            occurredAt: new DateTimeImmutable,
         );
 
         $dispatcher = $this->createMock(Dispatcher::class);

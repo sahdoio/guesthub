@@ -4,25 +4,17 @@ declare(strict_types=1);
 
 namespace Modules\IAM\Domain\Event;
 
-use DateTimeImmutable;
-use Modules\IAM\Domain\AccountId;
-use Modules\IAM\Domain\ActorId;
+use Modules\IAM\Domain\ValueObject\AccountId;
+use Modules\IAM\Domain\ValueObject\ActorId;
 use Modules\Shared\Domain\DomainEvent;
 
-final readonly class ActorRegistered implements DomainEvent
+final class ActorRegistered extends DomainEvent
 {
-    public DateTimeImmutable $occurredOn;
-
     public function __construct(
-        public ActorId $actorId,
-        public ?AccountId $accountId,
-        public string $email,
+        public readonly ActorId $actorId,
+        public readonly ?AccountId $accountId,
+        public readonly string $email,
     ) {
-        $this->occurredOn = new DateTimeImmutable;
-    }
-
-    public function occurredOn(): DateTimeImmutable
-    {
-        return $this->occurredOn;
+        parent::__construct();
     }
 }

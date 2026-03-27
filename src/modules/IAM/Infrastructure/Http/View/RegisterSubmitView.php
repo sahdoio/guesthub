@@ -7,13 +7,13 @@ namespace Modules\IAM\Infrastructure\Http\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Modules\IAM\Application\Command\RegisterActor;
-use Modules\IAM\Application\Command\RegisterActorHandler;
+use Modules\IAM\Application\Command\RegisterUser;
+use Modules\IAM\Application\Command\RegisterUserHandler;
 
 final class RegisterSubmitView
 {
     public function __construct(
-        private readonly RegisterActorHandler $handler,
+        private readonly RegisterUserHandler $handler,
     ) {}
 
     public function __invoke(Request $request): RedirectResponse
@@ -26,7 +26,7 @@ final class RegisterSubmitView
             'document' => ['required', 'string', 'max:50'],
         ]);
 
-        $this->handler->handle(new RegisterActor(
+        $this->handler->handle(new RegisterUser(
             name: $data['name'],
             email: $data['email'],
             password: $data['password'],

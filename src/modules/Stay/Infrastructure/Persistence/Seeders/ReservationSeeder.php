@@ -7,8 +7,8 @@ namespace Modules\Stay\Infrastructure\Persistence\Seeders;
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Repository\AccountRepository;
+use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\IAM\Infrastructure\Persistence\Seeders\AccountSeeder;
 use Modules\IAM\Infrastructure\Persistence\Seeders\UserSeeder;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
@@ -111,7 +111,7 @@ class ReservationSeeder extends Seeder
     private function save(Reservation $reservation): void
     {
         $reservation->pullDomainEvents(); // Discard events during seeding
-        $this->repository->save($reservation);
+        $this->repository->save($reservation, $this->tenantContext->id());
 
         // Manually insert stay_guests since domain events are discarded
         DB::table('stay_guests')->insertOrIgnore([

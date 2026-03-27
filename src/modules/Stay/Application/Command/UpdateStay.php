@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Application\Command;
 
+use Modules\Shared\Application\BaseData;
 use Modules\Stay\Domain\ValueObject\StayCategory;
 use Modules\Stay\Domain\ValueObject\StayType;
 
-final readonly class UpdateStay
+final readonly class UpdateStay extends BaseData
 {
     public function __construct(
         public string $stayId,

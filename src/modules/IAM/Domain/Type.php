@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\IAM\Domain;
 
+use Modules\IAM\Domain\ValueObject\TypeId;
 use Modules\IAM\Domain\ValueObject\TypeName;
 use Modules\Shared\Domain\Entity;
 use Modules\Shared\Domain\Identity;

@@ -7,6 +7,8 @@ namespace Modules\IAM\Infrastructure\Persistence\Seeders;
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\Service\PasswordHasher;
+use Modules\IAM\Domain\Service\UserEmailUniquenessChecker;
 use Modules\IAM\Domain\User;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 
@@ -17,10 +19,14 @@ class UserSeeder extends Seeder
 
     public function __construct(
         private readonly UserRepository $repository,
+        private readonly PasswordHasher $hasher,
+        private readonly UserEmailUniquenessChecker $emailUniquenessChecker,
     ) {}
 
     public function run(): void
     {
+        $defaultPassword = $this->hasher->hash('password123')->value;
+
         // Guest-type users (with loyalty tiers)
         $guests = [
             ['Alice Johnson', 'alice@example.com', '5511999990001', '11122233344', LoyaltyTier::BRONZE, []],
@@ -40,7 +46,19 @@ class UserSeeder extends Seeder
             }
 
             $id = $this->repository->nextIdentity();
-            $user = User::create($id, $name, $email, $phone, $document, $tier, $preferences, new DateTimeImmutable);
+            $user = User::create(
+                uuid: $id,
+                fullName: $name,
+                email: $email,
+                phone: $phone,
+                document: $document,
+                loyaltyTier: $tier,
+                preferences: $preferences,
+                createdAt: new DateTimeImmutable,
+                hashedPassword: $defaultPassword,
+                actorType: 'guest',
+                emailUniquenessChecker: $this->emailUniquenessChecker,
+            );
             $this->repository->save($user);
 
             self::$userIds[$email] = (string) $id;
@@ -62,7 +80,19 @@ class UserSeeder extends Seeder
             }
 
             $id = $this->repository->nextIdentity();
-            $user = User::create($id, $name, $email, $phone, $document, null, [], new DateTimeImmutable);
+            $user = User::create(
+                uuid: $id,
+                fullName: $name,
+                email: $email,
+                phone: $phone,
+                document: $document,
+                loyaltyTier: null,
+                preferences: [],
+                createdAt: new DateTimeImmutable,
+                hashedPassword: $defaultPassword,
+                actorType: 'owner',
+                emailUniquenessChecker: $this->emailUniquenessChecker,
+            );
             $this->repository->save($user);
 
             self::$userIds[$email] = (string) $id;

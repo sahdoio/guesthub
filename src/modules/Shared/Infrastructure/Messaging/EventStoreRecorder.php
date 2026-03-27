@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\Shared\Infrastructure\Messaging;
 
 use Modules\Shared\Application\EventStore;
-use Modules\Shared\Application\Messaging\IntegrationEvent;
 use Modules\Shared\Application\StoredEvent;
 use Modules\Shared\Domain\DomainEvent;
 
@@ -40,7 +39,7 @@ final class EventStoreRecorder
             aggregateType: $data['aggregate_type'],
             aggregateId: $data['aggregate_id'],
             payload: $data['payload'],
-            occurredOn: $event->occurredOn(),
+            occurredOn: $event->occurredOn,
         ));
     }
 
@@ -55,7 +54,7 @@ final class EventStoreRecorder
             aggregateType: null,
             aggregateId: $event->toArray()['reservation_id'] ?? null,
             payload: $event->toArray(),
-            occurredOn: $event->occurredAt(),
+            occurredOn: $event->occurredAt,
         ));
     }
 }

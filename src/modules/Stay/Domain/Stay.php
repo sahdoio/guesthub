@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Modules\Stay\Domain;
 
 use DateTimeImmutable;
-use Modules\IAM\Domain\AccountId;
+use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\Shared\Domain\AggregateRoot;
 use Modules\Shared\Domain\Identity;
 use Modules\Stay\Domain\Event\StayCreated;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Application\Command;
 
+use Modules\IAM\Infrastructure\Integration\AccountApi;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
 use Modules\Stay\Domain\Exception\ReservationNotFoundException;
@@ -14,6 +15,7 @@ final class CheckOutGuestHandler extends EventDispatchingHandler
 {
     public function __construct(
         private ReservationRepository $repository,
+        private AccountApi $accountApi,
         EventDispatcher $dispatcher,
     ) {
         parent::__construct($dispatcher);
@@ -27,7 +29,7 @@ final class CheckOutGuestHandler extends EventDispatchingHandler
 
         $reservation->checkOut();
 
-        $this->repository->save($reservation);
+        $this->repository->save($reservation, $this->accountApi->resolveNumericId($reservation->accountId));
         $this->dispatchEvents($reservation);
     }
 }

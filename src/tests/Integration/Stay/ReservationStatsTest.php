@@ -29,6 +29,8 @@ final class ReservationStatsTest extends TestCase
 
     private string $accountUuid;
 
+    private int $accountNumericId;
+
     private string $stayUuid;
 
     protected function setUp(): void
@@ -43,6 +45,7 @@ final class ReservationStatsTest extends TestCase
             'status' => 'active',
             'created_at' => now(),
         ]);
+        $this->accountNumericId = $account->id;
         $this->app->make(TenantContext::class)->set($account->id);
 
         $this->stayUuid = Uuid::uuid7()->toString();
@@ -71,6 +74,9 @@ final class ReservationStatsTest extends TestCase
             loyaltyTier: LoyaltyTier::BRONZE,
             preferences: [],
             createdAt: new DateTimeImmutable,
+            hashedPassword: 'hashed_default',
+            actorType: 'guest',
+            emailUniquenessChecker: $this->app->make(\Modules\IAM\Domain\Service\UserEmailUniquenessChecker::class),
         );
         $guestRepo->save($guest);
         $this->guestId = (string) $guest->uuid;
@@ -89,7 +95,7 @@ final class ReservationStatsTest extends TestCase
             ),
         );
 
-        $this->repository->save($reservation);
+        $this->repository->save($reservation, $this->accountNumericId);
 
         return $reservation;
     }
@@ -116,11 +122,11 @@ final class ReservationStatsTest extends TestCase
 
         $r2 = $this->createReservation();
         $r2->confirm();
-        $this->repository->save($r2);
+        $this->repository->save($r2, $this->accountNumericId);
 
         $r3 = $this->createReservation();
         $r3->cancel('testing');
-        $this->repository->save($r3);
+        $this->repository->save($r3, $this->accountNumericId);
 
         $result = $this->repository->countByStatus();
 
@@ -143,12 +149,12 @@ final class ReservationStatsTest extends TestCase
         $r1 = $this->createReservation();
         $r1->confirm();
         $r1->checkIn();
-        $this->repository->save($r1);
+        $this->repository->save($r1, $this->accountNumericId);
 
         $r2 = $this->createReservation();
         $r2->confirm();
         $r2->checkIn();
-        $this->repository->save($r2);
+        $this->repository->save($r2, $this->accountNumericId);
 
         $this->assertSame(2, $this->repository->countTodayCheckIns());
     }
@@ -160,7 +166,7 @@ final class ReservationStatsTest extends TestCase
         $r->confirm();
         $r->checkIn();
         $r->checkOut();
-        $this->repository->save($r);
+        $this->repository->save($r, $this->accountNumericId);
 
         $this->assertSame(1, $this->repository->countTodayCheckOuts());
     }

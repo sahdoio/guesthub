@@ -9,13 +9,9 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Billing\Infrastructure\IntegrationEvent\InvoiceFullyPaidEvent;
 use Modules\Shared\Application\EventDispatcher;
+use Modules\Shared\Application\TransactionManager;
 use Modules\Shared\Infrastructure\Messaging\LaravelEventDispatcher;
-use Modules\Stay\Application\Listeners\OnGuestCheckedIn;
-use Modules\Stay\Application\Listeners\OnGuestCheckedOut;
-use Modules\Stay\Application\Listeners\OnInvoiceFullyPaid;
-use Modules\Stay\Application\Listeners\OnReservationCancelled;
-use Modules\Stay\Application\Listeners\OnReservationConfirmed;
-use Modules\Stay\Application\Listeners\OnReservationCreated;
+use Modules\Shared\Infrastructure\Persistence\LaravelTransactionManager;
 use Modules\Stay\Domain\Event\GuestCheckedIn;
 use Modules\Stay\Domain\Event\GuestCheckedOut;
 use Modules\Stay\Domain\Event\ReservationCancelled;
@@ -25,6 +21,12 @@ use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\Service\GuestGateway;
 use Modules\Stay\Infrastructure\Integration\GuestGatewayAdapter;
+use Modules\Stay\Infrastructure\Listeners\OnGuestCheckedIn;
+use Modules\Stay\Infrastructure\Listeners\OnGuestCheckedOut;
+use Modules\Stay\Infrastructure\Listeners\OnInvoiceFullyPaid;
+use Modules\Stay\Infrastructure\Listeners\OnReservationCancelled;
+use Modules\Stay\Infrastructure\Listeners\OnReservationConfirmed;
+use Modules\Stay\Infrastructure\Listeners\OnReservationCreated;
 use Modules\Stay\Infrastructure\Persistence\Eloquent\EloquentReservationRepository;
 use Modules\Stay\Infrastructure\Persistence\Eloquent\EloquentStayRepository;
 
@@ -40,6 +42,7 @@ final class StayServiceProvider extends ServiceProvider
         $this->app->bind(ReservationRepository::class, EloquentReservationRepository::class);
         $this->app->bind(GuestGateway::class, GuestGatewayAdapter::class);
         $this->app->bindIf(EventDispatcher::class, LaravelEventDispatcher::class);
+        $this->app->bindIf(TransactionManager::class, LaravelTransactionManager::class);
     }
 
     public function boot(): void

@@ -7,9 +7,7 @@ namespace Tests\Integration\IAM;
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\IAM\Domain\Account;
-use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
-use Modules\IAM\Domain\ActorId;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
 use Modules\IAM\Domain\Repository\TypeRepository;
@@ -17,6 +15,8 @@ use Modules\IAM\Domain\Repository\UserRepository;
 use Modules\IAM\Domain\Service\EmailUniquenessChecker;
 use Modules\IAM\Domain\Type;
 use Modules\IAM\Domain\User;
+use Modules\IAM\Domain\ValueObject\AccountId;
+use Modules\IAM\Domain\ValueObject\ActorId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Domain\ValueObject\TypeName;
@@ -86,6 +86,9 @@ final class EloquentActorRepositoryTest extends TestCase
             loyaltyTier: LoyaltyTier::BRONZE,
             preferences: [],
             createdAt: new DateTimeImmutable,
+            hashedPassword: 'hashed_default',
+            actorType: 'guest',
+            emailUniquenessChecker: $this->app->make(\Modules\IAM\Domain\Service\UserEmailUniquenessChecker::class),
         );
         $userRepo->save($user);
         $this->guestId = UserModel::where('uuid', (string) $user->uuid)->value('id');

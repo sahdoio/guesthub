@@ -13,6 +13,7 @@ use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\ReservationId;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 final readonly class CancelReservationAction
 {
@@ -28,7 +29,9 @@ final readonly class CancelReservationAction
     {
         $id = $request->getAttribute('id');
 
-        $this->enforceReservationOwnership($id);
+        if (! $this->isAuthorizedForReservation($id)) {
+            return $this->responder->error(['message' => 'Access denied.'], Response::HTTP_FORBIDDEN);
+        }
 
         $data = $this->validator->validate((array) $request->getParsedBody(), [
             'reason' => ['required', 'string', 'min:10'],
@@ -42,18 +45,19 @@ final readonly class CancelReservationAction
         return $this->responder->ok(['message' => 'Reservation cancelled.']);
     }
 
-    private function enforceReservationOwnership(string $reservationUuid): void
+    private function isAuthorizedForReservation(string $reservationUuid): bool
     {
         if ($this->userResolver->isOwnerOrSuperAdmin()) {
-            return;
+            return true;
         }
 
         $ownGuestUuid = $this->userResolver->resolveUserUuid();
-        if ($ownGuestUuid !== null) {
-            $reservation = $this->reservationRepository->findByUuid(ReservationId::fromString($reservationUuid));
-            if ($reservation === null || $ownGuestUuid !== $reservation->guestId) {
-                abort(403, 'Access denied.');
-            }
+        if ($ownGuestUuid === null) {
+            return true;
         }
+
+        $reservation = $this->reservationRepository->findByUuid(ReservationId::fromString($reservationUuid));
+
+        return $reservation !== null && $ownGuestUuid === $reservation->guestId;
     }
 }

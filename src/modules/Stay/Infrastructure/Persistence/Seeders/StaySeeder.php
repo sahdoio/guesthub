@@ -6,8 +6,8 @@ namespace Modules\Stay\Infrastructure\Persistence\Seeders;
 
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
-use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Repository\AccountRepository;
+use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\IAM\Infrastructure\Persistence\Seeders\AccountSeeder;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Domain\Repository\StayRepository;

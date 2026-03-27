@@ -8,7 +8,6 @@ use DateTimeImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use Modules\IAM\Domain\Account;
-use Modules\IAM\Domain\AccountId;
 use Modules\IAM\Domain\Actor;
 use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\IAM\Domain\Repository\ActorRepository;
@@ -16,8 +15,9 @@ use Modules\IAM\Domain\Repository\TypeRepository;
 use Modules\IAM\Domain\Repository\UserRepository;
 use Modules\IAM\Domain\Service\EmailUniquenessChecker;
 use Modules\IAM\Domain\Service\PasswordHasher;
-use Modules\IAM\Domain\UserId;
+use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\IAM\Domain\ValueObject\TypeName;
+use Modules\IAM\Domain\ValueObject\UserId;
 
 class ActorSeeder extends Seeder
 {

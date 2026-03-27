@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Shared\Application\Query;
 
-final readonly class Pagination
+use Modules\Shared\Application\BaseData;
+
+final readonly class Pagination extends BaseData
 {
     public function __construct(
         public int $page = 1,

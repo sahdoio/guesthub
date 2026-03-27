@@ -8,7 +8,10 @@ use DateTimeImmutable;
 use Modules\IAM\Domain\Event\UserContactInfoUpdated;
 use Modules\IAM\Domain\Event\UserCreated;
 use Modules\IAM\Domain\Event\UserLoyaltyTierChanged;
+use Modules\IAM\Domain\Exception\UserAlreadyExistsException;
+use Modules\IAM\Domain\Service\UserEmailUniquenessChecker;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
+use Modules\IAM\Domain\ValueObject\UserId;
 use Modules\Shared\Domain\AggregateRoot;
 use Modules\Shared\Domain\Identity;
 
@@ -41,7 +44,16 @@ final class User extends AggregateRoot
         ?LoyaltyTier $loyaltyTier,
         array $preferences,
         DateTimeImmutable $createdAt,
+        string $hashedPassword,
+        string $actorType,
+        UserEmailUniquenessChecker $emailUniquenessChecker,
+        ?string $accountName = null,
+        ?string $accountSlug = null,
     ): self {
+        if ($emailUniquenessChecker->isEmailTaken($email)) {
+            throw UserAlreadyExistsException::withEmail($email);
+        }
+
         $user = new self(
             uuid: $uuid,
             fullName: $fullName,
@@ -53,7 +65,15 @@ final class User extends AggregateRoot
             createdAt: $createdAt,
         );
 
-        $user->recordEvent(new UserCreated($uuid, $email));
+        $user->recordEvent(new UserCreated(
+            userId: $uuid,
+            name: $fullName,
+            email: $email,
+            hashedPassword: $hashedPassword,
+            actorType: $actorType,
+            accountName: $accountName,
+            accountSlug: $accountSlug,
+        ));
 
         return $user;
     }

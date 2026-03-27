@@ -4,20 +4,15 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Infrastructure\IntegrationEvent;
 
-use DateTimeImmutable;
-use Modules\Shared\Application\Messaging\IntegrationEvent;
+use Modules\Shared\Infrastructure\Messaging\IntegrationEvent;
 
-final readonly class GuestCheckedOutEvent implements IntegrationEvent
+final class GuestCheckedOutEvent extends IntegrationEvent
 {
     public function __construct(
-        public string $reservationId,
-        public string $guestEmail,
-        public DateTimeImmutable $occurredAt,
-    ) {}
-
-    public function occurredAt(): DateTimeImmutable
-    {
-        return $this->occurredAt;
+        public readonly string $reservationId,
+        public readonly string $guestEmail,
+    ) {
+        parent::__construct();
     }
 
     public function toArray(): array

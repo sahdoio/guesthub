@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Reservation\Application\Listeners;
 
 use DateTimeImmutable;
-use Modules\Billing\Infrastructure\IntegrationEvent\InvoiceFullyPaidEvent;
+use Modules\IAM\Domain\Repository\AccountRepository;
+use Modules\IAM\Infrastructure\Integration\AccountApi;
 use Modules\Shared\Application\EventDispatcher;
-use Modules\Stay\Application\Listeners\OnInvoiceFullyPaid;
+use Modules\Stay\Application\Command\ConfirmPaidReservation;
+use Modules\Stay\Application\Command\ConfirmPaidReservationHandler;
 use Modules\Stay\Domain\Event\ReservationConfirmed;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\Reservation;
@@ -19,9 +21,17 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 
-#[CoversClass(OnInvoiceFullyPaid::class)]
+#[CoversClass(ConfirmPaidReservationHandler::class)]
 final class OnInvoiceFullyPaidTest extends TestCase
 {
+    private function createAccountApi(?int $numericId = 1): AccountApi
+    {
+        $repository = $this->createMock(AccountRepository::class);
+        $repository->method('resolveNumericId')->willReturn($numericId);
+
+        return new AccountApi($repository);
+    }
+
     private function createPendingReservation(): Reservation
     {
         $reservation = Reservation::create(
@@ -48,23 +58,20 @@ final class OnInvoiceFullyPaidTest extends TestCase
             ->willReturn($reservation);
         $repository->expects($this->once())
             ->method('save')
-            ->with($reservation);
+            ->with($reservation, 1);
 
-        $dispatchedEvents = [];
+        $accountApi = $this->createAccountApi();
+
         $dispatcher = $this->createMock(EventDispatcher::class);
         $dispatcher->expects($this->once())
             ->method('dispatch')
             ->with($this->isInstanceOf(ReservationConfirmed::class));
 
-        $listener = new OnInvoiceFullyPaid($repository, $dispatcher);
+        $handler = new ConfirmPaidReservationHandler($repository, $accountApi, $dispatcher);
 
-        $event = new InvoiceFullyPaidEvent(
-            invoiceId: 'inv-123',
+        $handler->handle(new ConfirmPaidReservation(
             reservationId: $reservationId,
-            occurredAt: new DateTimeImmutable,
-        );
-
-        $listener->handle($event);
+        ));
 
         $this->assertSame(ReservationStatus::CONFIRMED, $reservation->status);
     }
@@ -82,18 +89,16 @@ final class OnInvoiceFullyPaidTest extends TestCase
             ->willReturn($reservation);
         $repository->expects($this->never())->method('save');
 
+        $accountApi = $this->createAccountApi();
+
         $dispatcher = $this->createMock(EventDispatcher::class);
         $dispatcher->expects($this->never())->method('dispatch');
 
-        $listener = new OnInvoiceFullyPaid($repository, $dispatcher);
+        $handler = new ConfirmPaidReservationHandler($repository, $accountApi, $dispatcher);
 
-        $event = new InvoiceFullyPaidEvent(
-            invoiceId: 'inv-123',
+        $handler->handle(new ConfirmPaidReservation(
             reservationId: (string) $reservation->uuid,
-            occurredAt: new DateTimeImmutable,
-        );
-
-        $listener->handle($event);
+        ));
     }
 
     #[Test]
@@ -105,17 +110,15 @@ final class OnInvoiceFullyPaidTest extends TestCase
             ->willReturn(null);
         $repository->expects($this->never())->method('save');
 
+        $accountApi = $this->createAccountApi();
+
         $dispatcher = $this->createMock(EventDispatcher::class);
         $dispatcher->expects($this->never())->method('dispatch');
 
-        $listener = new OnInvoiceFullyPaid($repository, $dispatcher);
+        $handler = new ConfirmPaidReservationHandler($repository, $accountApi, $dispatcher);
 
-        $event = new InvoiceFullyPaidEvent(
-            invoiceId: 'inv-123',
+        $handler->handle(new ConfirmPaidReservation(
             reservationId: Uuid::uuid7()->toString(),
-            occurredAt: new DateTimeImmutable,
-        );
-
-        $listener->handle($event);
+        ));
     }
 }

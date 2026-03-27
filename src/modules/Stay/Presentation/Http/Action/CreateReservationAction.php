@@ -19,6 +19,7 @@ use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\StayId;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Symfony\Component\HttpFoundation\Response;
 
 final readonly class CreateReservationAction
 {
@@ -49,12 +50,16 @@ final readonly class CreateReservationAction
             'pets' => ['sometimes', 'integer', 'min:0', 'max:5'],
         ]);
 
-        $this->enforceGuestOwnership($data['guest_id']);
+        if (! $this->isAuthorizedForGuest($data['guest_id'])) {
+            return $this->responder->error(['message' => 'Access denied.'], Response::HTTP_FORBIDDEN);
+        }
 
         $account = $this->accountRepository->findByNumericId($this->tenantContext->id());
 
         $stay = $this->stayRepository->findByUuid(StayId::fromString($data['stay_id']));
-        abort_if($stay === null, 404, 'Stay not found.');
+        if ($stay === null) {
+            return $this->responder->error(['message' => 'Stay not found.'], Response::HTTP_NOT_FOUND);
+        }
 
         $id = $this->handler->handle(new CreateReservation(
             guestId: $data['guest_id'],
@@ -73,15 +78,14 @@ final readonly class CreateReservationAction
         return $this->responder->created(['data' => $readModel]);
     }
 
-    private function enforceGuestOwnership(string $guestUuid): void
+    private function isAuthorizedForGuest(string $guestUuid): bool
     {
         if ($this->userResolver->isOwnerOrSuperAdmin()) {
-            return;
+            return true;
         }
 
         $ownGuestUuid = $this->userResolver->resolveUserUuid();
-        if ($ownGuestUuid !== null && $ownGuestUuid !== $guestUuid) {
-            abort(403, 'Access denied.');
-        }
+
+        return $ownGuestUuid === null || $ownGuestUuid === $guestUuid;
     }
 }

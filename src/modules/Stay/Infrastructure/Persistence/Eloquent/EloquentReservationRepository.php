@@ -7,7 +7,6 @@ namespace Modules\Stay\Infrastructure\Persistence\Eloquent;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use Modules\Shared\Domain\PaginatedResult;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Domain\Repository\ReservationRepository;
 use Modules\Stay\Domain\Reservation;
 use Modules\Stay\Domain\ReservationId;
@@ -24,7 +23,6 @@ final readonly class EloquentReservationRepository implements ReservationReposit
 {
     public function __construct(
         private ReservationModel $model,
-        private TenantContext $tenantContext,
     ) {}
 
     public function listByGuestId(
@@ -57,9 +55,9 @@ final readonly class EloquentReservationRepository implements ReservationReposit
         );
     }
 
-    public function save(Reservation $reservation): void
+    public function save(Reservation $reservation, int $accountNumericId): void
     {
-        $data = $this->toRecord($reservation);
+        $data = $this->toRecord($reservation, $accountNumericId);
 
         $this->model->newQuery()
             ->updateOrInsert(['uuid' => $data['uuid']], $data);
@@ -159,11 +157,11 @@ final readonly class EloquentReservationRepository implements ReservationReposit
             ->count();
     }
 
-    private function toRecord(Reservation $reservation): array
+    private function toRecord(Reservation $reservation, int $accountNumericId): array
     {
         return [
             'uuid' => $reservation->uuid->value,
-            'account_id' => $this->tenantContext->id(),
+            'account_id' => $accountNumericId,
             'account_uuid' => $reservation->accountId,
             'stay_id' => $this->resolveStayNumericId($reservation->stayId),
             'stay_uuid' => $reservation->stayId,
@@ -242,7 +240,11 @@ final readonly class EloquentReservationRepository implements ReservationReposit
         ], $requests);
     }
 
-    /** @return SpecialRequest[] */
+    /**
+     * @return SpecialRequest[]
+     *
+     * @throws DateMalformedStringException
+     */
     private function deserializeSpecialRequests(?string $json): array
     {
         if ($json === null || $json === '') {

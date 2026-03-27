@@ -4,22 +4,14 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Domain\Event;
 
-use DateTimeImmutable;
 use Modules\Shared\Domain\DomainEvent;
 use Modules\Stay\Domain\ReservationId;
 
-final readonly class GuestCheckedOut implements DomainEvent
+final class GuestCheckedOut extends DomainEvent
 {
-    public DateTimeImmutable $occurredOn;
-
     public function __construct(
-        public ReservationId $reservationId,
+        public readonly ReservationId $reservationId,
     ) {
-        $this->occurredOn = new DateTimeImmutable;
-    }
-
-    public function occurredOn(): DateTimeImmutable
-    {
-        return $this->occurredOn;
+        parent::__construct();
     }
 }

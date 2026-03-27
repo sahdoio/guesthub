@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Guest;
 
+use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\IAM\Domain\Repository\UserRepository;
+use Modules\IAM\Domain\Service\UserEmailUniquenessChecker;
+use Modules\IAM\Domain\User;
+use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Infrastructure\Integration\Dto\UserData;
 use Modules\IAM\Infrastructure\Integration\UserApi;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
@@ -41,36 +45,32 @@ final class GuestApiTest extends TestCase
         $this->repository = $this->app->make(UserRepository::class);
     }
 
-    #[Test]
-    public function it_creates_a_guest_profile_and_returns_numeric_id(): void
+    private function createUser(string $name = 'Alice Johnson', string $email = 'alice@hotel.com'): User
     {
-        $id = $this->api->create(
-            name: 'Alice Johnson',
-            email: 'alice@hotel.com',
+        $id = $this->repository->nextIdentity();
+        $user = User::create(
+            uuid: $id,
+            fullName: $name,
+            email: $email,
             phone: '5511999999999',
             document: 'ABC123',
+            loyaltyTier: LoyaltyTier::BRONZE,
+            preferences: [],
+            createdAt: new DateTimeImmutable,
+            hashedPassword: 'hashed_default',
+            actorType: 'guest',
+            emailUniquenessChecker: $this->app->make(UserEmailUniquenessChecker::class),
         );
+        $this->repository->save($user);
 
-        $this->assertIsInt($id);
-        $this->assertGreaterThan(0, $id);
-
-        $profile = $this->repository->findByEmail('alice@hotel.com');
-        $this->assertNotNull($profile);
-        $this->assertSame('Alice Johnson', $profile->fullName);
+        return $user;
     }
 
     #[Test]
     public function it_finds_guest_profile_by_uuid(): void
     {
-        $this->api->create(
-            name: 'Alice Johnson',
-            email: 'alice@hotel.com',
-            phone: '5511999999999',
-            document: 'ABC123',
-        );
-
-        $profile = $this->repository->findByEmail('alice@hotel.com');
-        $uuid = (string) $profile->uuid;
+        $user = $this->createUser();
+        $uuid = (string) $user->uuid;
 
         $data = $this->api->findByUuid($uuid);
 
@@ -80,7 +80,7 @@ final class GuestApiTest extends TestCase
         $this->assertSame('alice@hotel.com', $data->email);
         $this->assertSame('5511999999999', $data->phone);
         $this->assertSame('ABC123', $data->document);
-        $this->assertNull($data->loyaltyTier);
+        $this->assertSame('bronze', $data->loyaltyTier);
     }
 
     #[Test]

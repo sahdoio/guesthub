@@ -44,6 +44,9 @@ final class DashboardTest extends TestCase
             loyaltyTier: LoyaltyTier::from($overrides['loyalty_tier'] ?? 'bronze'),
             preferences: [],
             createdAt: new DateTimeImmutable,
+            hashedPassword: 'hashed_default',
+            actorType: 'guest',
+            emailUniquenessChecker: $this->app->make(\Modules\IAM\Domain\Service\UserEmailUniquenessChecker::class),
         );
 
         $repository->save($guest);
@@ -83,7 +86,7 @@ final class DashboardTest extends TestCase
             };
         }
 
-        $repository->save($reservation);
+        $repository->save($reservation, $this->account->id);
 
         return $reservation;
     }

@@ -4,20 +4,15 @@ declare(strict_types=1);
 
 namespace Modules\Billing\Infrastructure\IntegrationEvent;
 
-use DateTimeImmutable;
-use Modules\Shared\Application\Messaging\IntegrationEvent;
+use Modules\Shared\Infrastructure\Messaging\IntegrationEvent;
 
-final readonly class InvoiceFullyPaidEvent implements IntegrationEvent
+final class InvoiceFullyPaidEvent extends IntegrationEvent
 {
     public function __construct(
-        public string $invoiceId,
-        public string $reservationId,
-        public DateTimeImmutable $occurredAt,
-    ) {}
-
-    public function occurredAt(): DateTimeImmutable
-    {
-        return $this->occurredAt;
+        public readonly string $invoiceId,
+        public readonly string $reservationId,
+    ) {
+        parent::__construct();
     }
 
     public function toArray(): array
