@@ -197,9 +197,9 @@ class MassSeeder extends Seeder
         $this->batchInsert('reservations', $reservations);
         $this->command->info(sprintf('  Created %d reservations.', count($reservations)));
 
-        // 7. Populate stay_guests from reservations
-        $this->command->info('Populating stay_guests...');
-        $stayGuests = [];
+        // 7. Populate account_guests from reservations
+        $this->command->info('Populating account_guests...');
+        $accountGuests = [];
         $seen = [];
         foreach ($reservations as $r) {
             $key = $r['account_id'].':'.$r['guest_id'];
@@ -207,14 +207,13 @@ class MassSeeder extends Seeder
                 continue;
             }
             $seen[$key] = true;
-            $stayGuests[] = [
+            $accountGuests[] = [
                 'account_id' => $r['account_id'],
                 'guest_uuid' => $r['guest_id'],
-                'first_reservation_at' => $r['created_at'],
             ];
         }
-        $this->batchInsert('stay_guests', $stayGuests);
-        $this->command->info(sprintf('  Created %d stay_guest records.', count($stayGuests)));
+        $this->batchInsert('account_guests', $accountGuests);
+        $this->command->info(sprintf('  Created %d account_guest records.', count($accountGuests)));
 
         $totalRecords = count($accounts) + count($stays) + count($guestUsers)
             + count($guestActorData['personalAccounts']) + count($guestActorData['actors'])

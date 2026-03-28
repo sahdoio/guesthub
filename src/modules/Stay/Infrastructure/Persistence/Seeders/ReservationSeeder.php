@@ -113,11 +113,10 @@ class ReservationSeeder extends Seeder
         $reservation->pullDomainEvents(); // Discard events during seeding
         $this->repository->save($reservation, $this->tenantContext->id());
 
-        // Manually insert stay_guests since domain events are discarded
-        DB::table('stay_guests')->insertOrIgnore([
+        // Manually insert account_guests since domain events are discarded
+        DB::table('account_guests')->insertOrIgnore([
             'account_id' => $this->tenantContext->id(),
             'guest_uuid' => $reservation->guestId,
-            'first_reservation_at' => $reservation->createdAt->format('Y-m-d H:i:s'),
         ]);
     }
 }

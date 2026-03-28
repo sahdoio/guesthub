@@ -12,5 +12,6 @@ final readonly class ListReservations extends BaseData
         public ?string $status = null,
         public ?string $guestId = null,
         public ?string $stayId = null,
+        public bool $upcoming = false,
     ) {}
 }

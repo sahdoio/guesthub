@@ -24,13 +24,18 @@ final readonly class ListReservationsHandler
     /** @return PaginatedResult<ReservationReadModel> */
     public function handle(ListReservations $query, Pagination $pagination): PaginatedResult
     {
-        $result = $this->repository->list(
-            page: $pagination->page,
-            perPage: $pagination->perPage,
-            status: $query->status,
-            guestId: $query->guestId,
-            stayId: $query->stayId,
-        );
+        $result = $query->upcoming
+            ? $this->repository->listUpcoming(
+                page: $pagination->page,
+                perPage: $pagination->perPage,
+            )
+            : $this->repository->list(
+                page: $pagination->page,
+                perPage: $pagination->perPage,
+                status: $query->status,
+                guestId: $query->guestId,
+                stayId: $query->stayId,
+            );
 
         $enrichedItems = array_map(
             fn (Reservation $reservation) => $this->enrichWithStay(

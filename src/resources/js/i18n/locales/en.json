@@ -150,7 +150,10 @@
         "revenue": "Revenue",
         "invoices_by_status": "Invoices by Status",
         "pending_reservations": "Pending Reservations",
-        "pending_reservations_subtitle": "{count} reservation(s) awaiting your confirmation"
+        "pending_reservations_subtitle": "{count} reservation(s) awaiting your confirmation",
+        "upcoming_reservations": "Upcoming Reservations",
+        "upcoming_reservations_subtitle": "Next guest check-ins coming up",
+        "no_upcoming": "No upcoming reservations"
     },
     "reservation": {
         "title": "Reservations",

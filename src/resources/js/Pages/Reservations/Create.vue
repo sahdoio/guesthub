@@ -17,7 +17,7 @@ const props = defineProps({
 const dateRange = ref({ start: null, end: null });
 
 const form = useForm({
-    guest_profile_id: '',
+    guest_id: '',
     check_in: '',
     check_out: '',
     stay_id: '',
@@ -55,18 +55,18 @@ const submit = () => {
                     <label for="guest" class="block text-sm font-medium text-gray-700 mb-1">{{ $t('reservation.guest') }}</label>
                     <select
                         id="guest"
-                        v-model="form.guest_profile_id"
+                        v-model="form.guest_id"
                         required
                         class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        :class="{ 'border-red-500': form.errors.guest_profile_id }"
+                        :class="{ 'border-red-500': form.errors.guest_id }"
                     >
                         <option value="" disabled>{{ $t('reservation.select_guest') }}</option>
                         <option v-for="guest in guests" :key="guest.id" :value="guest.id">
                             {{ guest.full_name }} ({{ guest.email }})
                         </option>
                     </select>
-                    <p v-if="form.errors.guest_profile_id" class="mt-1 text-sm text-red-600">
-                        {{ form.errors.guest_profile_id }}
+                    <p v-if="form.errors.guest_id" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.guest_id }}
                     </p>
                 </div>
 

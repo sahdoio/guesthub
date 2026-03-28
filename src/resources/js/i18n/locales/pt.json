@@ -150,7 +150,10 @@
         "revenue": "Receita",
         "invoices_by_status": "Faturas por Status",
         "pending_reservations": "Reservas Pendentes",
-        "pending_reservations_subtitle": "{count} reserva(s) aguardando sua confirmação"
+        "pending_reservations_subtitle": "{count} reserva(s) aguardando sua confirmação",
+        "upcoming_reservations": "Próximas Reservas",
+        "upcoming_reservations_subtitle": "Próximos check-ins de hóspedes",
+        "no_upcoming": "Nenhuma reserva futura"
     },
     "reservation": {
         "title": "Reservas",

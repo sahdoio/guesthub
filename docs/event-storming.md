@@ -19,33 +19,32 @@
 
 ## Bounded Context: IAM (Identity & Access Management)
 
-### Flow: Actor Registration (Guest Self-Registration)
+### Flow: Guest Registration
 
 🟨 **Actor:** Visitor (anonymous user)
 
 🟩 **Read Model:** Registration form (name, email, password, phone, document)
 
-🟦 **Command:** Register Actor
-> `accountName, name, email, password, phone, document`
+🟦 **Command:** Register User
+> `name, email, password, phone, document`
 
-◼️ **Invariant:** Email must be unique across the system
-◼️ **Invariant:** Document must be unique across the system
+◼️ **Invariant:** Email must be unique (User aggregate, via `UserEmailUniquenessChecker`)
 ◼️ **Invariant:** Password must be valid (hashed via bcrypt)
+
+🟧 **Event:** User Created
+> `userId, name, email, hashedPassword, actorType=guest, accountName, accountSlug`
+> Recorded inside `User::create()` aggregate factory
+
+🟪 **Policy:** Whenever User Created, then Provision Actor Account
+> Synchronous listener `OnUserCreated` → `ProvisionActorAccountHandler`
+> Creates Account, resolves user numeric ID, creates Actor with type
+> All within the same DB transaction (via `TransactionManager`)
 
 🟧 **Event:** Account Created
 > `accountId, name`
 
 🟧 **Event:** Actor Registered
 > `actorId, accountId, email, type=GUEST`
-
-🟪 **Policy:** Whenever Actor Registered (type=GUEST), then Create User
-> Integration via UserGateway
-
-🟧 **Event:** User Created
-> `userId, email, loyaltyTier=BRONZE`
-
-🟪 **Policy:** Whenever User Created, then Link Actor to User
-> `Actor.userId = user.id`
 
 ---
 
@@ -58,19 +57,19 @@
 🟦 **Command:** Register Hotel Owner
 > `name, email, password, phone, document`
 
-◼️ **Invariant:** Email must be unique across the system
+◼️ **Invariant:** Email must be unique (User aggregate, via `UserEmailUniquenessChecker`)
+
+🟧 **Event:** User Created
+> `userId, name, email, hashedPassword, actorType=owner, accountName, accountSlug`
+
+🟪 **Policy:** Whenever User Created, then Provision Actor Account
+> Same synchronous flow as guest registration (loyaltyTier=null for owners)
 
 🟧 **Event:** Account Created
 > `accountId, name`
 
 🟧 **Event:** Actor Registered
 > `actorId, accountId, email, type=OWNER`
-
-🟪 **Policy:** Whenever Actor Registered (type=OWNER), then Create User (no loyalty tier)
-> Integration via UserGateway (loyaltyTier=null)
-
-🟧 **Event:** User Created
-> `userId, email, loyaltyTier=null`
 
 > Hotel creation is a separate step done after login inside the dashboard.
 
@@ -115,7 +114,9 @@
 
 ---
 
-## Bounded Context: User (User Management)
+## Bounded Context: IAM — User Management
+
+> User management is part of the IAM bounded context (not a separate BC).
 
 ### Flow: User Creation (via owner/superadmin API)
 
@@ -124,12 +125,15 @@
 🟩 **Read Model:** Existing user list
 
 🟦 **Command:** Create User
-> `fullName, email, phone, document, loyaltyTier?`
+> `fullName, email, password, phone, document, actorType?, loyaltyTier?, accountName?, accountSlug?`
 
-◼️ **Invariant:** Document must be unique
+◼️ **Invariant:** Email must be unique (User aggregate, via `UserEmailUniquenessChecker`)
 
 🟧 **Event:** User Created
-> `userId, email, loyaltyTier=BRONZE (or null for owners)`
+> `userId, name, email, hashedPassword, actorType, accountName?, accountSlug?`
+
+🟪 **Policy:** Whenever User Created, then Provision Actor Account
+> Same synchronous provisioning flow as registration
 
 ---
 
@@ -480,8 +484,8 @@ stateDiagram-v2
 
 ```mermaid
 graph LR
-    IAM -- UserGateway --> IAM_User[User]
-    Stay -- GuestGateway --> IAM_User
+    IAM -- "UserApi (read)" --> Stay
+    Stay -- GuestGateway --> IAM
     Billing -- ReservationGateway --> Stay
     Stay -- "Integration Events" --> Billing
 ```
@@ -490,8 +494,8 @@ graph LR
 
 | Source | Target | Pattern | Operation |
 |--------|---------|---------|----------|
-| IAM | IAM (User) | UserGateway | Create user profile during actor registration |
-| Stay | IAM (User) | GuestGateway / UserApi | Fetch guest info (name, email, VIP status) for integration events |
+| IAM | IAM (internal) | Domain Events | `UserCreated` → `OnUserCreated` → `ProvisionActorAccountHandler` (synchronous, same transaction) |
+| Stay | IAM | GuestGateway / UserApi | Fetch guest info (name, email, VIP status) for integration events |
 | Stay | Billing | Integration Events | ReservationConfirmed, GuestCheckedOut, ReservationCancelled |
 | Billing | Stay | ReservationGateway | Fetch reservation and stay data for invoice creation |
 | Billing | Stripe | PaymentGateway | Create payment intents, process webhooks |
@@ -517,22 +521,22 @@ graph LR
 sequenceDiagram
     participant V as Visitor
     participant IAM
-    participant U as User
     participant S as Stay
     participant B as Billing
 
     Note over V: Registration & Auth
-    V->>IAM: Register Actor
-    IAM->>IAM: Account Created
-    IAM->>U: Actor Registered (via UserGateway)
-    U->>U: User Created
+    V->>IAM: Register User
+    IAM->>IAM: User Created (domain event)
+    IAM->>IAM: OnUserCreated → ProvisionActorAccount
+    IAM->>IAM: Account Created + Actor Registered
+    Note right of IAM: All within same DB transaction
     V->>IAM: Login
     IAM->>V: Actor Authenticated (token)
 
     Note over V: Booking (as Guest)
     V->>S: Create Reservation (stayId, dates, guests)
-    S->>U: Fetch Guest Info (VIP status)
-    U-->>S: Guest Info
+    S->>IAM: Fetch Guest Info via GuestGateway (VIP status)
+    IAM-->>S: Guest Info
     S->>S: Reservation Created (PENDING)
 
     Note over V: Operations (as Owner)

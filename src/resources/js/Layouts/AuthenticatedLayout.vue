@@ -70,9 +70,6 @@ const logout = () => {
                             <a href="/guests" :class="navClass('/guests')">
                                 {{ $t('nav.guests') }}
                             </a>
-                            <a href="/billing" :class="navClass('/billing')">
-                                {{ $t('billing.title') }}
-                            </a>
                         </div>
                     </div>
 
@@ -121,6 +118,17 @@ const logout = () => {
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                             </svg>
                                             {{ $t('nav.my_profile') }}
+                                        </a>
+
+                                        <a
+                                            href="/billing"
+                                            class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            @click="userMenuOpen = false"
+                                        >
+                                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+                                            </svg>
+                                            {{ $t('billing.title') }}
                                         </a>
 
                                         <div class="border-t border-gray-100 my-1"></div>

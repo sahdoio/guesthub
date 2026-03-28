@@ -157,6 +157,57 @@ final readonly class EloquentReservationRepository implements ReservationReposit
             ->count();
     }
 
+    public function listUpcoming(
+        int $page = 1,
+        int $perPage = 10,
+    ): PaginatedResult {
+        $query = $this->model->newQuery()
+            ->where('check_in', '>=', now()->toDateString())
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->orderBy('check_in');
+
+        $paginator = $query->paginate(perPage: $perPage, page: $page);
+
+        $items = collect($paginator->items())
+            ->map(fn (object $record) => $this->toEntity($record))
+            ->all();
+
+        return new PaginatedResult(
+            items: $items,
+            total: $paginator->total(),
+            perPage: $paginator->perPage(),
+            currentPage: $paginator->currentPage(),
+            lastPage: $paginator->lastPage(),
+        );
+    }
+
+    public function listUpcomingByGuestId(
+        string $guestId,
+        int $page = 1,
+        int $perPage = 5,
+    ): PaginatedResult {
+        $query = $this->model->newQuery()
+            ->withoutGlobalScopes()
+            ->where('guest_id', $guestId)
+            ->where('check_in', '>=', now()->toDateString())
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->orderBy('check_in');
+
+        $paginator = $query->paginate(perPage: $perPage, page: $page);
+
+        $items = collect($paginator->items())
+            ->map(fn (object $record) => $this->toEntity($record))
+            ->all();
+
+        return new PaginatedResult(
+            items: $items,
+            total: $paginator->total(),
+            perPage: $paginator->perPage(),
+            currentPage: $paginator->currentPage(),
+            lastPage: $paginator->lastPage(),
+        );
+    }
+
     private function toRecord(Reservation $reservation, int $accountNumericId): array
     {
         return [

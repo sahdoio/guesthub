@@ -29,11 +29,13 @@ Handles actors, accounts, users, types, authentication, and token management. Th
 | Entities | `Type` |
 | Identities | `ActorId`, `AccountId`, `UserId`, `TypeId` |
 | Value Objects | `TypeName` (enum: SUPERADMIN, OWNER, GUEST), `HashedPassword`, `LoyaltyTier` (enum: BRONZE, SILVER, GOLD, PLATINUM) |
-| Domain Services | `PasswordHasher`, `TokenManager`, `UserGateway`, `EmailUniquenessChecker` |
+| Domain Services | `PasswordHasher`, `TokenManager`, `EmailUniquenessChecker`, `UserEmailUniquenessChecker` |
 
 Multi-tenant: `Account` serves as the tenant boundary. All actors belong to an account, and other BCs' tables (stays, reservations, invoices) carry an `account_id` foreign key. The `actor_type_pivot` table links actors to their types.
 
-Domain events: `ActorRegistered`, `AccountCreated`, `UserCreated`, `UserContactInfoUpdated`, `UserLoyaltyTierChanged`.
+Domain events: `UserCreated`, `ActorRegistered`, `AccountCreated`, `UserContactInfoUpdated`, `UserLoyaltyTierChanged`.
+
+Domain exceptions: `UserAlreadyExistsException`, `ActorAlreadyExistsException`, `ActorNotFoundException`, `InvalidCredentialsException`.
 
 ### Stay
 
@@ -114,17 +116,17 @@ PENDING ──> SUCCEEDED
 ## Context Map
 
 ```
-                                      UserApi                    StayApi
+                                      UserApi (read)             StayApi
 ┌──────────┐     UserApi          ┌──────────┐              ┌─────────────┐
 │   IAM    │ ──────────────────>  │   Stay   │ ◄─────────── │   Billing   │
 │          │  (exposes UserApi    │          │  ReservationGateway         │
 │ (actors, │   for cross-BC      │ (stays,  │  (reads reservation data)  │
-│  users,  │   user data)        │  reserv- │                            │
+│  users,  │   read access)      │  reserv- │                            │
 │  auth)   │                     │  ations) │ ─── integration events ──> │
 └──────────┘                     └──────────┘                └────────────┘
      │                                │
-     │  UserApi                       │  GuestGateway
-     │  (UserGateway adapter)         │  (reads user data via IAM's UserApi)
+     │  Internal domain events        │  GuestGateway
+     │  (UserCreated → provision)     │  (reads user data via IAM's UserApi)
      └────────────────────────────────┘
 ```
 
@@ -133,7 +135,7 @@ PENDING ──> SUCCEEDED
 | Upstream | Downstream | Pattern | Purpose |
 |---|---|---|---|
 | IAM (UserApi) | Stay | **Anti-Corruption Layer** (read-only via `UserApi`) | Stay reads user data (name, email, VIP status) via `GuestGateway` |
-| IAM (UserApi) | IAM (Actor) | **Internal gateway** (write via `UserGateway`) | IAM creates user profiles during actor registration |
+| IAM (internal) | IAM (internal) | **Domain Events** | `UserCreated` → `OnUserCreated` → `ProvisionActorAccountHandler` creates Account + Actor (synchronous, same DB transaction via `TransactionManager`) |
 | Stay (StayApi) | Billing | **Anti-Corruption Layer** (via `ReservationGateway`) | Billing reads reservation and stay data for invoice creation |
 | Stay | Billing | **Integration Events** | Stay emits events (confirmed, checked out, cancelled) that Billing listens to |
 | IAM | All BCs | **Sanctum middleware** | `auth:sanctum` protects Stay and Billing routes |
@@ -206,6 +208,7 @@ modules/{BC}/
 |---|---|
 | `EventDispatcher` | Interface. Single method: `dispatch(object $event): void`. |
 | `EventDispatchingHandler` | Abstract base for command handlers that dispatch domain events after persistence. Provides `dispatchEvents(AggregateRoot)`. |
+| `TransactionManager` | Interface. Single method: `run(callable $callback): mixed`. Wraps use cases in a DB transaction (dependency inversion). |
 | `IntegrationEvent` | Interface. Methods: `occurredAt(): DateTimeImmutable`, `toArray(): array`. |
 | `EventStore` | Interface for persisting domain events. |
 | `StoredEvent` | DTO representing a persisted domain event. |
@@ -215,6 +218,7 @@ modules/{BC}/
 | Class | Purpose |
 |---|---|
 | `LaravelEventDispatcher` | Implements `EventDispatcher` by delegating to Laravel's `Illuminate\Contracts\Events\Dispatcher`. |
+| `LaravelTransactionManager` | Implements `TransactionManager` by delegating to `DB::transaction()`. |
 | `EventStoreRecorder` | Records domain events to the `stored_events` table. |
 | `TenantContext` | Singleton holding the current tenant (account) ID for multi-tenant scoping. |
 | `BelongsToTenant` | Eloquent global scope that filters queries by `account_id`. |
@@ -264,9 +268,9 @@ Domain events are recorded inside aggregates via `recordEvent()` and pulled by a
 
 | Event | Recorded When | Payload |
 |---|---|---|
+| `UserCreated` | `User::create()` | `userId`, `name`, `email`, `hashedPassword`, `actorType`, `accountName?`, `accountSlug?` |
 | `ActorRegistered` | `Actor::register()` | `actorId` |
 | `AccountCreated` | `Account::create()` | `accountId` |
-| `UserCreated` | `User::create()` | `userId`, `email` |
 | `UserContactInfoUpdated` | `updateContactInfo()` | `userId` |
 | `UserLoyaltyTierChanged` | `changeLoyaltyTier()` | `userId`, `tier` |
 
@@ -289,13 +293,13 @@ All integration events implement `IntegrationEvent` (with `occurredAt()` and `to
 
 ### Consumer: Billing BC
 
-The Billing BC listens to Stay integration events:
+The Billing BC listens to Stay integration events via thin listeners that delegate to command handlers:
 
-| Integration Event | Billing Listener | Action |
+| Integration Event | Thin Listener | Handler |
 |---|---|---|
 | `ReservationConfirmedEvent` | `OnReservationConfirmed` | Creates a draft invoice for the reservation |
-| `GuestCheckedOutEvent` | `OnGuestCheckedOut` | Triggers post-checkout billing logic |
-| `ReservationCancelledEvent` | `OnReservationCancelled` | Voids the associated invoice if applicable |
+| `GuestCheckedOutEvent` | `OnGuestCheckedOut` | `IssueInvoiceOnCheckoutHandler` — triggers post-checkout billing logic |
+| `ReservationCancelledEvent` | `OnReservationCancelled` | `CancelReservationBillingHandler` — voids/refunds the associated invoice |
 
 ---
 
@@ -304,39 +308,65 @@ The Billing BC listens to Stay integration events:
 The full lifecycle of an event from aggregate to integration to cross-BC consumption:
 
 ```
-1. Aggregate behavior method
+1. Aggregate factory/behavior method
    │  $this->recordEvent(new ReservationConfirmed($this->uuid))
    ▼
-2. Command Handler (Application layer)
+2. Command Handler (extends EventDispatchingHandler)
    │  $reservation->confirm();
    │  $this->repository->save($reservation);
-   │  foreach ($reservation->pullDomainEvents() as $event)
-   │      $this->dispatcher->dispatch($event);
+   │  $this->dispatchEvents($reservation);  // pulls & dispatches all recorded events
    ▼
 3. LaravelEventDispatcher
    │  Delegates to Laravel's event system
    ▼
-4. Stay Listener (Application layer)
+4. Thin Listener (Infrastructure layer)
    │  OnReservationConfirmed::handle(ReservationConfirmed $event)
-   │  - Fetches reservation from repository (for full context)
-   │  - Fetches guest info via GuestGateway (for email, VIP status)
-   │  - Creates ReservationConfirmedEvent (integration event)
-   │  - Dispatches integration event
+   │  - Maps event → command → calls handler (NO business logic in listener)
+   │  e.g. ProcessNewReservationHandler, ConfirmPaidReservationHandler
    ▼
 5. Integration event is dispatched via Laravel's event system
    │
    ├──> IntegrationEventPublisher (logs the event)
    │
-   └──> Billing Listener (cross-BC consumer)
+   └──> Billing Thin Listener (cross-BC consumer)
         │  OnReservationConfirmed::handle(ReservationConfirmedEvent $event)
-        │  - Fetches reservation data via ReservationGateway
-        │  - Creates Invoice with line items
-        │  - Saves invoice
+        │  - Maps event → command → calls handler
         ▼
-6. Invoice aggregate records InvoiceCreated domain event
+6. Handler creates Invoice aggregate, records InvoiceCreated domain event
 ```
 
-**Event wiring** is done in `StayServiceProvider::boot()`:
+### Thin Listeners Pattern
+
+All event listeners follow a strict pattern: **map event → command → handler call**. No business logic lives in listeners. This keeps listeners as simple routing adapters between the event system and application-layer command handlers.
+
+```php
+// Example: OnUserCreated (IAM)
+final readonly class OnUserCreated
+{
+    public function __construct(private ProvisionActorAccountHandler $handler) {}
+
+    public function handle(UserCreated $event): void
+    {
+        $this->handler->handle(new ProvisionActorAccount(
+            userId: (string) $event->userId,
+            name: $event->name,
+            // ... map event fields to command
+        ));
+    }
+}
+```
+
+### TransactionManager
+
+Command handlers that need atomicity (e.g., `RegisterUserHandler`) wrap their logic in `$this->transaction->run(...)`. Since domain event listeners (like `OnUserCreated` → `ProvisionActorAccountHandler`) are synchronous, all operations within a transaction boundary execute in the same DB transaction. This ensures that User creation + Account creation + Actor creation either all succeed or all roll back.
+
+**Event wiring** is done in each BC's service provider. In `IAMServiceProvider::boot()`:
+
+```php
+Event::listen(UserCreated::class, OnUserCreated::class);
+```
+
+In `StayServiceProvider::boot()`:
 
 ```php
 Event::listen(ReservationCreated::class, OnReservationCreated::class);
@@ -372,23 +402,15 @@ This is an **Anti-Corruption Layer**: the Stay BC translates IAM user data into 
 - `OnReservationConfirmed` — enriches integration event with guest email and VIP status
 - `OnGuestCheckedIn` / `OnGuestCheckedOut` — same enrichment
 
-### UserGateway (IAM internal)
-
-When an actor registers, IAM creates a corresponding user profile via the `UserGateway`:
-
-1. **Port** — `IAM/Domain/Service/UserGateway` interface defines `create(name, email, phone, document, ?loyaltyTier): int`
-2. **Adapter** — `IAM/Infrastructure/Integration/UserGatewayAdapter` delegates to IAM's own `UserApi`
-
-The returned user `id` is stored on the Actor as `userId`.
-
 ### UserApi (IAM Integration API)
 
 IAM exposes a `UserApi` (in `Infrastructure/Integration/`) for other BCs to consume. It provides:
 
-- `create(name, email, phone, document, ?loyaltyTier): int` — creates a user profile, returns numeric ID
 - `findByUuid(string): ?UserData` — returns a `UserData` DTO with profile fields
 
-This API is the single entry point for cross-BC access to user data. The Stay BC's `GuestGatewayAdapter` depends on it.
+This API is the single entry point for cross-BC read access to user data. The Stay BC's `GuestGatewayAdapter` depends on it.
+
+> **Note:** User creation during registration is handled internally by the `ProvisionActorAccountHandler` (triggered by the `UserCreated` domain event), not via an external gateway.
 
 ### StayApi (Stay Integration API)
 
@@ -549,17 +571,17 @@ interface TokenManager
 ```
 Implemented by `SanctumTokenManager` (in `Infrastructure/Services/`). This is the one place where the Eloquent `ActorModel` is used — Sanctum needs an Authenticatable model to issue tokens. The `ActorModel` exists solely for this infrastructure concern; the domain layer never sees it.
 
-**`UserGateway`** — user profile creation:
+**`EmailUniquenessChecker`** — validates email uniqueness for actors during registration:
+Implemented by `EloquentEmailUniquenessChecker`.
+
+**`UserEmailUniquenessChecker`** — validates email uniqueness at the User aggregate level:
 ```php
-interface UserGateway
+interface UserEmailUniquenessChecker
 {
-    public function create(string $name, string $email, string $phone, string $document, ?string $loyaltyTier = null): int;
+    public function isEmailTaken(string $email): bool;
 }
 ```
-Implemented by `UserGatewayAdapter` (in `Infrastructure/Integration/`) which delegates to IAM's own `UserApi`.
-
-**`EmailUniquenessChecker`** — validates email uniqueness during registration:
-Implemented by `EloquentEmailUniquenessChecker`.
+Implemented by `EloquentUserEmailUniquenessChecker`. Enforced as a domain invariant inside `User::create()` — throws `UserAlreadyExistsException` if email is taken.
 
 ### The Dual-Model Approach
 
@@ -580,27 +602,34 @@ Sanctum tokens are configured to expire after 24 hours (configurable via `SANCTU
 
 ### Use Cases (Command Handlers)
 
-**`RegisterActorHandler`** — Guest Registration:
+**`RegisterUserHandler`** — Guest Registration:
 ```
-1. Check if email already exists → throw ActorAlreadyExistsException
-2. Create Account for the new guest
-3. Create user profile via UserGateway → returns userId
-4. Look up the 'guest' Type
-5. Generate new ActorId
-6. Hash the plain password via PasswordHasher → HashedPassword
-7. Actor::register(...) → creates the aggregate with account, type, userId
-8. Save to repository
+1. Wrap in TransactionManager
+2. Generate new UserId
+3. Hash password via PasswordHasher → HashedPassword
+4. User::create(...) with UserEmailUniquenessChecker invariant
+   → records UserCreated event (with hashedPassword, actorType=guest, accountName, accountSlug)
+5. Save User to repository
+6. dispatchEvents(user) → triggers OnUserCreated listener
+   → ProvisionActorAccountHandler creates Account + Actor (same transaction)
+7. Return UserId
 ```
 
 **`RegisterHotelOwnerHandler`** — Owner Registration:
 ```
-1. Create Account for the new owner
-2. Create user profile via UserGateway (null loyaltyTier) → returns userId
-3. Look up the 'owner' Type
+1. Same flow as RegisterUserHandler
+2. actorType=owner, loyaltyTier=null
+3. ProvisionActorAccountHandler creates Account + Actor for owner
+```
+
+**`ProvisionActorAccountHandler`** — Actor & Account Provisioning (triggered by UserCreated):
+```
+1. Create Account aggregate
+2. Resolve user numeric ID from repository
+3. Look up the actor Type by name
 4. Generate new ActorId
-5. Hash the plain password via PasswordHasher → HashedPassword
-6. Actor::register(...) → creates the aggregate with account, type, userId
-7. Save to repository
+5. Actor::register(...) → creates the aggregate with account, type, userId
+6. Save Account and Actor to repositories
 ```
 
 **`AuthenticateActorHandler`** — Login:
@@ -623,7 +652,7 @@ Sanctum tokens are configured to expire after 24 hours (configurable via `SANCTU
           ┌──────────────┐               ┌──────────────────────────────┐
           │              │               │                              │
 POST /auth/register      │    Token      │  GET  /users/*               │
-  → RegisterActorHandler │ ──────────>   │  POST /stays/*               │
+  → RegisterUserHandler  │ ──────────>   │  POST /stays/*               │
           │              │  Bearer       │  POST /reservations/*        │
 POST /auth/login         │  header       │  GET  /invoices/*            │
   → AuthenticateActorHandler             │  POST /auth/logout           │
@@ -631,7 +660,7 @@ POST /auth/login         │  header       │  GET  /invoices/*            │
           └──────────────┘               └──────────────────────────────┘
 ```
 
-1. **Register** — `POST /api/auth/register` with `{ name, email, password, phone, document }`. Creates an Account, a user profile (via `UserGateway`), and an Actor with `guest` type, returns the actor resource. Also available as web form at `/register`. Validates: email format, password min 8 chars, phone in E.164 format. Rejects duplicate emails.
+1. **Register** — `POST /api/auth/register` with `{ name, email, password, phone, document }`. Creates a User (which triggers `UserCreated` → `ProvisionActorAccountHandler` to create Account + Actor), returns the actor resource. Also available as web form at `/register`. Validates: email format, password min 8 chars, phone digits only. Rejects duplicate emails via `UserEmailUniquenessChecker` domain invariant.
 
 2. **Login** — `POST /api/auth/login` with `{ email, password }`. Verifies credentials against the domain aggregate, then issues a Sanctum token via `TokenManager`. Returns `{ token, actor_id }`.
 

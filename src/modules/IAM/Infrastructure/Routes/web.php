@@ -13,13 +13,8 @@ use Modules\IAM\Infrastructure\Http\View\RegisterHotelView;
 use Modules\IAM\Infrastructure\Http\View\RegisterSubmitView;
 use Modules\IAM\Infrastructure\Http\View\RegisterView;
 use Modules\IAM\Infrastructure\Http\View\StopImpersonationView;
-use Modules\IAM\Infrastructure\Http\View\UserCreateView;
-use Modules\IAM\Infrastructure\Http\View\UserDeleteView;
-use Modules\IAM\Infrastructure\Http\View\UserEditView;
 use Modules\IAM\Infrastructure\Http\View\UserListView;
 use Modules\IAM\Infrastructure\Http\View\UserShowView;
-use Modules\IAM\Infrastructure\Http\View\UserStoreView;
-use Modules\IAM\Infrastructure\Http\View\UserUpdateView;
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', LoginView::class)->name('login');
@@ -47,10 +42,5 @@ Route::middleware(['auth', 'owner'])->prefix('profile')->group(function () {
 
 Route::middleware(['auth', 'owner'])->prefix('guests')->group(function () {
     Route::get('/', UserListView::class)->name('guests.index');
-    Route::get('/create', UserCreateView::class)->name('guests.create');
-    Route::post('/', UserStoreView::class)->name('guests.store');
     Route::get('/{id}', UserShowView::class)->name('guests.show');
-    Route::get('/{id}/edit', UserEditView::class)->name('guests.edit');
-    Route::put('/{id}', UserUpdateView::class)->name('guests.update');
-    Route::delete('/{id}', UserDeleteView::class)->name('guests.delete');
 });

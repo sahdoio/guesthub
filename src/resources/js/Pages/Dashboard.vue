@@ -16,6 +16,7 @@ const props = defineProps({
     stayStats: { type: Object, default: () => ({}) },
     billingStats: { type: Object, default: () => ({}) },
     pendingReservations: { type: Array, default: () => [] },
+    upcomingReservations: { type: Array, default: () => [] },
 });
 
 const statusColors = {
@@ -174,6 +175,46 @@ const formatCurrency = (cents) => {
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Upcoming Reservations -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-sm font-semibold text-gray-800">{{ $t('dashboard.upcoming_reservations') }}</h2>
+                    <p class="text-xs text-gray-500">{{ $t('dashboard.upcoming_reservations_subtitle') }}</p>
+                </div>
+            </div>
+            <div v-if="upcomingReservations.length > 0" class="space-y-2">
+                <div
+                    v-for="res in upcomingReservations"
+                    :key="res.id"
+                    class="flex items-center justify-between bg-gray-50 rounded-lg p-3"
+                >
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-gray-900">{{ res.guest?.full_name || '-' }}</span>
+                            <span v-if="res.stay?.name" class="text-xs text-gray-500">&mdash; {{ res.stay.name }}</span>
+                            <span
+                                class="text-xs px-2 py-0.5 rounded-full font-medium"
+                                :class="res.status === 'confirmed' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'"
+                            >
+                                {{ $t('status.' + res.status) }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-0.5">{{ res.period.check_in }} &rarr; {{ res.period.check_out }} ({{ res.period.nights }} {{ $t('reservation.nights') }})</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 ml-3">
+                        <a :href="`/reservations/${res.id}`" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">{{ $t('common.view') }}</a>
+                    </div>
+                </div>
+            </div>
+            <p v-else class="text-sm text-gray-400">{{ $t('dashboard.no_upcoming') }}</p>
         </div>
 
         <!-- Summary Cards -->

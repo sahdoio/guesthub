@@ -68,9 +68,6 @@ const logout = () => {
                             <a href="/portal/stays" :class="navClass('/portal/stays')">
                                 {{ $t('nav.stays') }}
                             </a>
-                            <a href="/portal/billing" :class="navClass('/portal/billing')">
-                                {{ $t('billing.title') }}
-                            </a>
                         </div>
                     </div>
 

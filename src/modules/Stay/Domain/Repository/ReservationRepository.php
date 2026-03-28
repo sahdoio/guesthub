@@ -43,4 +43,17 @@ interface ReservationRepository
     public function countTodayCheckIns(): int;
 
     public function countTodayCheckOuts(): int;
+
+    /** @return PaginatedResult<Reservation> */
+    public function listUpcoming(
+        int $page = 1,
+        int $perPage = 10,
+    ): PaginatedResult;
+
+    /** @return PaginatedResult<Reservation> */
+    public function listUpcomingByGuestId(
+        string $guestId,
+        int $page = 1,
+        int $perPage = 5,
+    ): PaginatedResult;
 }

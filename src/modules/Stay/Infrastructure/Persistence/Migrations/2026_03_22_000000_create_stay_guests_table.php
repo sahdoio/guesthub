@@ -8,11 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('stay_guests', function (Blueprint $table) {
+        Schema::create('account_guests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('account_id')->constrained('accounts')->cascadeOnDelete();
-            $table->uuid('guest_uuid');
-            $table->timestamp('first_reservation_at');
+            $table->uuid('guest_uuid')->comment('References users.uuid');
+            $table->timestamp('first_reservation_at')->nullable();
 
             $table->unique(['account_id', 'guest_uuid']);
             $table->index('guest_uuid');
@@ -21,6 +21,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('stay_guests');
+        Schema::dropIfExists('account_guests');
     }
 };

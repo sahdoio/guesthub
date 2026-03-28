@@ -11,6 +11,8 @@ use Modules\IAM\Application\Query\ListUsers;
 use Modules\IAM\Application\Query\ListUsersHandler;
 use Modules\IAM\Presentation\Http\Presenter\UserPresenter;
 use Modules\Shared\Application\Query\Pagination;
+use Modules\Shared\Infrastructure\Persistence\TenantContext;
+use Modules\Stay\Domain\Repository\StayGuestRepository;
 use Modules\Stay\Domain\Repository\StayRepository;
 
 final class ReservationCreateView
@@ -18,11 +20,18 @@ final class ReservationCreateView
     public function __construct(
         private ListUsersHandler $userHandler,
         private StayRepository $stayRepository,
+        private StayGuestRepository $stayGuestRepository,
+        private TenantContext $tenantContext,
     ) {}
 
     public function __invoke(Request $request): Response
     {
-        $users = $this->userHandler->handle(new ListUsers, new Pagination(1, 100));
+        $guestUuids = $this->stayGuestRepository->guestUuidsForAccount($this->tenantContext->id());
+
+        $users = $this->userHandler->handle(
+            new ListUsers(filters: ['guest_uuids' => $guestUuids]),
+            new Pagination(1, 100),
+        );
 
         $stayEntities = $this->stayRepository->findAll();
 
