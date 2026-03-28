@@ -117,13 +117,13 @@ PENDING ──> SUCCEEDED
 
 ```
                                       UserApi (read)             StayApi
-┌──────────┐     UserApi          ┌──────────┐              ┌─────────────┐
-│   IAM    │ ──────────────────>  │   Stay   │ ◄─────────── │   Billing   │
+┌──────────┐     UserApi          ┌──────────┐              ┌─────────────-┐
+│   IAM    │ ──────────────────>  │   Stay   │ ◄─────────── │   Billing    │
 │          │  (exposes UserApi    │          │  ReservationGateway         │
-│ (actors, │   for cross-BC      │ (stays,  │  (reads reservation data)  │
-│  users,  │   read access)      │  reserv- │                            │
-│  auth)   │                     │  ations) │ ─── integration events ──> │
-└──────────┘                     └──────────┘                └────────────┘
+│ (actors, │   for cross-BC       │ (stays,  │  (reads reservation data)   │
+│  users,  │   read access)       │  reserv- │                             │
+│  auth)   │                      │  ations) │ ─── integration events ──>  │
+└──────────┘                      └──────────┘                └────────────┘
      │                                │
      │  Internal domain events        │  GuestGateway
      │  (UserCreated → provision)     │  (reads user data via IAM's UserApi)
