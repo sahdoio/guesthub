@@ -1,0 +1,19 @@
+grumphp:
+  hooks_dir: ../.git/hooks
+  stop_on_failure: true
+
+  tasks:
+    composer:
+      no_check_lock: true
+
+    phpstan:
+      configuration: phpstan.neon
+      use_grumphp_paths: false
+      memory_limit: 2G
+
+    composer_script:
+      script: pint-test
+      triggered_by: ['php']
+
+    phpunit:
+      config_file: phpunit.xml

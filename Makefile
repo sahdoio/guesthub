@@ -1,7 +1,7 @@
 # Variables
 DC=docker compose --file docker-compose.yml
 
-.PHONY: help go go-hard up setup down sh test paratest test-coverage logs db-migrate db-seed db-rollback db-reset log clear phpstan pint queue
+.PHONY: help go go-hard up setup down sh test paratest test-coverage logs db-migrate db-seed db-rollback db-reset log clear phpstan pint queue grum
 
 .DEFAULT_GOAL := help
 
@@ -95,6 +95,9 @@ phpstan: ## Run PHPStan static analysis
 
 pint: ## Run Laravel Pint code style fixer
 	$(DC) exec guesthub ./vendor/bin/pint
+
+grum: ## Run GrumPHP pre-commit checks
+	cd src && ./vendor/bin/grumphp run
 
 queue: ## Start Horizon queue worker
 	$(DC) exec guesthub php artisan horizon
