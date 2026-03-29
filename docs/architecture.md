@@ -136,7 +136,7 @@ PENDING ──> SUCCEEDED
 |---|---|---|---|
 | IAM (UserApi) | Stay | **Anti-Corruption Layer** (read-only via `UserApi`) | Stay reads user data (name, email, VIP status) via `GuestGateway` |
 | IAM (internal) | IAM (internal) | **Domain Events** | `UserCreated` → `OnUserCreated` → `ProvisionActorAccountHandler` creates Account + Actor (synchronous, same DB transaction via `TransactionManager`) |
-| Stay (StayApi) | Billing | **Anti-Corruption Layer** (via `ReservationGateway`) | Billing reads reservation and stay data for invoice creation |
+| Stay (StayApi) | Billing | **Anti-Corruption Layer** (via `ReservationGateway` → `StayApi`) | Billing reads reservation and stay data for invoice creation |
 | Stay | Billing | **Integration Events** | Stay emits events (confirmed, checked out, cancelled) that Billing listens to |
 | IAM | All BCs | **Sanctum middleware** | `auth:sanctum` protects Stay and Billing routes |
 
@@ -414,10 +414,11 @@ This API is the single entry point for cross-BC read access to user data. The St
 
 ### StayApi (Stay Integration API)
 
-The Stay BC exposes a `StayApi` (in `Infrastructure/Integration/`) for other BCs to query stay data:
+The Stay BC exposes a `StayApi` (in `Infrastructure/Integration/`) for other BCs to query stay and reservation data:
 
 - `findByUuid(string): ?StayData` — returns stay details (name, slug, type, category, price, capacity, status)
 - `isAvailable(string): bool` — checks if a stay is active
+- `findReservation(string): ?ReservationData` — returns reservation details with stay info (guest, dates, nights, price per night)
 
 ### ReservationGateway (Billing → Stay)
 
@@ -425,7 +426,7 @@ The Billing BC needs reservation and stay data (guest ID, stay name, price per n
 
 1. **Port** — `Billing/Domain/Service/ReservationGateway` interface defines `findReservation(string): ?ReservationInfo`
 2. **DTO** — `ReservationInfo` is a read-only DTO owned by the Billing BC with fields: `reservationId`, `guestId`, `stayId`, `stayName`, `accountId`, `checkIn`, `checkOut`, `nights`, `pricePerNight`
-3. **Adapter** — `Billing/Infrastructure/Integration/ReservationGatewayAdapter` queries the Stay BC's Eloquent models and maps to `ReservationInfo`
+3. **Adapter** — `Billing/Infrastructure/Integration/ReservationGatewayAdapter` delegates to Stay's `StayApi.findReservation()` and maps `ReservationData` to `ReservationInfo`
 
 ### PaymentGateway (Billing → Stripe)
 
@@ -438,7 +439,7 @@ The Billing BC integrates with Stripe for payment processing:
 ### No Direct Coupling
 
 - No BC imports another BC's domain classes
-- No BC calls another BC's repository (except Billing's `ReservationGatewayAdapter` which uses Stay Eloquent models for pragmatic read access)
+- No BC calls another BC's repository directly
 - Cross-BC data flows through `UserApi`, `StayApi`, Gateway adapters, and integration events
 - IAM protects routes via Sanctum middleware (framework-level, not a domain dependency)
 

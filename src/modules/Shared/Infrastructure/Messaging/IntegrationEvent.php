@@ -7,6 +7,9 @@ namespace Modules\Shared\Infrastructure\Messaging;
 use DateTimeImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
+/**
+ * All integration events should be queued to ensure that they are processed asynchronously
+ */
 abstract class IntegrationEvent implements ShouldQueue
 {
     public readonly DateTimeImmutable $occurredAt;
