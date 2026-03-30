@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace Modules\Stay\Infrastructure\Persistence\Eloquent;
 
 use DateTimeImmutable;
-use Modules\IAM\Domain\ValueObject\AccountId;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\Shared\Domain\PaginatedResult;
-use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Domain\Repository\StayRepository;
 use Modules\Stay\Domain\Stay;
 use Modules\Stay\Domain\StayId;
@@ -21,14 +18,13 @@ final class EloquentStayRepository implements StayRepository
 {
     public function __construct(
         private readonly StayModel $model,
-        private readonly TenantContext $tenantContext,
     ) {}
 
     public function save(Stay $stay): void
     {
         $data = [
             'uuid' => $stay->uuid->value,
-            'account_id' => $this->tenantContext->isSet() ? $this->tenantContext->id() : $this->resolveAccountNumericId($stay->accountId),
+            'account_uuid' => $stay->accountId,
             'name' => $stay->name,
             'slug' => $stay->slug,
             'description' => $stay->description,
@@ -82,13 +78,11 @@ final class EloquentStayRepository implements StayRepository
     }
 
     /** @return list<Stay> */
-    public function findByAccountId(AccountId $accountId): array
+    public function findByAccountUuid(string $accountUuid): array
     {
-        $numericId = $this->resolveAccountNumericId($accountId);
-
         return $this->model->newQuery()
             ->withoutGlobalScopes()
-            ->where('account_id', $numericId)
+            ->where('account_uuid', $accountUuid)
             ->get()
             ->map(fn ($record) => $this->toEntity($record))
             ->all();
@@ -258,22 +252,11 @@ final class EloquentStayRepository implements StayRepository
             ->count();
     }
 
-    private function resolveAccountNumericId(AccountId $accountId): int
-    {
-        $id = AccountModel::query()->where('uuid', $accountId->value)->value('id');
-
-        return (int) $id;
-    }
-
     private function toEntity(object $record): Stay
     {
-        $accountUuid = AccountModel::query()
-            ->where('id', $record->account_id)
-            ->value('uuid');
-
         return StayReflector::reconstruct(
             uuid: StayId::fromString($record->uuid),
-            accountId: AccountId::fromString($accountUuid),
+            accountId: $record->account_uuid,
             name: $record->name,
             slug: $record->slug,
             description: $record->description,

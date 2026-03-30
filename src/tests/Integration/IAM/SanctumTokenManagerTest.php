@@ -40,7 +40,7 @@ final class SanctumTokenManagerTest extends TestCase
             'created_at' => now(),
         ]);
 
-        DB::table('actor_type_pivot')->insert([
+        DB::table('actor_type_map')->insert([
             'actor_id' => $actor->id,
             'type_id' => $this->guestType->id,
         ]);

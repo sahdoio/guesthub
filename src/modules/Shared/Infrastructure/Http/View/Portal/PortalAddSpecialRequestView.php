@@ -6,8 +6,6 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Application\Command\AddSpecialRequest;
 use Modules\Stay\Application\Command\AddSpecialRequestHandler;
@@ -19,7 +17,6 @@ final readonly class PortalAddSpecialRequestView
     public function __construct(
         private AddSpecialRequestHandler $addHandler,
         private ReservationRepository $repository,
-        private AccountRepository $accountRepository,
         private TenantContext $tenantContext,
     ) {}
 
@@ -39,11 +36,7 @@ final readonly class PortalAddSpecialRequestView
         }
 
         // Set tenant context for the reservation's hotel
-        $account = $this->accountRepository->findByUuid(AccountId::fromString($reservation->accountId));
-        if ($account) {
-            $numericId = $this->accountRepository->resolveNumericId($account->uuid);
-            $this->tenantContext->set($numericId);
-        }
+        $this->tenantContext->set($reservation->accountId);
 
         $data = $request->validate([
             'type' => ['required', 'string', 'in:early_check_in,late_check_out,extra_bed,dietary_restriction,special_occasion,other'],

@@ -9,16 +9,16 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\IAM\Application\Query\ListUsers;
 use Modules\IAM\Application\Query\ListUsersHandler;
+use Modules\IAM\Domain\Repository\AccountGuestRepository;
 use Modules\IAM\Presentation\Http\Presenter\UserPresenter;
 use Modules\Shared\Application\Query\Pagination;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
-use Modules\Stay\Domain\Repository\StayGuestRepository;
 
 final class UserListView
 {
     public function __construct(
         private ListUsersHandler $handler,
-        private StayGuestRepository $stayGuestRepository,
+        private AccountGuestRepository $accountGuestRepository,
         private TenantContext $tenantContext,
     ) {}
 
@@ -35,8 +35,8 @@ final class UserListView
         $typeNames = $user->types->pluck('name')->toArray();
 
         if (in_array('owner', $typeNames, true) && ! in_array('superadmin', $typeNames, true)) {
-            $filters['guest_uuids'] = $this->stayGuestRepository->guestUuidsForAccount(
-                $this->tenantContext->id(),
+            $filters['guest_uuids'] = $this->accountGuestRepository->guestUuidsForAccount(
+                $this->tenantContext->accountUuid(),
             );
         }
 

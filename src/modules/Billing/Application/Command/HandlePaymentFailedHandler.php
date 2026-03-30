@@ -6,7 +6,6 @@ namespace Modules\Billing\Application\Command;
 
 use DomainException;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
-use Modules\Billing\Domain\Service\AccountGateway;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
 
@@ -14,7 +13,6 @@ final class HandlePaymentFailedHandler extends EventDispatchingHandler
 {
     public function __construct(
         private InvoiceRepository $repository,
-        private AccountGateway $accountGateway,
         EventDispatcher $dispatcher,
     ) {
         parent::__construct($dispatcher);
@@ -27,7 +25,7 @@ final class HandlePaymentFailedHandler extends EventDispatchingHandler
 
         $invoice->markPaymentFailed($command->stripePaymentIntentId, $command->reason);
 
-        $this->repository->save($invoice, $this->accountGateway->resolveNumericId($invoice->accountId));
+        $this->repository->save($invoice);
         $this->dispatchEvents($invoice);
     }
 }

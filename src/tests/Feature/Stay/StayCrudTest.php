@@ -72,7 +72,7 @@ final class StayCrudTest extends TestCase
             'name' => 'Deluxe Suite',
             'type' => 'room',
             'category' => 'hotel_room',
-            'account_id' => $this->account->id,
+            'account_uuid' => $this->account->uuid,
         ]);
     }
 

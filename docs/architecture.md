@@ -12,6 +12,7 @@ GuestHub is a stay management platform built with **Domain-Driven Design (DDD)**
 - [Integration Events](#integration-events)
 - [Event Flow](#event-flow)
 - [Inter-BC Communication](#inter-bc-communication)
+- [Database Ownership](#database-ownership)
 - [Persistence & Reflectors](#persistence--reflectors)
 - [IAM Deep Dive — Actors & Authentication](#iam-deep-dive--actors--authentication)
 
@@ -31,7 +32,7 @@ Handles actors, accounts, users, types, authentication, and token management. Th
 | Value Objects | `TypeName` (enum: SUPERADMIN, OWNER, GUEST), `HashedPassword`, `LoyaltyTier` (enum: BRONZE, SILVER, GOLD, PLATINUM) |
 | Domain Services | `PasswordHasher`, `TokenManager`, `EmailUniquenessChecker`, `UserEmailUniquenessChecker` |
 
-Multi-tenant: `Account` serves as the tenant boundary. All actors belong to an account, and other BCs' tables (stays, reservations, invoices) carry an `account_id` foreign key. The `actor_type_pivot` table links actors to their types.
+Multi-tenant: `Account` serves as the tenant boundary. All actors belong to an account. Cross-BC tables reference accounts via `account_uuid` (no foreign key constraint). The `actor_type_map` table links actors to their types.
 
 Domain events: `UserCreated`, `ActorRegistered`, `AccountCreated`, `UserContactInfoUpdated`, `UserLoyaltyTierChanged`.
 
@@ -115,32 +116,137 @@ PENDING ──> SUCCEEDED
 
 ## Context Map
 
+### Relationship Descriptions
+
+**IAM [U] → Stay [D] (OHS + ACL)**
+IAM is the upstream identity provider. It exposes `UserApi` and `AccountGuestApi` as Open Host Services — stable, read-only contracts designed for external consumers. Stay consumes these through Anti-Corruption Layer adapters: `GuestGatewayAdapter` translates IAM's `UserData` into Stay's own `GuestInfo` DTO (deriving `isVip` from loyalty tier), and `AccountGuestGatewayAdapter` delegates guest-account linking to IAM. Stay never imports IAM domain classes; all coupling is to IAM's integration DTOs, translated at the adapter boundary.
+
+**Stay [U] → Billing [D] (OHS/PL + ACL)**
+Stay is the upstream operational core. It exposes `StayApi` as an Open Host Service for synchronous reads and publishes integration events as a Published Language for asynchronous state changes. Billing consumes `StayApi` through `ReservationGatewayAdapter` (ACL), translating Stay's `ReservationData` into Billing's own `ReservationInfo` DTO. Billing also subscribes to Stay's integration events (`ReservationCreatedEvent`, `ReservationConfirmedEvent`, `GuestCheckedOutEvent`, `ReservationCancelledEvent`) to trigger invoice lifecycle operations. Billing owns all translation responsibility.
+
+**Billing [U] → Stay [D] (PL)**
+Billing publishes `InvoiceFullyPaidEvent` as a Published Language event. Stay subscribes to confirm reservations upon full payment. This creates a bidirectional event flow (Stay → Billing for reservation lifecycle, Billing → Stay for payment confirmation), forming a **Partnership** where both teams coordinate changes to shared event contracts.
+
+**Shared Kernel (SK)**
+All BCs depend on `modules/Shared/` for domain primitives (`AggregateRoot`, `Identity`, `ValueObject`, `DomainEvent`), application ports (`EventDispatcher`, `TransactionManager`), the `IntegrationEvent` base class, and multi-tenant infrastructure (`TenantContext`, `BelongsToTenant`). Changes to the Shared Kernel require agreement across all teams — it is deliberately kept minimal and stable.
+
+### Mermaid Diagram
+
+```mermaid
+graph LR
+    subgraph SK["Shared Kernel"]
+        direction TB
+        SK_D["AggregateRoot · Identity · ValueObject<br/>DomainEvent · PaginatedResult"]
+        SK_A["EventDispatcher · TransactionManager<br/>IntegrationEvent"]
+        SK_I["TenantContext · BelongsToTenant<br/>LaravelEventDispatcher"]
+    end
+
+    subgraph IAM["IAM [U]"]
+        direction TB
+        IAM_T["accounts · users · actors<br/>actor_types · actor_type_map<br/>account_guests"]
+        IAM_API["OHS: UserApi · AccountGuestApi · AccountApi"]
+    end
+
+    subgraph Stay["Stay [U/D]"]
+        direction TB
+        Stay_T["stays · stay_images<br/>reservations"]
+        Stay_API["OHS: StayApi"]
+        Stay_PL["PL: ReservationCreatedEvent<br/>ReservationConfirmedEvent<br/>GuestCheckedInEvent<br/>GuestCheckedOutEvent<br/>ReservationCancelledEvent"]
+        Stay_ACL["ACL: GuestGatewayAdapter<br/>AccountGuestGatewayAdapter"]
+    end
+
+    subgraph Billing["Billing [D/U]"]
+        direction TB
+        Billing_T["invoices · line_items<br/>payments · stripe_webhook_events"]
+        Billing_PL["PL: InvoiceFullyPaidEvent"]
+        Billing_ACL["ACL: ReservationGatewayAdapter"]
+    end
+
+    IAM_API -- "UserApi (sync)" --> Stay_ACL
+    IAM_API -- "AccountGuestApi (sync)" --> Stay_ACL
+    Stay_API -- "StayApi (sync)" --> Billing_ACL
+    Stay_PL -- "events (async)" --> Billing
+    Billing_PL -- "events (async)" --> Stay
+
+    SK --> IAM
+    SK --> Stay
+    SK --> Billing
 ```
-                                      UserApi (read)             StayApi
-┌──────────┐     UserApi          ┌──────────┐              ┌─────────────-┐
-│   IAM    │ ──────────────────>  │   Stay   │ ◄─────────── │   Billing    │
-│          │  (exposes UserApi    │          │  ReservationGateway         │
-│ (actors, │   for cross-BC       │ (stays,  │  (reads reservation data)   │
-│  users,  │   read access)       │  reserv- │                             │
-│  auth)   │                      │  ations) │ ─── integration events ──>  │
-└──────────┘                      └──────────┘                └────────────┘
-     │                                │
-     │  Internal domain events        │  GuestGateway
-     │  (UserCreated → provision)     │  (reads user data via IAM's UserApi)
-     └────────────────────────────────┘
-```
 
-**Relationships:**
+### Relationship Table
 
-| Upstream | Downstream | Pattern | Purpose |
-|---|---|---|---|
-| IAM (UserApi) | Stay | **Anti-Corruption Layer** (read-only via `UserApi`) | Stay reads user data (name, email, VIP status) via `GuestGateway` |
-| IAM (internal) | IAM (internal) | **Domain Events** | `UserCreated` → `OnUserCreated` → `ProvisionActorAccountHandler` creates Account + Actor (synchronous, same DB transaction via `TransactionManager`) |
-| Stay (StayApi) | Billing | **Anti-Corruption Layer** (via `ReservationGateway` → `StayApi`) | Billing reads reservation and stay data for invoice creation |
-| Stay | Billing | **Integration Events** | Stay emits events (confirmed, checked out, cancelled) that Billing listens to |
-| IAM | All BCs | **Sanctum middleware** | `auth:sanctum` protects Stay and Billing routes |
+| Upstream BC | Downstream BC | Pattern | Communication | Rationale |
+|---|---|---|---|---|
+| IAM | Stay | OHS / ACL | Sync (in-process API) | Stay needs guest identity data (name, email, VIP status) to enrich integration events. `UserApi` provides a stable read-only contract; `GuestGatewayAdapter` translates to Stay's `GuestInfo` domain DTO. |
+| IAM | Stay | OHS / ACL | Sync (in-process API) | Stay needs to link guests to accounts and query account-guest associations. `AccountGuestApi` owns the `account_guests` table (IAM); `AccountGuestGatewayAdapter` proxies the calls. |
+| Stay | Billing | OHS / ACL | Sync (in-process API) | Billing needs reservation and stay details (nights, price per night, stay name) for invoice creation. `StayApi` provides the contract; `ReservationGatewayAdapter` translates to Billing's `ReservationInfo` DTO. |
+| Stay | Billing | PL | Async (queued events) | Reservation lifecycle changes (created, confirmed, checked out, cancelled) trigger billing operations (create invoice, issue invoice, void/refund). Events carry enriched snapshots so Billing can act independently. |
+| Billing | Stay | PL | Async (queued events) | Payment completion triggers reservation confirmation. `InvoiceFullyPaidEvent` carries `reservationId` so Stay can confirm the reservation without querying Billing. |
+| Shared | All BCs | Shared Kernel | Compile-time dependency | Domain primitives, application ports, and multi-tenant infrastructure are shared to avoid duplication of foundational abstractions. |
 
-No BC calls another BC's repository directly. All cross-boundary data flows through Gateway adapters, Integration APIs, and integration events.
+### Integration Point Details
+
+#### IAM → Stay: `UserApi` (OHS)
+
+| Aspect | Detail |
+|---|---|
+| API class | `Modules\IAM\Infrastructure\Integration\UserApi` |
+| Method | `findByUuid(string $uuid): ?UserData` |
+| DTO | `UserData { uuid, fullName, email, phone, document, loyaltyTier }` |
+| ACL adapter | `Stay\Infrastructure\Integration\GuestGatewayAdapter` |
+| Domain port | `Stay\Domain\Service\GuestGateway` |
+| Domain DTO | `GuestInfo { guestId, fullName, email, phone, document, isVip }` |
+| Translation | `isVip` derived from `loyaltyTier ∈ {gold, platinum}` |
+| Consumers | `OnReservationConfirmed`, `OnGuestCheckedIn`, `OnGuestCheckedOut` listeners |
+
+#### IAM → Stay: `AccountGuestApi` (OHS)
+
+| Aspect | Detail |
+|---|---|
+| API class | `Modules\IAM\Infrastructure\Integration\AccountGuestApi` |
+| Methods | `link(accountUuid, guestUuid): void`, `guestUuidsForAccount(accountUuid): list<string>` |
+| ACL adapter | `Stay\Infrastructure\Integration\AccountGuestGatewayAdapter` |
+| Domain port | `Stay\Domain\Service\AccountGuestGateway` |
+| Translation | Pass-through (no DTO transformation needed) |
+| Consumers | `ProcessNewReservationHandler` (write), `ReservationCreateView` (read) |
+
+#### Stay → Billing: `StayApi` (OHS)
+
+| Aspect | Detail |
+|---|---|
+| API class | `Modules\Stay\Infrastructure\Integration\StayApi` |
+| Methods | `findByUuid(uuid): ?StayData`, `isAvailable(uuid): bool`, `findReservation(reservationId): ?ReservationData` |
+| DTOs | `StayData { uuid, name, slug, type, category, pricePerNight, capacity, status, ... }` |
+| | `ReservationData { reservationId, guestId, stayId, stayName, accountId, checkIn, checkOut, nights, pricePerNight }` |
+| ACL adapter | `Billing\Infrastructure\Integration\ReservationGatewayAdapter` |
+| Domain port | `Billing\Domain\Service\ReservationGateway` |
+| Domain DTO | `ReservationInfo { reservationId, guestId, stayId, stayName, accountId, checkIn, checkOut, nights, pricePerNight }` |
+| Translation | Namespace change; field mapping is 1:1 (conformist-like but owns the DTO) |
+| Consumers | `OnReservationCreated`, `OnReservationConfirmed` listeners → `CreateInvoiceForReservationHandler` |
+
+#### Stay → Billing: Integration Events (PL)
+
+| Event | Payload | Billing Listener | Handler | Effect |
+|---|---|---|---|---|
+| `ReservationCreatedEvent` | reservationId, guestEmail, stayId, checkIn, checkOut, isVip | `OnReservationCreated` (sync) | `CreateInvoiceForReservation` → `IssueInvoice` | Creates and immediately issues invoice |
+| `ReservationConfirmedEvent` | reservationId, guestEmail, stayId, checkIn, checkOut, isVip | `OnReservationConfirmed` (queued) | `CreateInvoiceForReservation` | Creates draft invoice |
+| `GuestCheckedOutEvent` | reservationId, guestEmail | `OnGuestCheckedOut` (queued) | `IssueInvoiceOnCheckout` | Issues invoice if still in draft |
+| `ReservationCancelledEvent` | reservationId, stayId, checkIn, checkOut, reason, freeCancellationUntil | `OnReservationCancelled` (queued) | `CancelReservationBilling` | Voids or refunds invoice |
+
+#### Billing → Stay: Integration Events (PL)
+
+| Event | Payload | Stay Listener | Handler | Effect |
+|---|---|---|---|---|
+| `InvoiceFullyPaidEvent` | invoiceId, reservationId | `OnInvoiceFullyPaid` (queued) | `ConfirmPaidReservation` | Confirms reservation (PENDING → CONFIRMED) |
+
+### Strict Boundaries
+
+- No BC calls another BC's repository directly
+- No BC imports another BC's Eloquent models or domain aggregates
+- No foreign key constraints across BC boundaries — cross-BC references use UUID strings only
+- All cross-boundary data flows through Integration APIs (OHS), Gateway adapters (ACL), and Integration Events (PL)
+- Each BC's `ServiceProvider` registers only its own DB migrations
+- Integration events carry enriched snapshots; consumers do not call back to the publisher for missing data during event handling (except `OnReservationConfirmed` and `OnReservationCreated` in Billing, which fetch reservation details via `StayApi` for invoice line item calculation)
 
 ---
 
@@ -220,8 +326,8 @@ modules/{BC}/
 | `LaravelEventDispatcher` | Implements `EventDispatcher` by delegating to Laravel's `Illuminate\Contracts\Events\Dispatcher`. |
 | `LaravelTransactionManager` | Implements `TransactionManager` by delegating to `DB::transaction()`. |
 | `EventStoreRecorder` | Records domain events to the `stored_events` table. |
-| `TenantContext` | Singleton holding the current tenant (account) ID for multi-tenant scoping. |
-| `BelongsToTenant` | Eloquent global scope that filters queries by `account_id`. |
+| `TenantContext` | Singleton holding the current tenant's `account_uuid` (string) for multi-tenant scoping. |
+| `BelongsToTenant` | Eloquent global scope that filters queries by `account_uuid`. |
 | `HandleInertiaRequests` | Inertia middleware sharing auth/user data with all pages. |
 | `EnsureActorType` | Middleware that validates the authenticated actor has the required type(s). |
 | `EnsureActorIsOwner` | Middleware that validates actor is an owner type. |
@@ -438,10 +544,69 @@ The Billing BC integrates with Stripe for payment processing:
 
 ### No Direct Coupling
 
-- No BC imports another BC's domain classes
+- No BC imports another BC's domain classes or Eloquent models
 - No BC calls another BC's repository directly
+- No foreign key constraints across BC boundaries — cross-BC references use UUID strings only
 - Cross-BC data flows through `UserApi`, `StayApi`, Gateway adapters, and integration events
 - IAM protects routes via Sanctum middleware (framework-level, not a domain dependency)
+
+---
+
+## Database Ownership
+
+Each BC owns its database tables. Cross-BC references use UUID strings only — **no foreign key constraints** across BC boundaries. External data access is only via Integration APIs (`UserApi`, `StayApi`) or Integration Events.
+
+### IAM Tables
+
+| Table | Purpose |
+|---|---|
+| `accounts` | Tenant accounts (owner organizations and guest personal accounts) |
+| `users` | User profiles (name, email, phone, document, loyalty tier) |
+| `actors` | Authentication identities (email, password, account FK, user FK) |
+| `actor_types` | Type definitions (superadmin, owner, guest) |
+| `actor_type_map` | Many-to-many: actors ↔ types |
+| `account_guests` | Links accounts to their guests (FK to `accounts.id` and `users.id`) |
+
+IAM tables use numeric foreign keys internally (e.g., `actors.account_id → accounts.id`, `account_guests.account_id → accounts.id`, `account_guests.user_id → users.id`). This is same-BC, so FK constraints are allowed.
+
+### Stay Tables
+
+| Table | Purpose |
+|---|---|
+| `stays` | Bookable properties (name, type, category, price, capacity) |
+| `stay_images` | Property images (FK to `stays.id` — same BC) |
+| `reservations` | Guest reservations with status lifecycle |
+
+Cross-BC references:
+- `stays.account_uuid` → references `accounts.uuid` (no FK)
+- `reservations.account_uuid` → references `accounts.uuid` (no FK)
+- `reservations.stay_id` → FK to `stays.id` (same BC — proper FK constraint with cascade delete)
+- `reservations.stay_uuid` → denormalized copy of `stays.uuid` for domain-layer convenience
+- `reservations.guest_id` → references `users.uuid` (no FK)
+
+### Billing Tables
+
+| Table | Purpose |
+|---|---|
+| `invoices` | Invoice header (status, totals, currency, Stripe customer) |
+| `line_items` | Invoice line items (FK to `invoices.id` — same BC) |
+| `payments` | Payment records (FK to `invoices.id` — same BC) |
+| `stripe_webhook_events` | Idempotency tracking for Stripe webhooks |
+
+Cross-BC references:
+- `invoices.account_uuid` → references `accounts.uuid` (no FK)
+- `invoices.reservation_id` → references `reservations.uuid` (no FK, stored as string)
+- `invoices.guest_id` → references `users.uuid` (no FK, stored as string)
+
+### Shared Tables
+
+| Table | Purpose |
+|---|---|
+| `stored_events` | Domain event audit log |
+
+### Multi-Tenant Scoping
+
+`TenantContext` is a singleton holding the current tenant's `account_uuid` (string). The `BelongsToTenant` Eloquent trait adds a global scope filtering by `account_uuid`. The `SetTenantContext` middleware resolves the UUID from the authenticated actor's account at request start.
 
 ---
 
@@ -492,7 +657,7 @@ Domain events are persisted to the `stored_events` table via `EventStoreRecorder
 
 ### Multi-Tenancy: Accounts
 
-An **Account** is the IAM aggregate that represents a tenant. Each account is a property owner or organization. All actors belong to an account, and all main tables across BCs (stays, reservations, invoices) carry an `account_id` foreign key for data isolation.
+An **Account** is the IAM aggregate that represents a tenant. Each account is a property owner or organization. All actors belong to an account (via `account_id` FK within IAM). Other BCs reference accounts via `account_uuid` (no FK constraint) for data isolation.
 
 ### Users
 
@@ -502,7 +667,7 @@ The `UserApi` exposes user data to other BCs (Stay uses it via `GuestGateway` to
 
 ### Types
 
-**Type** is a domain entity stored in the `types` table. Types are seeded (`superadmin`, `owner`, `guest`) and referenced by actors via the `actor_type_pivot` table (many-to-many). The `TypeName` enum provides type-safe domain logic:
+**Type** is a domain entity stored in the `types` table. Types are seeded (`superadmin`, `owner`, `guest`) and referenced by actors via the `actor_type_map` table (many-to-many). The `TypeName` enum provides type-safe domain logic:
 
 | `TypeName` | Purpose |
 |---|---|
@@ -546,7 +711,7 @@ Key design decisions:
 - **`private(set)` properties** (typeIds, password, updatedAt) — mutable only through behavior methods
 - **`register()` factory** — the only way to create an Actor (constructor is private)
 - **`userId` FK** — direct foreign key to `users` table
-- **Many-to-many types** — actors can have multiple types via the `actor_type_pivot` table
+- **Many-to-many types** — actors can have multiple types via the `actor_type_map` table
 
 ### Domain Service Ports
 
@@ -595,7 +760,7 @@ IAM has two representations of an actor:
 | Created by | `Actor::register()` | Seeded or created alongside the domain actor |
 | Persistence | `EloquentActorRepository` writes to `actors` table | Reads from the same `actors` table |
 
-Both read/write the same `actors` table. The domain `Actor` is persisted via `EloquentActorRepository` (through `ActorReflector` for hydration). The `ActorModel` is only used by `SanctumTokenManager`, Laravel's `auth:sanctum` middleware, and the web login/register views. It has `BelongsToMany` relationship to `ActorTypeModel` via the `actor_type_pivot` table, and a `BelongsTo` relationship to `AccountModel`.
+Both read/write the same `actors` table. The domain `Actor` is persisted via `EloquentActorRepository` (through `ActorReflector` for hydration). The `ActorModel` is only used by `SanctumTokenManager`, Laravel's `auth:sanctum` middleware, and the web login/register views. It has `BelongsToMany` relationship to `ActorTypeModel` via the `actor_type_map` table, and a `BelongsTo` relationship to `AccountModel`.
 
 ### Token Expiration
 
@@ -677,7 +842,7 @@ POST /auth/login         │  header       │  GET  /invoices/*            │
 | `EnsureActorType` | Validates actor has required type(s). Used as `type:owner,superadmin` in route groups. |
 | `EnsureActorIsOwner` | Validates actor is an owner type. |
 | `EnsureActorIsGuest` | Validates actor is a guest type. |
-| `SetTenantContext` | Sets `TenantContext` from the authenticated actor's account. |
+| `SetTenantContext` | Resolves the authenticated actor's account UUID and sets `TenantContext`. |
 | `MapRouteParameters` | Maps route parameters for controller resolution. |
 
 ### Exceptions

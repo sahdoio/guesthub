@@ -12,7 +12,6 @@ use Modules\Billing\Domain\Exception\InvoiceNotFoundException;
 use Modules\Billing\Domain\InvoiceId;
 use Modules\Billing\Domain\PaymentId;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
-use Modules\Billing\Domain\Service\AccountGateway;
 use Modules\Billing\Domain\Service\PaymentGateway;
 use Modules\Billing\Domain\ValueObject\PaymentMethod;
 use Modules\Shared\Application\EventDispatcher;
@@ -22,7 +21,6 @@ class InitiatePaymentHandler extends EventDispatchingHandler
 {
     public function __construct(
         private InvoiceRepository $repository,
-        private AccountGateway $accountGateway,
         private PaymentGateway $paymentGateway,
         EventDispatcher $dispatcher,
     ) {
@@ -56,7 +54,7 @@ class InitiatePaymentHandler extends EventDispatchingHandler
                 createdAt: new DateTimeImmutable,
             );
 
-            $this->repository->save($invoice, $this->accountGateway->resolveNumericId($invoice->accountId));
+            $this->repository->save($invoice);
             $this->dispatchEvents($invoice);
         }
 

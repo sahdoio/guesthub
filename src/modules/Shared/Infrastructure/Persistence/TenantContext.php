@@ -6,29 +6,17 @@ namespace Modules\Shared\Infrastructure\Persistence;
 
 final class TenantContext
 {
-    private ?int $accountId = null;
+    private ?string $accountUuid = null;
 
-    public function set(int $accountId): void
+    public function set(string $accountUuid): void
     {
-        $this->accountId = $accountId;
+        $this->accountUuid = $accountUuid;
     }
 
-    public function id(): int
+    public function accountUuid(): string
     {
-        if ($this->accountId !== null) {
-            return $this->accountId;
-        }
-
-        $user = auth()->user();
-
-        if ($user !== null && ! empty($user->account_id)) {
-            return (int) $user->account_id;
-        }
-
-        // Superadmin session-based tenant
-        $sessionTenantId = session('tenant_account_id');
-        if ($sessionTenantId !== null) {
-            return (int) $sessionTenantId;
+        if ($this->accountUuid !== null) {
+            return $this->accountUuid;
         }
 
         throw new \RuntimeException('No tenant context available.');
@@ -36,12 +24,6 @@ final class TenantContext
 
     public function isSet(): bool
     {
-        try {
-            $this->id();
-
-            return true;
-        } catch (\RuntimeException) {
-            return false;
-        }
+        return $this->accountUuid !== null;
     }
 }

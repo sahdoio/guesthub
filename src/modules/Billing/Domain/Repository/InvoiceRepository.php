@@ -9,7 +9,7 @@ use Modules\Billing\Domain\InvoiceId;
 
 interface InvoiceRepository
 {
-    public function save(Invoice $invoice, int $accountNumericId): void;
+    public function save(Invoice $invoice): void;
 
     public function findByUuid(InvoiceId $uuid): ?Invoice;
 
@@ -23,8 +23,6 @@ interface InvoiceRepository
 
     /** @return Invoice[] */
     public function findAllByGuestIdGlobal(string $guestId): array;
-
-    public function resolveAccountNumericId(InvoiceId $uuid): ?int;
 
     public function nextIdentity(): InvoiceId;
 

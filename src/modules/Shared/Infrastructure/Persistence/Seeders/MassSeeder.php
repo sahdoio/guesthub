@@ -129,14 +129,12 @@ class MassSeeder extends Seeder
         $this->command->info('Seeding accounts...');
         $accounts = $this->generateAccounts($now);
         $this->batchInsert('accounts', $accounts);
-        $accountIds = DB::table('accounts')->orderBy('id')->pluck('id', 'uuid')->toArray();
         $this->command->info(sprintf('  Created %d accounts.', count($accounts)));
 
         // 2. Generate stays
         $this->command->info('Seeding stays...');
-        $stays = $this->generateStays($accounts, $accountIds, $now);
+        $stays = $this->generateStays($accounts, $now);
         $this->batchInsert('stays', $stays);
-        $stayIds = DB::table('stays')->orderBy('id')->pluck('id', 'uuid')->toArray();
         $this->command->info(sprintf('  Created %d stays.', count($stays)));
 
         // 3. Generate guest users
@@ -152,7 +150,7 @@ class MassSeeder extends Seeder
         $this->batchInsert('accounts', $guestActorData['personalAccounts']);
         // Re-fetch account IDs after adding personal accounts
         $allAccountIds = DB::table('accounts')->orderBy('id')->pluck('id', 'uuid')->toArray();
-        // Update guest actors with correct account_id
+        // Update guest actors with correct account_id (actors table still uses numeric FK within IAM BC)
         foreach ($guestActorData['actors'] as &$actor) {
             $actor['account_id'] = $allAccountIds[$actor['_account_uuid']] ?? $actor['account_id'];
             unset($actor['_account_uuid']);
@@ -170,7 +168,7 @@ class MassSeeder extends Seeder
                 'type_id' => $guestTypeId,
             ];
         }
-        $this->batchInsert('actor_type_pivot', $guestActorTypePivots);
+        $this->batchInsert('actor_type_map', $guestActorTypePivots);
         $this->command->info(sprintf('  Created %d guest actors with personal accounts.', count($guestActorData['actors'])));
 
         // 5. Generate owner actors (one per business account)
@@ -188,28 +186,31 @@ class MassSeeder extends Seeder
                 'type_id' => $ownerTypeId,
             ];
         }
-        $this->batchInsert('actor_type_pivot', $ownerActorTypePivots);
+        $this->batchInsert('actor_type_map', $ownerActorTypePivots);
         $this->command->info(sprintf('  Created %d owner actors.', count($ownerActors)));
 
         // 6. Generate reservations
         $this->command->info('Seeding reservations...');
-        $reservations = $this->generateReservations($guestUsers, $accounts, $stays, $now);
+        $stayNumericIds = DB::table('stays')->pluck('id', 'uuid')->toArray();
+        $reservations = $this->generateReservations($guestUsers, $accounts, $stays, $stayNumericIds, $now);
         $this->batchInsert('reservations', $reservations);
         $this->command->info(sprintf('  Created %d reservations.', count($reservations)));
 
-        // 7. Populate account_guests from reservations
+        // 7. Populate account_guests from reservations (owned by IAM, uses proper FKs)
         $this->command->info('Populating account_guests...');
+        $accountNumericIds = DB::table('accounts')->pluck('id', 'uuid')->toArray();
+        $userNumericIds = DB::table('users')->pluck('id', 'uuid')->toArray();
         $accountGuests = [];
         $seen = [];
         foreach ($reservations as $r) {
-            $key = $r['account_id'].':'.$r['guest_id'];
+            $key = $r['account_uuid'].':'.$r['guest_id'];
             if (isset($seen[$key])) {
                 continue;
             }
             $seen[$key] = true;
             $accountGuests[] = [
-                'account_id' => $r['account_id'],
-                'guest_uuid' => $r['guest_id'],
+                'account_id' => $accountNumericIds[$r['account_uuid']],
+                'user_id' => $userNumericIds[$r['guest_id']],
             ];
         }
         $this->batchInsert('account_guests', $accountGuests);
@@ -251,7 +252,7 @@ class MassSeeder extends Seeder
         return $accounts;
     }
 
-    private function generateStays(array $accounts, array $accountIds, string $now): array
+    private function generateStays(array $accounts, string $now): array
     {
         $stays = [];
         $usedNames = [];
@@ -264,7 +265,6 @@ class MassSeeder extends Seeder
         $staysPerAccount = (int) ceil(self::STAYS_COUNT / count($accounts));
 
         foreach ($accounts as $account) {
-            $accountId = $accountIds[$account['uuid']];
 
             for ($i = 0; $i < $staysPerAccount && count($stays) < self::STAYS_COUNT; $i++) {
                 $name = $this->generateUniqueStayName($usedNames, $usedSlugs);
@@ -301,7 +301,7 @@ class MassSeeder extends Seeder
 
                 $stays[] = [
                     'uuid' => $uuid,
-                    'account_id' => $accountId,
+                    'account_uuid' => $account['uuid'],
                     'name' => $name,
                     'slug' => $slug,
                     'description' => sprintf('Welcome to %s, a premier destination offering world-class hospitality in the heart of %s.', $name, $cityData['city']),
@@ -459,7 +459,7 @@ class MassSeeder extends Seeder
         return $actors;
     }
 
-    private function generateReservations(array $guestUsers, array $accounts, array $stays, string $now): array
+    private function generateReservations(array $guestUsers, array $accounts, array $stays, array $stayNumericIds, string $now): array
     {
         $reservations = [];
         $statusDistribution = array_merge(
@@ -470,23 +470,10 @@ class MassSeeder extends Seeder
             array_fill(0, 10, 'cancelled'),
         );
 
-        // Build lookup maps from DB
-        $dbStays = DB::table('stays')->get(['id', 'uuid', 'account_id'])->keyBy('uuid');
-        $dbAccounts = DB::table('accounts')->get(['id', 'uuid'])->keyBy('id');
-
         for ($i = 0; $i < self::RESERVATIONS_COUNT; $i++) {
             $guestUser = $guestUsers[array_rand($guestUsers)];
             $stay = $stays[array_rand($stays)];
-            $stayDb = $dbStays[$stay['uuid']] ?? null;
-
-            if (! $stayDb) {
-                continue;
-            }
-
-            $accountDb = $dbAccounts[$stayDb->account_id] ?? null;
-            $accountId = $stayDb->account_id;
-            $accountUuid = $accountDb->uuid ?? null;
-            $stayDbId = $stayDb->id;
+            $accountUuid = $stay['account_uuid'];
 
             $status = $statusDistribution[array_rand($statusDistribution)];
 
@@ -522,9 +509,8 @@ class MassSeeder extends Seeder
             $reservations[] = [
                 'uuid' => (string) Str::uuid(),
                 'guest_id' => $guestUser['uuid'],
-                'account_id' => $accountId,
                 'account_uuid' => $accountUuid,
-                'stay_id' => $stayDbId,
+                'stay_id' => $stayNumericIds[$stay['uuid']],
                 'stay_uuid' => $stay['uuid'],
                 'check_in' => $checkInStr,
                 'check_out' => $checkOutStr,

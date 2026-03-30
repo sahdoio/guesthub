@@ -23,7 +23,7 @@ return new class extends Migration
             $table->index('user_id');
         });
 
-        Schema::create('actor_type_pivot', function (Blueprint $table) {
+        Schema::create('actor_type_map', function (Blueprint $table) {
             $table->id();
             $table->foreignId('actor_id')->constrained('actors')->cascadeOnDelete();
             $table->foreignId('type_id')->constrained('actor_types')->cascadeOnDelete();
@@ -35,7 +35,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('actor_type_pivot');
+        Schema::dropIfExists('actor_type_map');
         Schema::dropIfExists('actors');
     }
 };

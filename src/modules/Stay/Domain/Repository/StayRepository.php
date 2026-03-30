@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Domain\Repository;
 
-use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\Shared\Domain\PaginatedResult;
 use Modules\Stay\Domain\Stay;
 use Modules\Stay\Domain\StayId;
@@ -20,7 +19,7 @@ interface StayRepository
     public function findByName(string $name): ?Stay;
 
     /** @return list<Stay> */
-    public function findByAccountId(AccountId $accountId): array;
+    public function findByAccountUuid(string $accountUuid): array;
 
     /** @return list<Stay> */
     public function findAll(?int $limit = null): array;

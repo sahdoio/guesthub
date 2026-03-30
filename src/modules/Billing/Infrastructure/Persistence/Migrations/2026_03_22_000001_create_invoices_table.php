@@ -11,8 +11,7 @@ return new class extends Migration
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->foreignId('account_id')->constrained('accounts')->cascadeOnDelete();
-            $table->string('account_uuid');
+            $table->uuid('account_uuid')->index();
             $table->string('reservation_id')->index();
             $table->string('guest_id')->index();
             $table->string('status')->default('draft');
@@ -28,7 +27,6 @@ return new class extends Migration
             $table->timestamp('voided_at')->nullable();
             $table->timestamp('refunded_at')->nullable();
 
-            $table->index('account_id');
             $table->index('status');
         });
     }

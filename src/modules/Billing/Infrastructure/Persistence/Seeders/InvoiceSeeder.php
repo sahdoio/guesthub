@@ -41,7 +41,6 @@ class InvoiceSeeder extends Seeder
 
             $invoice = InvoiceModel::withoutGlobalScopes()->create([
                 'uuid' => Uuid::uuid7()->toString(),
-                'account_id' => $reservation->account_id,
                 'account_uuid' => $reservation->account_uuid,
                 'reservation_id' => $reservation->uuid,
                 'guest_id' => $reservation->guest_id,

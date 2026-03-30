@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\Stay\Domain;
 
 use DateTimeImmutable;
-use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\Shared\Domain\AggregateRoot;
 use Modules\Shared\Domain\Identity;
 use Modules\Stay\Domain\Event\StayCreated;
@@ -16,7 +15,7 @@ final class Stay extends AggregateRoot
 {
     private function __construct(
         public readonly StayId $uuid,
-        public readonly AccountId $accountId,
+        public readonly string $accountId,
         private(set) string $name,
         private(set) string $slug,
         private(set) ?string $description,
@@ -36,7 +35,7 @@ final class Stay extends AggregateRoot
 
     public static function create(
         StayId $uuid,
-        AccountId $accountId,
+        string $accountId,
         string $name,
         string $slug,
         StayType $type,

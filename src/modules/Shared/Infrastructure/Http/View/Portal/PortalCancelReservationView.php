@@ -6,7 +6,6 @@ namespace Modules\Shared\Infrastructure\Http\View\Portal;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Application\Command\CancelReservation;
 use Modules\Stay\Application\Command\CancelReservationHandler;
@@ -18,7 +17,6 @@ final class PortalCancelReservationView
     public function __construct(
         private CancelReservationHandler $cancelHandler,
         private ReservationRepository $repository,
-        private AccountRepository $accountRepository,
         private TenantContext $tenantContext,
     ) {}
 
@@ -38,13 +36,7 @@ final class PortalCancelReservationView
         }
 
         // Set tenant context for the reservation's hotel so save() works
-        $account = $this->accountRepository->findByUuid(
-            \Modules\IAM\Domain\ValueObject\AccountId::fromString($reservation->accountId)
-        );
-        if ($account) {
-            $numericId = $this->accountRepository->resolveNumericId($account->uuid);
-            $this->tenantContext->set($numericId);
-        }
+        $this->tenantContext->set($reservation->accountId);
 
         $data = $request->validate([
             'reason' => ['required', 'string', 'min:10'],

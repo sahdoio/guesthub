@@ -33,7 +33,6 @@ final class InvoiceCrudTest extends TestCase
 
         $invoice = InvoiceModel::withoutGlobalScopes()->create(array_merge([
             'uuid' => $invoiceUuid,
-            'account_id' => $this->account->id,
             'account_uuid' => $this->account->uuid,
             'reservation_id' => Uuid::uuid7()->toString(),
             'guest_id' => Uuid::uuid7()->toString(),

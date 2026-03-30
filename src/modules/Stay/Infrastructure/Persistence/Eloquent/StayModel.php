@@ -11,7 +11,7 @@ use Modules\Shared\Infrastructure\Persistence\Eloquent\BelongsToTenant;
 /**
  * @property int $id
  * @property string $uuid
- * @property int $account_id
+ * @property string $account_uuid
  * @property string $name
  * @property string $slug
  * @property string|null $description
@@ -38,7 +38,7 @@ final class StayModel extends Model
 
     protected $fillable = [
         'uuid',
-        'account_id',
+        'account_uuid',
         'name',
         'slug',
         'description',

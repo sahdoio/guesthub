@@ -55,9 +55,9 @@ final readonly class EloquentReservationRepository implements ReservationReposit
         );
     }
 
-    public function save(Reservation $reservation, int $accountNumericId): void
+    public function save(Reservation $reservation): void
     {
-        $data = $this->toRecord($reservation, $accountNumericId);
+        $data = $this->toRecord($reservation);
 
         $this->model->newQuery()
             ->updateOrInsert(['uuid' => $data['uuid']], $data);
@@ -208,11 +208,23 @@ final readonly class EloquentReservationRepository implements ReservationReposit
         );
     }
 
-    private function toRecord(Reservation $reservation, int $accountNumericId): array
+    private function resolveStayNumericId(string $stayUuid): int
+    {
+        $id = StayModel::withoutGlobalScopes()
+            ->where('uuid', $stayUuid)
+            ->value('id');
+
+        if ($id === null) {
+            throw new \RuntimeException("Stay not found for UUID: {$stayUuid}");
+        }
+
+        return (int) $id;
+    }
+
+    private function toRecord(Reservation $reservation): array
     {
         return [
             'uuid' => $reservation->uuid->value,
-            'account_id' => $accountNumericId,
             'account_uuid' => $reservation->accountId,
             'stay_id' => $this->resolveStayNumericId($reservation->stayId),
             'stay_uuid' => $reservation->stayId,
@@ -243,8 +255,8 @@ final readonly class EloquentReservationRepository implements ReservationReposit
         return ReservationReflector::reconstruct(
             uuid: ReservationId::fromString($record->uuid),
             guestId: $record->guest_id,
-            accountId: $record->account_uuid ?? '',
-            stayId: $record->stay_uuid ?? '',
+            accountId: $record->account_uuid,
+            stayId: $record->stay_uuid,
             period: new ReservationPeriod(
                 new DateTimeImmutable($record->check_in),
                 new DateTimeImmutable($record->check_out),
@@ -265,17 +277,6 @@ final readonly class EloquentReservationRepository implements ReservationReposit
             cancellationReason: $record->cancellation_reason,
             freeCancellationUntil: $record->free_cancellation_until ? new DateTimeImmutable($record->free_cancellation_until) : null,
         );
-    }
-
-    private function resolveStayNumericId(string $stayUuid): ?int
-    {
-        if ($stayUuid === '') {
-            return null;
-        }
-
-        $id = StayModel::query()->withoutGlobalScopes()->where('uuid', $stayUuid)->value('id');
-
-        return $id !== null ? (int) $id : null;
     }
 
     /** @param SpecialRequest[] $requests */

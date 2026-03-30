@@ -41,7 +41,7 @@ final class HandleInertiaRequests extends Middleware
                     'name' => $ownerAccount->name,
                     'slug' => $ownerAccount->slug ?? '',
                 ];
-                $stays = $this->stayRepository->findByAccountId($ownerAccount->uuid);
+                $stays = $this->stayRepository->findByAccountUuid((string) $ownerAccount->uuid);
                 $tenantData['hasHotels'] = count($stays) > 0;
             }
         }

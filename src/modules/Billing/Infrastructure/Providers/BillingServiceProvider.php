@@ -9,10 +9,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Billing\Domain\Event\InvoiceFullyPaid;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
-use Modules\Billing\Domain\Service\AccountGateway;
 use Modules\Billing\Domain\Service\PaymentGateway;
 use Modules\Billing\Domain\Service\ReservationGateway;
-use Modules\Billing\Infrastructure\Integration\AccountGatewayAdapter;
 use Modules\Billing\Infrastructure\Integration\ReservationGatewayAdapter;
 use Modules\Billing\Infrastructure\Listeners\OnGuestCheckedOut;
 use Modules\Billing\Infrastructure\Listeners\OnInvoiceFullyPaid;
@@ -36,7 +34,6 @@ final class BillingServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../Config/billing.php', 'billing');
 
         $this->app->bind(InvoiceRepository::class, EloquentInvoiceRepository::class);
-        $this->app->bind(AccountGateway::class, AccountGatewayAdapter::class);
         $this->app->bind(PaymentGateway::class, match (config('billing.gateway')) {
             'simulated' => SimulatedPaymentGateway::class,
             default => StripePaymentGateway::class,

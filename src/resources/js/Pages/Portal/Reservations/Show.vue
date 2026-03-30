@@ -1,7 +1,8 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import axios from 'axios';
 import GuestPortalLayout from '@/Layouts/GuestPortalLayout.vue';
 
 defineOptions({ layout: GuestPortalLayout });
@@ -42,15 +43,22 @@ const formatDate = (dateStr) => {
     return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
-// Payment form
-const payForm = useForm({});
+// Payment
 const processingPayment = ref(false);
-const payNow = () => {
+const paymentError = ref(null);
+const payNow = async () => {
     processingPayment.value = true;
-    payForm.post(`/portal/billing/${inv.value.uuid}/pay`, {
-        onSuccess: () => { processingPayment.value = false; },
-        onError: () => { processingPayment.value = false; },
-    });
+    paymentError.value = null;
+    try {
+        const { data } = await axios.post(`/portal/billing/${inv.value.uuid}/pay`);
+        if (data.simulated) {
+            router.reload();
+        }
+    } catch (e) {
+        paymentError.value = e.response?.data?.error || 'Payment failed.';
+    } finally {
+        processingPayment.value = false;
+    }
 };
 
 // Cancel form
@@ -298,7 +306,7 @@ const requestStatusColors = {
                     <button
                         v-else
                         @click="payNow"
-                        :disabled="payForm.processing"
+                        :disabled="processingPayment"
                         class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg shadow-sm text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
                     >
                         {{ $t('billing.pay_to_confirm') }}

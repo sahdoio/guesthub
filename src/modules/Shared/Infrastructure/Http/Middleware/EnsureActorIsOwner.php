@@ -6,6 +6,7 @@ namespace Modules\Shared\Infrastructure\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -13,6 +14,7 @@ final class EnsureActorIsOwner
 {
     public function __construct(
         private readonly TenantContext $tenantContext,
+        private readonly AccountRepository $accountRepository,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -41,7 +43,10 @@ final class EnsureActorIsOwner
 
         // Set tenant context from user's account
         if ($user->account_id) {
-            $this->tenantContext->set((int) $user->account_id);
+            $account = $this->accountRepository->findByNumericId((int) $user->account_id);
+            if ($account !== null) {
+                $this->tenantContext->set($account->uuid->value);
+            }
         }
 
         return $next($request);

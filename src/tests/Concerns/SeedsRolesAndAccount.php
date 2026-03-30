@@ -51,7 +51,7 @@ trait SeedsRolesAndAccount
 
         $this->stay = StayModel::withoutGlobalScopes()->create([
             'uuid' => Uuid::uuid7()->toString(),
-            'account_id' => $this->account->id,
+            'account_uuid' => $this->account->uuid,
             'name' => 'Test Stay',
             'slug' => 'test-stay',
             'type' => 'room',
@@ -62,7 +62,7 @@ trait SeedsRolesAndAccount
             'created_at' => now(),
         ]);
 
-        $this->app->make(TenantContext::class)->set($this->account->id);
+        $this->app->make(TenantContext::class)->set($this->account->uuid);
     }
 
     protected function createOwnerActor(array $overrides = []): ActorModel
@@ -76,7 +76,7 @@ trait SeedsRolesAndAccount
             'created_at' => now(),
         ], $overrides));
 
-        DB::table('actor_type_pivot')->insert([
+        DB::table('actor_type_map')->insert([
             'actor_id' => $actor->id,
             'type_id' => $this->ownerType->id,
         ]);
@@ -103,7 +103,7 @@ trait SeedsRolesAndAccount
             'created_at' => now(),
         ], $overrides));
 
-        DB::table('actor_type_pivot')->insert([
+        DB::table('actor_type_map')->insert([
             'actor_id' => $actor->id,
             'type_id' => $this->guestType->id,
         ]);
@@ -122,7 +122,7 @@ trait SeedsRolesAndAccount
             'created_at' => now(),
         ], $overrides));
 
-        DB::table('actor_type_pivot')->insert([
+        DB::table('actor_type_map')->insert([
             'actor_id' => $actor->id,
             'type_id' => $this->superadminType->id,
         ]);

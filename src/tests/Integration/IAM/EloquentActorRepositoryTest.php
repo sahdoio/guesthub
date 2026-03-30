@@ -20,7 +20,6 @@ use Modules\IAM\Domain\ValueObject\ActorId;
 use Modules\IAM\Domain\ValueObject\HashedPassword;
 use Modules\IAM\Domain\ValueObject\LoyaltyTier;
 use Modules\IAM\Domain\ValueObject\TypeName;
-use Modules\IAM\Infrastructure\Persistence\Eloquent\AccountModel;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\EloquentActorRepository;
 use Modules\IAM\Infrastructure\Persistence\Eloquent\UserModel;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
@@ -72,8 +71,7 @@ final class EloquentActorRepositoryTest extends TestCase
         $this->accountId = $account->uuid;
 
         // Set tenant context
-        $numericAccountId = (int) AccountModel::where('uuid', $account->uuid->value)->value('id');
-        $this->app->make(TenantContext::class)->set($numericAccountId);
+        $this->app->make(TenantContext::class)->set($account->uuid->value);
 
         // Seed a user for FK reference
         $userRepo = $this->app->make(UserRepository::class);

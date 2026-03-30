@@ -200,7 +200,8 @@
         "no_reservations_yet": "Nenhuma reserva ainda.",
         "total_reservations": "Total de reservas",
         "view_all": "Ver todas as reservas",
-        "recent": "Reservas Recentes"
+        "recent": "Reservas Recentes",
+        "no_rooms_available": "Nenhum quarto disponível para o tipo e período selecionados."
     },
     "guest": {
         "title": "Hóspedes",

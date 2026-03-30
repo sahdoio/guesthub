@@ -7,7 +7,6 @@ namespace Modules\Stay\Infrastructure\Http\View;
 use DateTimeImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Application\Command\CreateReservation;
 use Modules\Stay\Application\Command\CreateReservationHandler;
@@ -19,7 +18,6 @@ final class ReservationStoreView
     public function __construct(
         private CreateReservationHandler $handler,
         private TenantContext $tenantContext,
-        private AccountRepository $accountRepository,
         private StayRepository $stayRepository,
     ) {}
 
@@ -32,14 +30,12 @@ final class ReservationStoreView
             'check_out' => ['required', 'date', 'after:check_in'],
         ]);
 
-        $account = $this->accountRepository->findByNumericId($this->tenantContext->id());
-
         $stay = $this->stayRepository->findByUuid(StayId::fromString($data['stay_id']));
         abort_if($stay === null, 404, 'Stay not found.');
 
         $id = $this->handler->handle(new CreateReservation(
             guestId: $data['guest_id'],
-            accountId: (string) $account->uuid,
+            accountId: $this->tenantContext->accountUuid(),
             stayId: (string) $stay->uuid,
             checkIn: new DateTimeImmutable($data['check_in']),
             checkOut: new DateTimeImmutable($data['check_out']),

@@ -12,21 +12,21 @@ use Modules\IAM\Application\Query\ListUsersHandler;
 use Modules\IAM\Presentation\Http\Presenter\UserPresenter;
 use Modules\Shared\Application\Query\Pagination;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
-use Modules\Stay\Domain\Repository\StayGuestRepository;
 use Modules\Stay\Domain\Repository\StayRepository;
+use Modules\Stay\Domain\Service\AccountGuestGateway;
 
 final class ReservationCreateView
 {
     public function __construct(
         private ListUsersHandler $userHandler,
         private StayRepository $stayRepository,
-        private StayGuestRepository $stayGuestRepository,
+        private AccountGuestGateway $accountGuestGateway,
         private TenantContext $tenantContext,
     ) {}
 
     public function __invoke(Request $request): Response
     {
-        $guestUuids = $this->stayGuestRepository->guestUuidsForAccount($this->tenantContext->id());
+        $guestUuids = $this->accountGuestGateway->guestUuidsForAccount($this->tenantContext->accountUuid());
 
         $users = $this->userHandler->handle(
             new ListUsers(filters: ['guest_uuids' => $guestUuids]),

@@ -47,12 +47,12 @@ final class EloquentReservationRepositoryTest extends TestCase
             'created_at' => now(),
         ]);
         $this->accountNumericId = $account->id;
-        $this->app->make(TenantContext::class)->set($account->id);
+        $this->app->make(TenantContext::class)->set($this->accountUuid);
 
         $this->stayUuid = Uuid::uuid7()->toString();
         StayModel::withoutGlobalScopes()->create([
             'uuid' => $this->stayUuid,
-            'account_id' => $account->id,
+            'account_uuid' => $this->accountUuid,
             'name' => 'Test Stay',
             'slug' => 'test-stay',
             'type' => 'room',

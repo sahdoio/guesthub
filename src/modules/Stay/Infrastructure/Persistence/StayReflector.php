@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\Stay\Infrastructure\Persistence;
 
 use DateTimeImmutable;
-use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\Stay\Domain\Stay;
 use Modules\Stay\Domain\StayId;
 use Modules\Stay\Domain\ValueObject\StayCategory;
@@ -16,7 +15,7 @@ final class StayReflector
 {
     public static function reconstruct(
         StayId $uuid,
-        AccountId $accountId,
+        string $accountId,
         string $name,
         string $slug,
         ?string $description,

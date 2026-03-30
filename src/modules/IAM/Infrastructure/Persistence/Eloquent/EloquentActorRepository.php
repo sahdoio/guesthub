@@ -30,11 +30,11 @@ final class EloquentActorRepository implements ActorRepository
         // Sync types via pivot table
         $actorId = $this->model->newQuery()->where('uuid', $actor->uuid->value)->value('id');
 
-        DB::table('actor_type_pivot')->where('actor_id', $actorId)->delete();
+        DB::table('actor_type_map')->where('actor_id', $actorId)->delete();
 
         foreach ($actor->typeIds() as $typeId) {
             $dbTypeId = ActorTypeModel::where('uuid', $typeId->value)->value('id');
-            DB::table('actor_type_pivot')->insert([
+            DB::table('actor_type_map')->insert([
                 'actor_id' => $actorId,
                 'type_id' => $dbTypeId,
             ]);
@@ -114,9 +114,9 @@ final class EloquentActorRepository implements ActorRepository
             return [];
         }
 
-        return DB::table('actor_type_pivot')
-            ->join('actor_types', 'actor_types.id', '=', 'actor_type_pivot.type_id')
-            ->where('actor_type_pivot.actor_id', $record->id)
+        return DB::table('actor_type_map')
+            ->join('actor_types', 'actor_types.id', '=', 'actor_type_map.type_id')
+            ->where('actor_type_map.actor_id', $record->id)
             ->pluck('actor_types.name')
             ->all();
     }
@@ -129,9 +129,9 @@ final class EloquentActorRepository implements ActorRepository
     /** @return list<TypeId> */
     private function loadTypeIds(int $actorId): array
     {
-        return DB::table('actor_type_pivot')
-            ->join('actor_types', 'actor_types.id', '=', 'actor_type_pivot.type_id')
-            ->where('actor_type_pivot.actor_id', $actorId)
+        return DB::table('actor_type_map')
+            ->join('actor_types', 'actor_types.id', '=', 'actor_type_map.type_id')
+            ->where('actor_type_map.actor_id', $actorId)
             ->pluck('actor_types.uuid')
             ->map(fn (string $uuid) => TypeId::fromString($uuid))
             ->all();

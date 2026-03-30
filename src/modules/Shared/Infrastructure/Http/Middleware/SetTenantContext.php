@@ -26,9 +26,12 @@ final class SetTenantContext
         }
 
         if ($user->account_id) {
-            $this->tenantContext->set((int) $user->account_id);
-        } elseif ($request->session()->has('tenant_account_id')) {
-            $this->tenantContext->set((int) $request->session()->get('tenant_account_id'));
+            $account = $this->accountRepository->findByNumericId((int) $user->account_id);
+            if ($account !== null) {
+                $this->tenantContext->set($account->uuid->value);
+            }
+        } elseif ($request->session()->has('tenant_account_uuid')) {
+            $this->tenantContext->set($request->session()->get('tenant_account_uuid'));
         } else {
             $user->load('types');
             $typeNames = $user->types->pluck('name')->toArray();
@@ -36,11 +39,8 @@ final class SetTenantContext
             if (in_array('superadmin', $typeNames, true)) {
                 $accounts = $this->accountRepository->findAll();
                 if ($accounts !== []) {
-                    $defaultId = $this->accountRepository->resolveNumericId($accounts[0]->uuid);
-                    if ($defaultId !== null) {
-                        $this->tenantContext->set($defaultId);
-                        $request->session()->put('tenant_account_id', $defaultId);
-                    }
+                    $this->tenantContext->set($accounts[0]->uuid->value);
+                    $request->session()->put('tenant_account_uuid', $accounts[0]->uuid->value);
                 }
             }
         }

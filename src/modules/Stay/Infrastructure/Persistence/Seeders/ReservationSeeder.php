@@ -6,9 +6,7 @@ namespace Modules\Stay\Infrastructure\Persistence\Seeders;
 
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\IAM\Domain\ValueObject\AccountId;
+use Modules\IAM\Domain\Repository\AccountGuestRepository;
 use Modules\IAM\Infrastructure\Persistence\Seeders\AccountSeeder;
 use Modules\IAM\Infrastructure\Persistence\Seeders\UserSeeder;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
@@ -21,15 +19,14 @@ class ReservationSeeder extends Seeder
 {
     public function __construct(
         private readonly ReservationRepository $repository,
-        private readonly AccountRepository $accountRepository,
+        private readonly AccountGuestRepository $accountGuestRepository,
         private readonly TenantContext $tenantContext,
     ) {}
 
     public function run(): void
     {
         $accountUuid = AccountSeeder::$defaultAccountUuid;
-        $accountId = $this->accountRepository->resolveNumericId(AccountId::fromString($accountUuid));
-        $this->tenantContext->set($accountId);
+        $this->tenantContext->set($accountUuid);
 
         $stayUuid = StaySeeder::$defaultStayUuid;
         $userIds = UserSeeder::$userIds;
@@ -44,7 +41,7 @@ class ReservationSeeder extends Seeder
             adults: 2,
         );
         $r1->addSpecialRequest(RequestType::EARLY_CHECK_IN, 'Arriving on early morning flight');
-        $this->save($r1);
+        $this->save($r1, $accountUuid);
 
         // 2. Confirmed reservation (future, VIP guest) — couple with pet
         $r2 = Reservation::create(
@@ -59,7 +56,7 @@ class ReservationSeeder extends Seeder
         $r2->addSpecialRequest(RequestType::SPECIAL_OCCASION, 'Anniversary celebration - champagne and flowers');
         $r2->addSpecialRequest(RequestType::LATE_CHECK_OUT, 'Late flight, need room until 4pm');
         $r2->confirm();
-        $this->save($r2);
+        $this->save($r2, $accountUuid);
 
         // 3. Checked-in reservation (current stay) — family with child and baby
         $r3 = Reservation::create(
@@ -77,7 +74,7 @@ class ReservationSeeder extends Seeder
         $r3->confirm();
         $r3->checkIn();
         $r3->fulfillSpecialRequest($r3->specialRequests[0]->id());
-        $this->save($r3);
+        $this->save($r3, $accountUuid);
 
         // 4. Cancelled reservation (VIP guest) — solo traveler
         $r4 = Reservation::create(
@@ -89,7 +86,7 @@ class ReservationSeeder extends Seeder
             adults: 1,
         );
         $r4->cancel('Business trip rescheduled to next month');
-        $this->save($r4);
+        $this->save($r4, $accountUuid);
 
         // 5. Confirmed reservation with multiple special requests — group with children
         $r5 = Reservation::create(
@@ -105,18 +102,15 @@ class ReservationSeeder extends Seeder
         $r5->addSpecialRequest(RequestType::DIETARY_RESTRICTION, 'Gluten-free meals required');
         $r5->addSpecialRequest(RequestType::OTHER, 'Extra pillows and blankets please');
         $r5->confirm();
-        $this->save($r5);
+        $this->save($r5, $accountUuid);
     }
 
-    private function save(Reservation $reservation): void
+    private function save(Reservation $reservation, string $accountUuid): void
     {
         $reservation->pullDomainEvents(); // Discard events during seeding
-        $this->repository->save($reservation, $this->tenantContext->id());
+        $this->repository->save($reservation);
 
-        // Manually insert account_guests since domain events are discarded
-        DB::table('account_guests')->insertOrIgnore([
-            'account_id' => $this->tenantContext->id(),
-            'guest_uuid' => $reservation->guestId,
-        ]);
+        // Link guest to account since domain events are discarded
+        $this->accountGuestRepository->link($accountUuid, $reservation->guestId);
     }
 }

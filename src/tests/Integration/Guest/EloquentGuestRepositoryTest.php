@@ -36,7 +36,7 @@ final class EloquentGuestRepositoryTest extends TestCase
             'status' => 'active',
             'created_at' => now(),
         ]);
-        $this->app->make(TenantContext::class)->set($account->id);
+        $this->app->make(TenantContext::class)->set($account->uuid);
 
         $this->repository = $this->app->make(UserRepository::class);
     }

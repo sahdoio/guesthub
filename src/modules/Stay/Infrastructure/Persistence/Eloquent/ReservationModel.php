@@ -11,7 +11,6 @@ use Modules\Shared\Infrastructure\Persistence\Eloquent\BelongsToTenant;
 /**
  * @property int $id
  * @property string $uuid
- * @property int $account_id
  * @property string $account_uuid
  * @property int $stay_id
  * @property string $stay_uuid
@@ -38,7 +37,6 @@ final class ReservationModel extends Model
 
     protected $fillable = [
         'uuid',
-        'account_id',
         'account_uuid',
         'stay_id',
         'stay_uuid',
@@ -69,6 +67,6 @@ final class ReservationModel extends Model
 
     public function stay(): BelongsTo
     {
-        return $this->belongsTo(StayModel::class, 'stay_uuid', 'uuid');
+        return $this->belongsTo(StayModel::class, 'stay_id');
     }
 }

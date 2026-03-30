@@ -6,7 +6,6 @@ namespace Modules\Stay\Presentation\Http\Action;
 
 use DateMalformedStringException;
 use DateTimeImmutable;
-use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Shared\Infrastructure\Service\AuthenticatedUserResolver;
 use Modules\Shared\Presentation\Http\JsonResponder;
@@ -30,7 +29,6 @@ final readonly class CreateReservationAction
         private InputValidator $validator,
         private JsonResponder $responder,
         private TenantContext $tenantContext,
-        private AccountRepository $accountRepository,
         private StayRepository $stayRepository,
     ) {}
 
@@ -54,8 +52,6 @@ final readonly class CreateReservationAction
             return $this->responder->error(['message' => 'Access denied.'], Response::HTTP_FORBIDDEN);
         }
 
-        $account = $this->accountRepository->findByNumericId($this->tenantContext->id());
-
         $stay = $this->stayRepository->findByUuid(StayId::fromString($data['stay_id']));
         if ($stay === null) {
             return $this->responder->error(['message' => 'Stay not found.'], Response::HTTP_NOT_FOUND);
@@ -63,7 +59,7 @@ final readonly class CreateReservationAction
 
         $id = $this->handler->handle(new CreateReservation(
             guestId: $data['guest_id'],
-            accountId: (string) $account->uuid,
+            accountId: $this->tenantContext->accountUuid(),
             stayId: (string) $stay->uuid,
             checkIn: new DateTimeImmutable($data['check_in']),
             checkOut: new DateTimeImmutable($data['check_out']),

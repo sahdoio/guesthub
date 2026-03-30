@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Modules\Stay\Application\Command;
 
 use DateTimeImmutable;
-use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
 use Modules\Stay\Domain\Repository\StayRepository;
@@ -27,7 +26,7 @@ final class CreateStayHandler extends EventDispatchingHandler
 
         $stay = Stay::create(
             uuid: $id,
-            accountId: AccountId::fromString($command->accountId),
+            accountId: $command->accountId,
             name: $command->name,
             slug: $command->slug,
             type: $command->type,

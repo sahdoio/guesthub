@@ -39,7 +39,7 @@ final class GuestApiTest extends TestCase
             'status' => 'active',
             'created_at' => now(),
         ]);
-        $this->app->make(TenantContext::class)->set($account->id);
+        $this->app->make(TenantContext::class)->set($account->uuid);
 
         $this->api = $this->app->make(UserApi::class);
         $this->repository = $this->app->make(UserRepository::class);

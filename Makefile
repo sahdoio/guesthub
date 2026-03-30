@@ -97,6 +97,7 @@ pint: ## Run Laravel Pint code style fixer
 	$(DC) exec guesthub ./vendor/bin/pint
 
 grum: ## Run GrumPHP pre-commit checks
+	rm -f src/database/database.sqlite && touch src/database/database.sqlite
 	cd src && ./vendor/bin/grumphp run
 
 queue: ## Start Horizon queue worker

@@ -11,7 +11,6 @@ use Modules\Billing\Domain\DTO\PaymentIntent;
 use Modules\Billing\Domain\InvoiceId;
 use Modules\Billing\Domain\PaymentId;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
-use Modules\Billing\Domain\Service\AccountGateway;
 use Modules\Billing\Domain\Service\PaymentGateway;
 use Modules\Billing\Domain\ValueObject\PaymentMethod;
 use Modules\Shared\Application\EventDispatcher;
@@ -22,7 +21,6 @@ final class PortalInitiatePaymentAction extends EventDispatchingHandler
 {
     public function __construct(
         private InvoiceRepository $repository,
-        private AccountGateway $accountGateway,
         private PaymentGateway $paymentGateway,
         private TenantContext $tenantContext,
         EventDispatcher $dispatcher,
@@ -34,21 +32,15 @@ final class PortalInitiatePaymentAction extends EventDispatchingHandler
     {
         $id = InvoiceId::fromString($uuid);
 
-        // Resolve tenant from invoice
-        $accountNumericId = $this->repository->resolveAccountNumericId($id);
-
-        if ($accountNumericId === null) {
-            abort(404, 'Invoice not found.');
-        }
-
-        // Set tenant context so repository can find the invoice
-        $this->tenantContext->set($accountNumericId);
-
-        $invoice = $this->repository->findByUuid($id);
+        // Find globally first (no tenant scope), then set tenant from the invoice
+        $invoice = $this->repository->findByUuidGlobal($id);
 
         if (! $invoice) {
             abort(404, 'Invoice not found.');
         }
+
+        // Set tenant context from invoice's account UUID
+        $this->tenantContext->set($invoice->accountId);
 
         // Enforce ownership
         $guestUuid = $request->attributes->get('guest_uuid');
@@ -78,7 +70,7 @@ final class PortalInitiatePaymentAction extends EventDispatchingHandler
             $invoice->markPaymentSucceeded($result->paymentIntentId);
         }
 
-        $this->repository->save($invoice, $this->accountGateway->resolveNumericId($invoice->accountId));
+        $this->repository->save($invoice);
         $this->dispatchEvents($invoice);
 
         return new JsonResponse([

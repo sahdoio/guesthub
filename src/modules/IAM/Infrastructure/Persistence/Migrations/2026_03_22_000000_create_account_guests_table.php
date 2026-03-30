@@ -11,11 +11,10 @@ return new class extends Migration
         Schema::create('account_guests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('account_id')->constrained('accounts')->cascadeOnDelete();
-            $table->uuid('guest_uuid')->comment('References users.uuid');
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamp('first_reservation_at')->nullable();
 
-            $table->unique(['account_id', 'guest_uuid']);
-            $table->index('guest_uuid');
+            $table->unique(['account_id', 'user_id']);
         });
     }
 

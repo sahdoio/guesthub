@@ -8,7 +8,6 @@ use DateMalformedStringException;
 use DateTimeImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Modules\IAM\Domain\Repository\AccountRepository;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Application\Command\CreateReservation;
 use Modules\Stay\Application\Command\CreateReservationHandler;
@@ -19,7 +18,6 @@ final class PortalReservationStoreView
     public function __construct(
         private CreateReservationHandler $handler,
         private StayRepository $stayRepository,
-        private AccountRepository $accountRepository,
         private TenantContext $tenantContext,
     ) {}
 
@@ -46,8 +44,7 @@ final class PortalReservationStoreView
         }
 
         // Set tenant context for the reservation's stay account
-        $numericId = $this->accountRepository->resolveNumericId($stay->accountId);
-        $this->tenantContext->set($numericId);
+        $this->tenantContext->set((string) $stay->accountId);
 
         $id = $this->handler->handle(new CreateReservation(
             guestId: $guestUuid,

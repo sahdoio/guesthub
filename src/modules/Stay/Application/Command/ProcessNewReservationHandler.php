@@ -7,8 +7,8 @@ namespace Modules\Stay\Application\Command;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Stay\Domain\Exception\ReservationNotFoundException;
 use Modules\Stay\Domain\Repository\ReservationRepository;
-use Modules\Stay\Domain\Repository\StayGuestRepository;
 use Modules\Stay\Domain\ReservationId;
+use Modules\Stay\Domain\Service\AccountGuestGateway;
 use Modules\Stay\Domain\Service\GuestGateway;
 use Modules\Stay\Infrastructure\IntegrationEvent\ReservationCreatedEvent;
 
@@ -16,7 +16,7 @@ final readonly class ProcessNewReservationHandler
 {
     public function __construct(
         private ReservationRepository $repository,
-        private StayGuestRepository $stayGuestRepository,
+        private AccountGuestGateway $accountGuestGateway,
         private GuestGateway $guestGateway,
         private EventDispatcher $dispatcher,
     ) {}
@@ -29,8 +29,8 @@ final readonly class ProcessNewReservationHandler
         $reservation = $this->repository->findByUuid($reservationId)
             ?? throw ReservationNotFoundException::withId($reservationId);
 
-        // Record in account_guests read model
-        $this->stayGuestRepository->link($reservation->accountId, $reservation->guestId);
+        // Record in account_guests read model (owned by IAM)
+        $this->accountGuestGateway->link($reservation->accountId, $reservation->guestId);
 
         $guestInfo = $this->guestGateway->findByUuid($reservation->guestId);
 

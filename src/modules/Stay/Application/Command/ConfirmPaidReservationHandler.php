@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Application\Command;
 
-use Modules\IAM\Infrastructure\Integration\AccountApi;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
 use Modules\Stay\Domain\Repository\ReservationRepository;
@@ -15,7 +14,6 @@ final class ConfirmPaidReservationHandler extends EventDispatchingHandler
 {
     public function __construct(
         private readonly ReservationRepository $repository,
-        private readonly AccountApi $accountApi,
         EventDispatcher $dispatcher,
     ) {
         parent::__construct($dispatcher);
@@ -36,7 +34,7 @@ final class ConfirmPaidReservationHandler extends EventDispatchingHandler
 
         $reservation->confirm();
 
-        $this->repository->save($reservation, $this->accountApi->resolveNumericId($reservation->accountId));
+        $this->repository->save($reservation);
         $this->dispatchEvents($reservation);
     }
 }

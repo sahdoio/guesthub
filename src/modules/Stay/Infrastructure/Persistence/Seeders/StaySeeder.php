@@ -6,8 +6,6 @@ namespace Modules\Stay\Infrastructure\Persistence\Seeders;
 
 use DateTimeImmutable;
 use Illuminate\Database\Seeder;
-use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\IAM\Domain\ValueObject\AccountId;
 use Modules\IAM\Infrastructure\Persistence\Seeders\AccountSeeder;
 use Modules\Shared\Infrastructure\Persistence\TenantContext;
 use Modules\Stay\Domain\Repository\StayRepository;
@@ -113,7 +111,6 @@ class StaySeeder extends Seeder
 
     public function __construct(
         private readonly StayRepository $stayRepository,
-        private readonly AccountRepository $accountRepository,
         private readonly TenantContext $tenantContext,
     ) {}
 
@@ -135,14 +132,12 @@ class StaySeeder extends Seeder
                 continue;
             }
 
-            $accountId = AccountId::fromString($accountUuid);
-            $numericAccountId = $this->accountRepository->resolveNumericId($accountId);
-            $this->tenantContext->set($numericAccountId);
+            $this->tenantContext->set($accountUuid);
 
             $stayId = $this->stayRepository->nextIdentity();
             $stay = Stay::create(
                 uuid: $stayId,
-                accountId: $accountId,
+                accountId: $accountUuid,
                 name: $data['name'],
                 slug: $data['slug'],
                 type: StayType::from($data['type']),

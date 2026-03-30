@@ -18,9 +18,10 @@ use Modules\Stay\Domain\Event\ReservationCancelled;
 use Modules\Stay\Domain\Event\ReservationConfirmed;
 use Modules\Stay\Domain\Event\ReservationCreated;
 use Modules\Stay\Domain\Repository\ReservationRepository;
-use Modules\Stay\Domain\Repository\StayGuestRepository;
 use Modules\Stay\Domain\Repository\StayRepository;
+use Modules\Stay\Domain\Service\AccountGuestGateway;
 use Modules\Stay\Domain\Service\GuestGateway;
+use Modules\Stay\Infrastructure\Integration\AccountGuestGatewayAdapter;
 use Modules\Stay\Infrastructure\Integration\GuestGatewayAdapter;
 use Modules\Stay\Infrastructure\Listeners\OnGuestCheckedIn;
 use Modules\Stay\Infrastructure\Listeners\OnGuestCheckedOut;
@@ -29,7 +30,6 @@ use Modules\Stay\Infrastructure\Listeners\OnReservationCancelled;
 use Modules\Stay\Infrastructure\Listeners\OnReservationConfirmed;
 use Modules\Stay\Infrastructure\Listeners\OnReservationCreated;
 use Modules\Stay\Infrastructure\Persistence\Eloquent\EloquentReservationRepository;
-use Modules\Stay\Infrastructure\Persistence\Eloquent\EloquentStayGuestRepository;
 use Modules\Stay\Infrastructure\Persistence\Eloquent\EloquentStayRepository;
 
 final class StayServiceProvider extends ServiceProvider
@@ -38,7 +38,7 @@ final class StayServiceProvider extends ServiceProvider
     {
         // Stay bindings
         $this->app->bind(StayRepository::class, EloquentStayRepository::class);
-        $this->app->bind(StayGuestRepository::class, EloquentStayGuestRepository::class);
+        $this->app->bind(AccountGuestGateway::class, AccountGuestGatewayAdapter::class);
 
         // Reservation bindings
         $this->mergeConfigFrom(__DIR__.'/../Config/reservation.php', 'reservation');

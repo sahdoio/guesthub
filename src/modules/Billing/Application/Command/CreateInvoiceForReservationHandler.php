@@ -10,7 +10,6 @@ use Modules\Billing\Domain\InvoiceId;
 use Modules\Billing\Domain\LineItem;
 use Modules\Billing\Domain\LineItemId;
 use Modules\Billing\Domain\Repository\InvoiceRepository;
-use Modules\Billing\Domain\Service\AccountGateway;
 use Modules\Billing\Domain\ValueObject\Money;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
@@ -19,7 +18,6 @@ class CreateInvoiceForReservationHandler extends EventDispatchingHandler
 {
     public function __construct(
         private InvoiceRepository $repository,
-        private AccountGateway $accountGateway,
         EventDispatcher $dispatcher,
     ) {
         parent::__construct($dispatcher);
@@ -48,7 +46,7 @@ class CreateInvoiceForReservationHandler extends EventDispatchingHandler
             createdAt: new DateTimeImmutable,
         );
 
-        $this->repository->save($invoice, $this->accountGateway->resolveNumericId($invoice->accountId));
+        $this->repository->save($invoice);
         $this->dispatchEvents($invoice);
 
         return $id;

@@ -18,11 +18,10 @@ final readonly class EloquentInvoiceRepository implements InvoiceRepository
         private InvoiceModel $model,
     ) {}
 
-    public function save(Invoice $invoice, int $accountNumericId): void
+    public function save(Invoice $invoice): void
     {
         $invoiceData = [
             'uuid' => $invoice->uuid->value,
-            'account_id' => $accountNumericId,
             'account_uuid' => $invoice->accountId,
             'reservation_id' => $invoice->reservationId,
             'guest_id' => $invoice->guestId,
@@ -190,20 +189,10 @@ final readonly class EloquentInvoiceRepository implements InvoiceRepository
             ->all();
     }
 
-    public function resolveAccountNumericId(InvoiceId $uuid): ?int
-    {
-        $id = $this->model->newQuery()
-            ->withoutGlobalScopes()
-            ->where('uuid', $uuid->value)
-            ->value('account_id');
-
-        return $id !== null ? (int) $id : null;
-    }
-
     public function listForOwnerView(int $page = 1, int $perPage = 15, ?string $status = null): array
     {
         $query = $this->model->newQuery()
-            ->with(['lineItems', 'payments', 'reservation.stay', 'guest']);
+            ->with(['lineItems', 'payments']);
 
         if ($status !== null) {
             $query->where('status', $status);
@@ -226,7 +215,7 @@ final readonly class EloquentInvoiceRepository implements InvoiceRepository
     public function findForOwnerView(string $uuid): ?array
     {
         $invoice = $this->model->newQuery()
-            ->with(['lineItems', 'payments', 'reservation.stay', 'guest'])
+            ->with(['lineItems', 'payments'])
             ->where('uuid', $uuid)
             ->first();
 

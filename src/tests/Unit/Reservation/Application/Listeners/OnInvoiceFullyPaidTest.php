@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Reservation\Application\Listeners;
 
 use DateTimeImmutable;
-use Modules\IAM\Domain\Repository\AccountRepository;
-use Modules\IAM\Infrastructure\Integration\AccountApi;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Stay\Application\Command\ConfirmPaidReservation;
 use Modules\Stay\Application\Command\ConfirmPaidReservationHandler;
@@ -24,14 +22,6 @@ use Ramsey\Uuid\Uuid;
 #[CoversClass(ConfirmPaidReservationHandler::class)]
 final class OnInvoiceFullyPaidTest extends TestCase
 {
-    private function createAccountApi(?int $numericId = 1): AccountApi
-    {
-        $repository = $this->createMock(AccountRepository::class);
-        $repository->method('resolveNumericId')->willReturn($numericId);
-
-        return new AccountApi($repository);
-    }
-
     private function createPendingReservation(): Reservation
     {
         $reservation = Reservation::create(
@@ -41,7 +31,7 @@ final class OnInvoiceFullyPaidTest extends TestCase
             Uuid::uuid7()->toString(),
             new ReservationPeriod(new DateTimeImmutable('+10 days'), new DateTimeImmutable('+13 days')),
         );
-        $reservation->pullDomainEvents(); // clear creation event
+        $reservation->pullDomainEvents();
 
         return $reservation;
     }
@@ -58,16 +48,14 @@ final class OnInvoiceFullyPaidTest extends TestCase
             ->willReturn($reservation);
         $repository->expects($this->once())
             ->method('save')
-            ->with($reservation, 1);
-
-        $accountApi = $this->createAccountApi();
+            ->with($reservation);
 
         $dispatcher = $this->createMock(EventDispatcher::class);
         $dispatcher->expects($this->once())
             ->method('dispatch')
             ->with($this->isInstanceOf(ReservationConfirmed::class));
 
-        $handler = new ConfirmPaidReservationHandler($repository, $accountApi, $dispatcher);
+        $handler = new ConfirmPaidReservationHandler($repository, $dispatcher);
 
         $handler->handle(new ConfirmPaidReservation(
             reservationId: $reservationId,
@@ -89,12 +77,10 @@ final class OnInvoiceFullyPaidTest extends TestCase
             ->willReturn($reservation);
         $repository->expects($this->never())->method('save');
 
-        $accountApi = $this->createAccountApi();
-
         $dispatcher = $this->createMock(EventDispatcher::class);
         $dispatcher->expects($this->never())->method('dispatch');
 
-        $handler = new ConfirmPaidReservationHandler($repository, $accountApi, $dispatcher);
+        $handler = new ConfirmPaidReservationHandler($repository, $dispatcher);
 
         $handler->handle(new ConfirmPaidReservation(
             reservationId: (string) $reservation->uuid,
@@ -110,12 +96,10 @@ final class OnInvoiceFullyPaidTest extends TestCase
             ->willReturn(null);
         $repository->expects($this->never())->method('save');
 
-        $accountApi = $this->createAccountApi();
-
         $dispatcher = $this->createMock(EventDispatcher::class);
         $dispatcher->expects($this->never())->method('dispatch');
 
-        $handler = new ConfirmPaidReservationHandler($repository, $accountApi, $dispatcher);
+        $handler = new ConfirmPaidReservationHandler($repository, $dispatcher);
 
         $handler->handle(new ConfirmPaidReservation(
             reservationId: Uuid::uuid7()->toString(),

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Modules\Stay\Application\Command;
 
-use Modules\IAM\Infrastructure\Integration\AccountApi;
 use Modules\Shared\Application\EventDispatcher;
 use Modules\Shared\Application\EventDispatchingHandler;
 use Modules\Stay\Domain\Exception\ReservationNotFoundException;
@@ -15,7 +14,6 @@ final class CancelReservationHandler extends EventDispatchingHandler
 {
     public function __construct(
         private ReservationRepository $repository,
-        private AccountApi $accountApi,
         EventDispatcher $dispatcher,
     ) {
         parent::__construct($dispatcher);
@@ -29,7 +27,7 @@ final class CancelReservationHandler extends EventDispatchingHandler
 
         $reservation->cancel($command->reason);
 
-        $this->repository->save($reservation, $this->accountApi->resolveNumericId($reservation->accountId));
+        $this->repository->save($reservation);
         $this->dispatchEvents($reservation);
     }
 }
