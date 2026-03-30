@@ -144,7 +144,7 @@ graph LR
     subgraph IAM["IAM [U]"]
         direction TB
         IAM_T["accounts · users · actors<br/>actor_types · actor_type_map<br/>account_guests"]
-        IAM_API["OHS: UserApi · AccountGuestApi · AccountApi"]
+        IAM_API["OHS: UserApi · AccountGuestApi"]
     end
 
     subgraph Stay["Stay [U/D]"]
