@@ -17,7 +17,7 @@ use Ramsey\Uuid\Uuid;
 final class FreeCancellationTest extends TestCase
 {
     #[Test]
-    public function it_sets_free_cancellation_until_48h_before_checkin(): void
+    public function itSetsFreeCancellationUntil48hBeforeCheckin(): void
     {
         $checkIn = new DateTimeImmutable('+10 days');
         $checkOut = new DateTimeImmutable('+13 days');
@@ -35,7 +35,7 @@ final class FreeCancellationTest extends TestCase
     }
 
     #[Test]
-    public function it_is_within_free_cancellation_window_when_checkin_is_far(): void
+    public function itIsWithinFreeCancellationWindowWhenCheckinIsFar(): void
     {
         $checkIn = new DateTimeImmutable('+10 days');
         $checkOut = new DateTimeImmutable('+13 days');
@@ -52,7 +52,7 @@ final class FreeCancellationTest extends TestCase
     }
 
     #[Test]
-    public function it_is_outside_free_cancellation_window_when_checkin_is_soon(): void
+    public function itIsOutsideFreeCancellationWindowWhenCheckinIsSoon(): void
     {
         // Check-in is in 1 hour — 48h window has passed
         $checkIn = new DateTimeImmutable('+1 hour');

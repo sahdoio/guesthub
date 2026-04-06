@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 final class ReservationReflectorTest extends TestCase
 {
     #[Test]
-    public function it_reconstructs_a_pending_reservation(): void
+    public function itReconstructsAPendingReservation(): void
     {
         $uuid = ReservationId::generate();
         $period = new ReservationPeriod(
@@ -62,7 +62,7 @@ final class ReservationReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_reconstructs_a_checked_in_reservation(): void
+    public function itReconstructsACheckedInReservation(): void
     {
         $confirmedAt = new DateTimeImmutable('2026-01-16');
         $checkedInAt = new DateTimeImmutable('2026-01-18');
@@ -97,7 +97,7 @@ final class ReservationReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_reconstructs_a_cancelled_reservation(): void
+    public function itReconstructsACancelledReservation(): void
     {
         $cancelledAt = new DateTimeImmutable('2026-01-17');
 
@@ -131,7 +131,7 @@ final class ReservationReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_does_not_record_domain_events(): void
+    public function itDoesNotRecordDomainEvents(): void
     {
         $reservation = ReservationReflector::reconstruct(
             uuid: ReservationId::generate(),

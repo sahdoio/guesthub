@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Support\Facades\Route;
 use Modules\Shared\Infrastructure\Http\View\Portal\PortalAddSpecialRequestView;
 use Modules\Shared\Infrastructure\Http\View\Portal\PortalCancelReservationView;

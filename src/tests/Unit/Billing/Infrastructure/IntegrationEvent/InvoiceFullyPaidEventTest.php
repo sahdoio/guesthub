@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 final class InvoiceFullyPaidEventTest extends TestCase
 {
     #[Test]
-    public function it_implements_integration_event(): void
+    public function itImplementsIntegrationEvent(): void
     {
         $event = new InvoiceFullyPaidEvent(
             invoiceId: 'inv-123',
@@ -26,7 +26,7 @@ final class InvoiceFullyPaidEventTest extends TestCase
     }
 
     #[Test]
-    public function it_serializes_correctly(): void
+    public function itSerializesCorrectly(): void
     {
         $event = new InvoiceFullyPaidEvent(
             invoiceId: 'inv-123',
@@ -41,7 +41,7 @@ final class InvoiceFullyPaidEventTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_occurred_at(): void
+    public function itReturnsOccurredAt(): void
     {
         $event = new InvoiceFullyPaidEvent(
             invoiceId: 'inv-123',

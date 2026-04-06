@@ -66,7 +66,7 @@ final class GuestGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function it_finds_guest_info_by_uuid(): void
+    public function itFindsGuestInfoByUuid(): void
     {
         $uuid = $this->seedGuest('alice@hotel.com');
 
@@ -80,13 +80,13 @@ final class GuestGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_null_for_unknown_uuid(): void
+    public function itReturnsNullForUnknownUuid(): void
     {
         $this->assertNull($this->gateway->findByUuid('00000000-0000-0000-0000-000000000000'));
     }
 
     #[Test]
-    public function it_identifies_gold_guest_as_vip(): void
+    public function itIdentifiesGoldGuestAsVip(): void
     {
         $uuid = $this->seedGuest('gold@hotel.com', LoyaltyTier::GOLD);
 
@@ -96,7 +96,7 @@ final class GuestGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function it_identifies_platinum_guest_as_vip(): void
+    public function itIdentifiesPlatinumGuestAsVip(): void
     {
         $uuid = $this->seedGuest('platinum@hotel.com', LoyaltyTier::PLATINUM);
 
@@ -106,7 +106,7 @@ final class GuestGatewayAdapterTest extends TestCase
     }
 
     #[Test]
-    public function it_identifies_silver_guest_as_non_vip(): void
+    public function itIdentifiesSilverGuestAsNonVip(): void
     {
         $uuid = $this->seedGuest('silver@hotel.com', LoyaltyTier::SILVER);
 

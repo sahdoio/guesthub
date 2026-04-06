@@ -57,13 +57,13 @@ final class GuestStatsTest extends TestCase
     }
 
     #[Test]
-    public function count_returns_zero_with_no_guests(): void
+    public function countReturnsZeroWithNoGuests(): void
     {
         $this->assertSame(0, $this->repository->count());
     }
 
     #[Test]
-    public function count_returns_total_guests(): void
+    public function countReturnsTotalGuests(): void
     {
         $this->createGuest();
         $this->createGuest();
@@ -73,13 +73,13 @@ final class GuestStatsTest extends TestCase
     }
 
     #[Test]
-    public function count_by_loyalty_tier_returns_empty_when_no_guests(): void
+    public function countByLoyaltyTierReturnsEmptyWhenNoGuests(): void
     {
         $this->assertSame([], $this->repository->countByLoyaltyTier());
     }
 
     #[Test]
-    public function count_by_loyalty_tier_groups_correctly(): void
+    public function countByLoyaltyTierGroupsCorrectly(): void
     {
         $this->createGuest('bronze');
         $this->createGuest('bronze');

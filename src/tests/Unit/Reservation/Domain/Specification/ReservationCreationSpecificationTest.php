@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 final class ReservationCreationSpecificationTest extends TestCase
 {
     #[Test]
-    public function it_rejects_checkin_in_the_past(): void
+    public function itRejectsCheckinInThePast(): void
     {
         $spec = new ReservationCreationSpecification;
 
@@ -28,7 +28,7 @@ final class ReservationCreationSpecificationTest extends TestCase
     }
 
     #[Test]
-    public function it_allows_checkin_today(): void
+    public function itAllowsCheckinToday(): void
     {
         $spec = new ReservationCreationSpecification;
 
@@ -41,7 +41,7 @@ final class ReservationCreationSpecificationTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_booking_too_far_in_advance_for_regular_guest(): void
+    public function itRejectsBookingTooFarInAdvanceForRegularGuest(): void
     {
         $spec = new ReservationCreationSpecification;
 
@@ -54,7 +54,7 @@ final class ReservationCreationSpecificationTest extends TestCase
     }
 
     #[Test]
-    public function it_allows_vip_to_book_further_in_advance(): void
+    public function itAllowsVipToBookFurtherInAdvance(): void
     {
         $spec = new ReservationCreationSpecification;
 

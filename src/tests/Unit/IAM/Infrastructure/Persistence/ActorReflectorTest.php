@@ -30,7 +30,7 @@ final class ActorReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_reconstructs_a_guest_actor(): void
+    public function itReconstructsAGuestActor(): void
     {
         $uuid = ActorId::generate();
         $createdAt = new DateTimeImmutable('2026-01-15 10:00:00');
@@ -61,7 +61,7 @@ final class ActorReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_reconstructs_an_admin_actor(): void
+    public function itReconstructsAnAdminActor(): void
     {
         $actor = ActorReflector::reconstruct(
             uuid: ActorId::generate(),
@@ -80,7 +80,7 @@ final class ActorReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_reconstructs_with_updated_at(): void
+    public function itReconstructsWithUpdatedAt(): void
     {
         $actor = ActorReflector::reconstruct(
             uuid: ActorId::generate(),
@@ -99,7 +99,7 @@ final class ActorReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_does_not_record_domain_events(): void
+    public function itDoesNotRecordDomainEvents(): void
     {
         $actor = ActorReflector::reconstruct(
             uuid: ActorId::generate(),

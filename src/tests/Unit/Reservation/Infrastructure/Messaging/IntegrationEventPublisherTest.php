@@ -16,7 +16,7 @@ use Tests\TestCase;
 final class IntegrationEventPublisherTest extends TestCase
 {
     #[Test]
-    public function it_dispatches_the_integration_event(): void
+    public function itDispatchesTheIntegrationEvent(): void
     {
         Log::shouldReceive('info')->once();
 

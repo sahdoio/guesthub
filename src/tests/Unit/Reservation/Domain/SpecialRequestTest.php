@@ -30,7 +30,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_with_pending_status(): void
+    public function itCreatesWithPendingStatus(): void
     {
         $request = $this->createRequest();
 
@@ -41,7 +41,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function it_can_be_fulfilled(): void
+    public function itCanBeFulfilled(): void
     {
         $request = $this->createRequest();
 
@@ -52,7 +52,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function it_cannot_be_fulfilled_twice(): void
+    public function itCannotBeFulfilledTwice(): void
     {
         $request = $this->createRequest();
         $request->fulfill();
@@ -62,7 +62,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function it_can_be_cancelled(): void
+    public function itCanBeCancelled(): void
     {
         $request = $this->createRequest();
 
@@ -72,7 +72,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function it_cannot_cancel_after_fulfillment(): void
+    public function itCannotCancelAfterFulfillment(): void
     {
         $request = $this->createRequest();
         $request->fulfill();
@@ -82,7 +82,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function it_cannot_fulfill_after_cancellation(): void
+    public function itCannotFulfillAfterCancellation(): void
     {
         $request = $this->createRequest();
         $request->cancel();
@@ -92,7 +92,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function it_changes_description(): void
+    public function itChangesDescription(): void
     {
         $request = $this->createRequest();
 
@@ -102,7 +102,7 @@ final class SpecialRequestTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_empty_description(): void
+    public function itRejectsEmptyDescription(): void
     {
         $request = $this->createRequest();
 

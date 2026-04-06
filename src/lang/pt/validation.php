@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     'required' => 'O campo :attribute e obrigatorio.',

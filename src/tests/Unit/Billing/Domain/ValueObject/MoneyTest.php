@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 final class MoneyTest extends TestCase
 {
     #[Test]
-    public function it_creates_money(): void
+    public function itCreatesMoney(): void
     {
         $money = new Money(1500, 'usd');
 
@@ -23,7 +23,7 @@ final class MoneyTest extends TestCase
     }
 
     #[Test]
-    public function it_adds_money(): void
+    public function itAddsMoney(): void
     {
         $a = new Money(100, 'usd');
         $b = new Money(200, 'usd');
@@ -35,7 +35,7 @@ final class MoneyTest extends TestCase
     }
 
     #[Test]
-    public function it_subtracts_money(): void
+    public function itSubtractsMoney(): void
     {
         $a = new Money(500, 'usd');
         $b = new Money(200, 'usd');
@@ -47,7 +47,7 @@ final class MoneyTest extends TestCase
     }
 
     #[Test]
-    public function it_multiplies_money(): void
+    public function itMultipliesMoney(): void
     {
         $money = new Money(100, 'usd');
 
@@ -58,7 +58,7 @@ final class MoneyTest extends TestCase
     }
 
     #[Test]
-    public function it_checks_zero(): void
+    public function itChecksZero(): void
     {
         $zero = new Money(0, 'usd');
         $nonZero = new Money(100, 'usd');
@@ -68,7 +68,7 @@ final class MoneyTest extends TestCase
     }
 
     #[Test]
-    public function it_checks_positive(): void
+    public function itChecksPositive(): void
     {
         $positive = new Money(100, 'usd');
         $zero = new Money(0, 'usd');
@@ -80,7 +80,7 @@ final class MoneyTest extends TestCase
     }
 
     #[Test]
-    public function it_formats_money(): void
+    public function itFormatsMoney(): void
     {
         $money = new Money(12550, 'usd');
 
@@ -88,7 +88,7 @@ final class MoneyTest extends TestCase
     }
 
     #[Test]
-    public function it_checks_equality(): void
+    public function itChecksEquality(): void
     {
         $a = new Money(100, 'usd');
         $b = new Money(100, 'usd');
@@ -101,7 +101,7 @@ final class MoneyTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_different_currencies(): void
+    public function itRejectsDifferentCurrencies(): void
     {
         $usd = new Money(100, 'usd');
         $eur = new Money(100, 'eur');
@@ -111,7 +111,7 @@ final class MoneyTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_different_currencies_on_subtract(): void
+    public function itRejectsDifferentCurrenciesOnSubtract(): void
     {
         $usd = new Money(100, 'usd');
         $eur = new Money(100, 'eur');

@@ -73,7 +73,7 @@ final class OnReservationCancelledTest extends TestCase
     }
 
     #[Test]
-    public function it_voids_issued_invoice_on_cancellation(): void
+    public function itVoidsIssuedInvoiceOnCancellation(): void
     {
         $invoice = $this->createInvoice(InvoiceStatus::ISSUED);
 
@@ -104,7 +104,7 @@ final class OnReservationCancelledTest extends TestCase
     }
 
     #[Test]
-    public function it_voids_draft_invoice_on_cancellation(): void
+    public function itVoidsDraftInvoiceOnCancellation(): void
     {
         $invoice = $this->createInvoice(InvoiceStatus::DRAFT);
 
@@ -129,7 +129,7 @@ final class OnReservationCancelledTest extends TestCase
     }
 
     #[Test]
-    public function it_refunds_paid_invoice_within_free_cancellation_window(): void
+    public function itRefundsPaidInvoiceWithinFreeCancellationWindow(): void
     {
         $invoice = $this->createInvoice(InvoiceStatus::PAID);
 
@@ -160,7 +160,7 @@ final class OnReservationCancelledTest extends TestCase
     }
 
     #[Test]
-    public function it_does_not_refund_paid_invoice_past_free_cancellation_window(): void
+    public function itDoesNotRefundPaidInvoicePastFreeCancellationWindow(): void
     {
         $invoice = $this->createInvoice(InvoiceStatus::PAID);
 
@@ -187,7 +187,7 @@ final class OnReservationCancelledTest extends TestCase
     }
 
     #[Test]
-    public function it_does_nothing_when_no_invoice_exists(): void
+    public function itDoesNothingWhenNoInvoiceExists(): void
     {
         $repository = $this->createMock(InvoiceRepository::class);
         $repository->expects($this->once())

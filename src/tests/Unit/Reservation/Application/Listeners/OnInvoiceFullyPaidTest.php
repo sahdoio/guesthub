@@ -37,7 +37,7 @@ final class OnInvoiceFullyPaidTest extends TestCase
     }
 
     #[Test]
-    public function it_confirms_pending_reservation_on_invoice_fully_paid(): void
+    public function itConfirmsPendingReservationOnInvoiceFullyPaid(): void
     {
         $reservation = $this->createPendingReservation();
         $reservationId = (string) $reservation->uuid;
@@ -65,7 +65,7 @@ final class OnInvoiceFullyPaidTest extends TestCase
     }
 
     #[Test]
-    public function it_does_not_confirm_already_confirmed_reservation(): void
+    public function itDoesNotConfirmAlreadyConfirmedReservation(): void
     {
         $reservation = $this->createPendingReservation();
         $reservation->confirm();
@@ -88,7 +88,7 @@ final class OnInvoiceFullyPaidTest extends TestCase
     }
 
     #[Test]
-    public function it_does_nothing_when_reservation_not_found(): void
+    public function itDoesNothingWhenReservationNotFound(): void
     {
         $repository = $this->createMock(ReservationRepository::class);
         $repository->expects($this->once())

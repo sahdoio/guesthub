@@ -64,14 +64,14 @@ final class InvoiceCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_requires_authentication(): void
+    public function itRequiresAuthentication(): void
     {
         $this->get('/billing')
             ->assertRedirect('/login');
     }
 
     #[Test]
-    public function it_blocks_guest_actors(): void
+    public function itBlocksGuestActors(): void
     {
         $guest = $this->createGuestActor();
 
@@ -81,7 +81,7 @@ final class InvoiceCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_lists_invoices(): void
+    public function itListsInvoices(): void
     {
         $this->createInvoiceModel();
 
@@ -96,7 +96,7 @@ final class InvoiceCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_shows_an_invoice(): void
+    public function itShowsAnInvoice(): void
     {
         $invoice = $this->createInvoiceModel();
 
@@ -111,7 +111,7 @@ final class InvoiceCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_issues_an_invoice(): void
+    public function itIssuesAnInvoice(): void
     {
         $invoice = $this->createInvoiceModel();
 
@@ -127,7 +127,7 @@ final class InvoiceCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_voids_an_invoice(): void
+    public function itVoidsAnInvoice(): void
     {
         $invoice = $this->createInvoiceModel();
 

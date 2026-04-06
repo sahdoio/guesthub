@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
 final class IntegrationEventTest extends TestCase
 {
     #[Test]
-    public function reservation_created_event_serializes_correctly(): void
+    public function reservationCreatedEventSerializesCorrectly(): void
     {
         $event = new ReservationCreatedEvent(
             reservationId: 'res-100',
@@ -48,7 +48,7 @@ final class IntegrationEventTest extends TestCase
     }
 
     #[Test]
-    public function reservation_confirmed_event_serializes_correctly(): void
+    public function reservationConfirmedEventSerializesCorrectly(): void
     {
         $event = new ReservationConfirmedEvent(
             reservationId: 'res-123',
@@ -73,7 +73,7 @@ final class IntegrationEventTest extends TestCase
     }
 
     #[Test]
-    public function reservation_cancelled_event_serializes_correctly(): void
+    public function reservationCancelledEventSerializesCorrectly(): void
     {
         $event = new ReservationCancelledEvent(
             reservationId: 'res-456',
@@ -93,7 +93,7 @@ final class IntegrationEventTest extends TestCase
     }
 
     #[Test]
-    public function guest_checked_in_event_serializes_correctly(): void
+    public function guestCheckedInEventSerializesCorrectly(): void
     {
         $event = new GuestCheckedInEvent(
             reservationId: 'res-789',
@@ -110,7 +110,7 @@ final class IntegrationEventTest extends TestCase
     }
 
     #[Test]
-    public function guest_checked_out_event_serializes_correctly(): void
+    public function guestCheckedOutEventSerializesCorrectly(): void
     {
         $event = new GuestCheckedOutEvent(
             reservationId: 'res-789',

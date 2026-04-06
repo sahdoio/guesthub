@@ -45,7 +45,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_empty_list(): void
+    public function itReturnsEmptyList(): void
     {
         $response = $this->getJson('/api/reservations');
 
@@ -60,7 +60,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function it_lists_reservations(): void
+    public function itListsReservations(): void
     {
         $this->createReservation();
         $this->createReservation();
@@ -74,7 +74,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function it_paginates_results(): void
+    public function itPaginatesResults(): void
     {
         for ($i = 0; $i < 5; $i++) {
             $this->createReservation();
@@ -91,7 +91,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_second_page(): void
+    public function itReturnsSecondPage(): void
     {
         for ($i = 0; $i < 5; $i++) {
             $this->createReservation();
@@ -110,7 +110,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function each_item_has_reservation_structure(): void
+    public function eachItemHasReservationStructure(): void
     {
         $this->createReservation();
 
@@ -132,7 +132,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function it_filtersby_status(): void
+    public function itFiltersbyStatus(): void
     {
         $id = $this->createReservation();
         $this->createReservation();
@@ -147,7 +147,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function it_caps_per_page_at100(): void
+    public function itCapsPerPageAt100(): void
     {
         $response = $this->getJson('/api/reservations?per_page=999');
 
@@ -156,7 +156,7 @@ final class ListReservationsTest extends TestCase
     }
 
     #[Test]
-    public function it_defaults_to15_per_page(): void
+    public function itDefaultsTo15PerPage(): void
     {
         $response = $this->getJson('/api/reservations');
 

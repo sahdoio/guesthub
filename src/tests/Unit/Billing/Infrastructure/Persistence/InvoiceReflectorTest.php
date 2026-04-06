@@ -24,7 +24,7 @@ use PHPUnit\Framework\TestCase;
 final class InvoiceReflectorTest extends TestCase
 {
     #[Test]
-    public function it_reconstructs_a_draft_invoice(): void
+    public function itReconstructsADraftInvoice(): void
     {
         $uuid = InvoiceId::generate();
         $createdAt = new DateTimeImmutable('2026-03-15 10:00:00');
@@ -81,7 +81,7 @@ final class InvoiceReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_reconstructs_a_paid_invoice_with_payment(): void
+    public function itReconstructsAPaidInvoiceWithPayment(): void
     {
         $issuedAt = new DateTimeImmutable('2026-03-16');
         $paidAt = new DateTimeImmutable('2026-03-17');
@@ -129,7 +129,7 @@ final class InvoiceReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_reconstructs_a_voided_invoice(): void
+    public function itReconstructsAVoidedInvoice(): void
     {
         $voidedAt = new DateTimeImmutable('2026-03-18');
 
@@ -159,7 +159,7 @@ final class InvoiceReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_reconstructs_line_item_correctly(): void
+    public function itReconstructsLineItemCorrectly(): void
     {
         $lineItemUuid = (string) LineItemId::generate();
 
@@ -179,7 +179,7 @@ final class InvoiceReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_reconstructs_payment_correctly(): void
+    public function itReconstructsPaymentCorrectly(): void
     {
         $paymentUuid = (string) PaymentId::generate();
 
@@ -205,7 +205,7 @@ final class InvoiceReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_does_not_record_domain_events(): void
+    public function itDoesNotRecordDomainEvents(): void
     {
         $invoice = InvoiceReflector::reconstruct(
             uuid: InvoiceId::generate(),

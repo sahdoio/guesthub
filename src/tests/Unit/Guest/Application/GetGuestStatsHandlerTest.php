@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 final class GetGuestStatsHandlerTest extends TestCase
 {
     #[Test]
-    public function it_returns_guest_stats_dto(): void
+    public function itReturnsGuestStatsDto(): void
     {
         $repository = $this->createMock(UserRepository::class);
 
@@ -40,7 +40,7 @@ final class GetGuestStatsHandlerTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_empty_stats_when_no_guests(): void
+    public function itReturnsEmptyStatsWhenNoGuests(): void
     {
         $repository = $this->createMock(UserRepository::class);
 
@@ -55,7 +55,7 @@ final class GetGuestStatsHandlerTest extends TestCase
     }
 
     #[Test]
-    public function to_array_returns_correct_structure(): void
+    public function toArrayReturnsCorrectStructure(): void
     {
         $repository = $this->createMock(UserRepository::class);
 

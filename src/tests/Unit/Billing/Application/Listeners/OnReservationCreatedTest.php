@@ -21,7 +21,7 @@ use Tests\TestCase;
 final class OnReservationCreatedTest extends TestCase
 {
     #[Test]
-    public function it_creates_and_issues_invoice_on_reservation_created(): void
+    public function itCreatesAndIssuesInvoiceOnReservationCreated(): void
     {
         $reservationId = 'res-uuid-1';
         $accountId = 'acc-uuid-1';

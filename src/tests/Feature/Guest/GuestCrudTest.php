@@ -53,7 +53,7 @@ final class GuestCrudTest extends TestCase
     // --- Show ---
 
     #[Test]
-    public function it_shows_a_guest_profile(): void
+    public function itShowsAGuestProfile(): void
     {
         $id = $this->createGuest();
 
@@ -65,7 +65,7 @@ final class GuestCrudTest extends TestCase
     }
 
     #[Test]
-    public function show_returns_error_for_unknown_guest(): void
+    public function showReturnsErrorForUnknownGuest(): void
     {
         $this->getJson('/api/guests/00000000-0000-0000-0000-000000000000')
             ->assertStatus(500);
@@ -74,7 +74,7 @@ final class GuestCrudTest extends TestCase
     // --- Update ---
 
     #[Test]
-    public function it_updates_contact_info(): void
+    public function itUpdatesContactInfo(): void
     {
         $id = $this->createGuest();
 
@@ -96,7 +96,7 @@ final class GuestCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_updates_loyalty_tier(): void
+    public function itUpdatesLoyaltyTier(): void
     {
         $id = $this->createGuest();
 
@@ -109,7 +109,7 @@ final class GuestCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_updates_preferences(): void
+    public function itUpdatesPreferences(): void
     {
         $id = $this->createGuest();
 
@@ -122,7 +122,7 @@ final class GuestCrudTest extends TestCase
     }
 
     #[Test]
-    public function update_validates_email_format(): void
+    public function updateValidatesEmailFormat(): void
     {
         $id = $this->createGuest();
 
@@ -134,7 +134,7 @@ final class GuestCrudTest extends TestCase
     // --- Delete ---
 
     #[Test]
-    public function it_deletes_a_guest_profile(): void
+    public function itDeletesAGuestProfile(): void
     {
         $id = $this->createGuest();
 
@@ -145,7 +145,7 @@ final class GuestCrudTest extends TestCase
     }
 
     #[Test]
-    public function delete_returns_error_for_unknown_guest(): void
+    public function deleteReturnsErrorForUnknownGuest(): void
     {
         $this->deleteJson('/api/guests/00000000-0000-0000-0000-000000000000')
             ->assertStatus(500);
@@ -154,7 +154,7 @@ final class GuestCrudTest extends TestCase
     // --- List ---
 
     #[Test]
-    public function it_lists_guest_profiles_with_pagination(): void
+    public function itListsGuestProfilesWithPagination(): void
     {
         $this->createGuest(['document' => 'DOC001', 'email' => 'a@hotel.com']);
         $this->createGuest(['document' => 'DOC002', 'email' => 'b@hotel.com']);
@@ -171,7 +171,7 @@ final class GuestCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_empty_list_when_no_guests(): void
+    public function itReturnsEmptyListWhenNoGuests(): void
     {
         $response = $this->getJson('/api/guests');
 

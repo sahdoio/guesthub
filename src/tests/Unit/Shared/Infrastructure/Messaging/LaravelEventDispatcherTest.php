@@ -15,7 +15,7 @@ use stdClass;
 final class LaravelEventDispatcherTest extends TestCase
 {
     #[Test]
-    public function it_delegates_to_laravel_dispatcher(): void
+    public function itDelegatesToLaravelDispatcher(): void
     {
         $event = new stdClass;
 

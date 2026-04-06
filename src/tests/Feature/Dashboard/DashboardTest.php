@@ -92,14 +92,14 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function it_requires_authentication(): void
+    public function itRequiresAuthentication(): void
     {
         $this->get('/dashboard')
             ->assertRedirect('/login');
     }
 
     #[Test]
-    public function it_blocks_guest_actors(): void
+    public function itBlocksGuestActors(): void
     {
         $guest = $this->createGuestActor();
 
@@ -109,7 +109,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function it_shows_dashboard_with_empty_stats(): void
+    public function itShowsDashboardWithEmptyStats(): void
     {
         $response = $this->actingAs($this->actor)
             ->get('/dashboard');
@@ -131,7 +131,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function it_shows_correct_guest_totals(): void
+    public function itShowsCorrectGuestTotals(): void
     {
         $this->createGuest();
         $this->createGuest();
@@ -146,7 +146,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function it_shows_guests_by_loyalty_tier(): void
+    public function itShowsGuestsByLoyaltyTier(): void
     {
         $this->createGuest(['loyalty_tier' => 'bronze']);
         $this->createGuest(['loyalty_tier' => 'bronze']);
@@ -164,7 +164,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function it_shows_reservation_totals(): void
+    public function itShowsReservationTotals(): void
     {
         $guestId = $this->createGuest();
         $this->createReservation($guestId);
@@ -179,7 +179,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function it_shows_reservations_by_status(): void
+    public function itShowsReservationsByStatus(): void
     {
         $guestId = $this->createGuest();
         $this->createReservation($guestId);
@@ -198,7 +198,7 @@ final class DashboardTest extends TestCase
     }
 
     #[Test]
-    public function it_shows_stay_stats(): void
+    public function itShowsStayStats(): void
     {
         $response = $this->actingAs($this->actor)
             ->get('/dashboard');

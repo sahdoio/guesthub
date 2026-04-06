@@ -101,13 +101,13 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function count_returns_zero_with_no_reservations(): void
+    public function countReturnsZeroWithNoReservations(): void
     {
         $this->assertSame(0, $this->repository->count());
     }
 
     #[Test]
-    public function count_returns_total_reservations(): void
+    public function countReturnsTotalReservations(): void
     {
         $this->createReservation();
         $this->createReservation();
@@ -116,7 +116,7 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function count_by_status_groups_correctly(): void
+    public function countByStatusGroupsCorrectly(): void
     {
         $this->createReservation();
 
@@ -136,7 +136,7 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function count_today_check_ins_returns_zero_by_default(): void
+    public function countTodayCheckInsReturnsZeroByDefault(): void
     {
         $this->createReservation();
 
@@ -144,7 +144,7 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function count_today_check_ins_counts_correctly(): void
+    public function countTodayCheckInsCountsCorrectly(): void
     {
         $r1 = $this->createReservation();
         $r1->confirm();
@@ -160,7 +160,7 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function count_today_check_outs_counts_correctly(): void
+    public function countTodayCheckOutsCountsCorrectly(): void
     {
         $r = $this->createReservation();
         $r->confirm();
@@ -172,7 +172,7 @@ final class ReservationStatsTest extends TestCase
     }
 
     #[Test]
-    public function count_by_status_returns_empty_when_no_reservations(): void
+    public function countByStatusReturnsEmptyWhenNoReservations(): void
     {
         $this->assertSame([], $this->repository->countByStatus());
     }

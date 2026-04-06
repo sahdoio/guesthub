@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestCase;
 final class GetReservationStatsHandlerTest extends TestCase
 {
     #[Test]
-    public function it_returns_reservation_stats_dto(): void
+    public function itReturnsReservationStatsDto(): void
     {
         $repository = $this->createMock(ReservationRepository::class);
 
@@ -42,7 +42,7 @@ final class GetReservationStatsHandlerTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_empty_stats_when_no_reservations(): void
+    public function itReturnsEmptyStatsWhenNoReservations(): void
     {
         $repository = $this->createMock(ReservationRepository::class);
 
@@ -61,7 +61,7 @@ final class GetReservationStatsHandlerTest extends TestCase
     }
 
     #[Test]
-    public function to_array_returns_correct_structure(): void
+    public function toArrayReturnsCorrectStructure(): void
     {
         $repository = $this->createMock(ReservationRepository::class);
 

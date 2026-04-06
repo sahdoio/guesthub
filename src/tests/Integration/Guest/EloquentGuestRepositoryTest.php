@@ -59,7 +59,7 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_saves_and_finds_by_uuid(): void
+    public function itSavesAndFindsByUuid(): void
     {
         $profile = $this->createProfile();
         $this->repository->save($profile);
@@ -73,13 +73,13 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_null_for_unknown_uuid(): void
+    public function itReturnsNullForUnknownUuid(): void
     {
         $this->assertNull($this->repository->findByUuid(UserId::generate()));
     }
 
     #[Test]
-    public function it_finds_by_email(): void
+    public function itFindsByEmail(): void
     {
         $profile = $this->createProfile(['email' => 'bob@hotel.com']);
         $this->repository->save($profile);
@@ -91,7 +91,7 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_finds_by_document(): void
+    public function itFindsByDocument(): void
     {
         $profile = $this->createProfile(['document' => 'XYZ999']);
         $this->repository->save($profile);
@@ -103,7 +103,7 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_updates_existing_profile(): void
+    public function itUpdatesExistingProfile(): void
     {
         $profile = $this->createProfile();
         $this->repository->save($profile);
@@ -118,7 +118,7 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_removes_a_profile(): void
+    public function itRemovesAProfile(): void
     {
         $profile = $this->createProfile();
         $this->repository->save($profile);
@@ -130,7 +130,7 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_lists_profiles(): void
+    public function itListsProfiles(): void
     {
         for ($i = 0; $i < 3; $i++) {
             $this->repository->save($this->createProfile([
@@ -148,7 +148,7 @@ final class EloquentGuestRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_generates_unique_identities(): void
+    public function itGeneratesUniqueIdentities(): void
     {
         $id1 = $this->repository->nextIdentity();
         $id2 = $this->repository->nextIdentity();

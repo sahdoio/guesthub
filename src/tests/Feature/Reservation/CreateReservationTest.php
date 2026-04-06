@@ -40,7 +40,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_a_reservation(): void
+    public function itCreatesAReservation(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload());
 
@@ -65,7 +65,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_a_vip_reservation(): void
+    public function itCreatesAVipReservation(): void
     {
         $this->putJson("/api/guests/{$this->guestId}", [
             'loyalty_tier' => 'gold',
@@ -78,7 +78,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function it_validates_required_fields(): void
+    public function itValidatesRequiredFields(): void
     {
         $response = $this->postJson('/api/reservations', []);
 
@@ -92,7 +92,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function it_validates_guest_id_format(): void
+    public function itValidatesGuestIdFormat(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
             'guest_id' => 'not-a-uuid',
@@ -103,7 +103,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function it_validates_checkin_not_in_past(): void
+    public function itValidatesCheckinNotInPast(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
             'check_in' => now()->subDay()->format('Y-m-d'),
@@ -114,7 +114,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function it_validates_checkout_after_checkin(): void
+    public function itValidatesCheckoutAfterCheckin(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
             'check_in' => now()->addDays(5)->format('Y-m-d'),
@@ -126,7 +126,7 @@ final class CreateReservationTest extends TestCase
     }
 
     #[Test]
-    public function it_validates_stay_id_format(): void
+    public function itValidatesStayIdFormat(): void
     {
         $response = $this->postJson('/api/reservations', $this->validPayload([
             'stay_id' => 'not-a-uuid',

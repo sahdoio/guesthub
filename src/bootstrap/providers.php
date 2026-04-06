@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     App\Providers\HorizonServiceProvider::class,
     Modules\Billing\Infrastructure\Providers\BillingServiceProvider::class,

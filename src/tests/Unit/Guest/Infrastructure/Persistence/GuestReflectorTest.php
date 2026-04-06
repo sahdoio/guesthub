@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 final class GuestReflectorTest extends TestCase
 {
     #[Test]
-    public function it_reconstructs_a_guest_profile(): void
+    public function itReconstructsAGuestProfile(): void
     {
         $uuid = UserId::generate();
         $createdAt = new DateTimeImmutable('2026-01-15 10:00:00');
@@ -47,7 +47,7 @@ final class GuestReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_reconstructs_with_updated_at(): void
+    public function itReconstructsWithUpdatedAt(): void
     {
         $updatedAt = new DateTimeImmutable('2026-02-01 15:30:00');
 
@@ -67,7 +67,7 @@ final class GuestReflectorTest extends TestCase
     }
 
     #[Test]
-    public function it_does_not_record_domain_events(): void
+    public function itDoesNotRecordDomainEvents(): void
     {
         $profile = UserReflector::reconstruct(
             uuid: UserId::generate(),

@@ -111,7 +111,7 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_saves_and_finds_by_uuid(): void
+    public function itSavesAndFindsByUuid(): void
     {
         $actor = $this->registerActor();
         $this->repository->save($actor);
@@ -127,13 +127,13 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_null_for_unknown_uuid(): void
+    public function itReturnsNullForUnknownUuid(): void
     {
         $this->assertNull($this->repository->findByUuid(ActorId::generate()));
     }
 
     #[Test]
-    public function it_finds_by_email(): void
+    public function itFindsByEmail(): void
     {
         $actor = $this->registerActor(['email' => 'jane@hotel.com']);
         $this->repository->save($actor);
@@ -145,13 +145,13 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_null_for_unknown_email(): void
+    public function itReturnsNullForUnknownEmail(): void
     {
         $this->assertNull($this->repository->findByEmail('nonexistent@hotel.com'));
     }
 
     #[Test]
-    public function it_updates_existing_actor(): void
+    public function itUpdatesExistingActor(): void
     {
         $actor = $this->registerActor();
         $this->repository->save($actor);
@@ -165,7 +165,7 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_saves_actor_with_null_user(): void
+    public function itSavesActorWithNullUser(): void
     {
         $actor = $this->registerActor([
             'typeIds' => [$this->ownerType->uuid],
@@ -180,7 +180,7 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_generates_unique_identities(): void
+    public function itGeneratesUniqueIdentities(): void
     {
         $id1 = $this->repository->nextIdentity();
         $id2 = $this->repository->nextIdentity();
@@ -189,7 +189,7 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_saves_super_admin_with_null_account(): void
+    public function itSavesSuperAdminWithNullAccount(): void
     {
         $superadminType = Type::create(uuid: $this->typeRepository->nextIdentity(), name: TypeName::SUPERADMIN);
         $this->typeRepository->save($superadminType);
@@ -215,7 +215,7 @@ final class EloquentActorRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_persists_multiple_types(): void
+    public function itPersistsMultipleTypes(): void
     {
         $actor = $this->registerActor([
             'typeIds' => [$this->guestType->uuid, $this->ownerType->uuid],

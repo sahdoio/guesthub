@@ -57,7 +57,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_a_draft_invoice(): void
+    public function itCreatesADraftInvoice(): void
     {
         $lineItem = $this->createLineItem(10000, 2); // 100.00 * 2 = 200.00
         $invoice = $this->createInvoice([$lineItem], 0.10);
@@ -74,7 +74,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function it_issues_a_draft_invoice(): void
+    public function itIssuesADraftInvoice(): void
     {
         $invoice = $this->createInvoice();
         $invoice->pullDomainEvents();
@@ -90,7 +90,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function it_records_a_payment(): void
+    public function itRecordsAPayment(): void
     {
         $invoice = $this->createInvoice();
         $invoice->issue();
@@ -112,7 +112,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function it_marks_payment_succeeded_and_transitions_to_paid(): void
+    public function itMarksPaymentSucceededAndTransitionsToPaid(): void
     {
         $invoice = $this->createInvoice();
         $invoice->issue();
@@ -138,7 +138,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function it_marks_payment_failed(): void
+    public function itMarksPaymentFailed(): void
     {
         $invoice = $this->createInvoice();
         $invoice->issue();
@@ -158,7 +158,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function it_voids_a_draft_invoice(): void
+    public function itVoidsADraftInvoice(): void
     {
         $invoice = $this->createInvoice();
         $invoice->pullDomainEvents();
@@ -174,7 +174,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function it_voids_an_issued_invoice(): void
+    public function itVoidsAnIssuedInvoice(): void
     {
         $invoice = $this->createInvoice();
         $invoice->issue();
@@ -191,7 +191,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function it_refunds_a_paid_invoice(): void
+    public function itRefundsAPaidInvoice(): void
     {
         $invoice = $this->createInvoice();
         $invoice->issue();
@@ -218,7 +218,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function it_prevents_issuing_non_draft_invoice(): void
+    public function itPreventsIssuingNonDraftInvoice(): void
     {
         $invoice = $this->createInvoice();
         $invoice->issue();
@@ -228,7 +228,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function it_prevents_voiding_paid_invoice(): void
+    public function itPreventsVoidingPaidInvoice(): void
     {
         $invoice = $this->createInvoice();
         $invoice->issue();
@@ -248,7 +248,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function it_prevents_refunding_non_paid_invoice(): void
+    public function itPreventsRefundingNonPaidInvoice(): void
     {
         $invoice = $this->createInvoice();
 
@@ -257,7 +257,7 @@ final class InvoiceTest extends TestCase
     }
 
     #[Test]
-    public function it_calculates_totals_correctly_with_multiple_line_items(): void
+    public function itCalculatesTotalsCorrectlyWithMultipleLineItems(): void
     {
         $lineItem1 = $this->createLineItem(10000, 2); // 100.00 * 2 = 200.00
         $lineItem2 = $this->createLineItem(5000, 3);  // 50.00  * 3 = 150.00

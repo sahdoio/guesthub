@@ -81,7 +81,7 @@ final class EloquentReservationRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_saves_and_finds_by_uuid(): void
+    public function itSavesAndFindsByUuid(): void
     {
         $reservation = $this->createReservation();
         $this->repository->save($reservation, $this->accountNumericId);
@@ -95,13 +95,13 @@ final class EloquentReservationRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_null_for_unknown_uuid(): void
+    public function itReturnsNullForUnknownUuid(): void
     {
         $this->assertNull($this->repository->findByUuid(ReservationId::generate()));
     }
 
     #[Test]
-    public function it_persists_status_changes(): void
+    public function itPersistsStatusChanges(): void
     {
         $reservation = $this->createReservation();
         $this->repository->save($reservation, $this->accountNumericId);
@@ -116,7 +116,7 @@ final class EloquentReservationRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_persists_special_requests(): void
+    public function itPersistsSpecialRequests(): void
     {
         $reservation = $this->createReservation();
         $reservation->addSpecialRequest(RequestType::EARLY_CHECK_IN, 'Early arrival');
@@ -131,7 +131,7 @@ final class EloquentReservationRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_persists_cancellation(): void
+    public function itPersistsCancellation(): void
     {
         $reservation = $this->createReservation();
         $this->repository->save($reservation, $this->accountNumericId);
@@ -147,7 +147,7 @@ final class EloquentReservationRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_lists_reservations(): void
+    public function itListsReservations(): void
     {
         for ($i = 0; $i < 3; $i++) {
             $this->repository->save($this->createReservation(['guestId' => "guest-{$i}"]), $this->accountNumericId);
@@ -161,7 +161,7 @@ final class EloquentReservationRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_lists_filtered_by_status(): void
+    public function itListsFilteredByStatus(): void
     {
         $pending = $this->createReservation();
         $this->repository->save($pending, $this->accountNumericId);
@@ -177,7 +177,7 @@ final class EloquentReservationRepositoryTest extends TestCase
     }
 
     #[Test]
-    public function it_generates_unique_identities(): void
+    public function itGeneratesUniqueIdentities(): void
     {
         $id1 = $this->repository->nextIdentity();
         $id2 = $this->repository->nextIdentity();

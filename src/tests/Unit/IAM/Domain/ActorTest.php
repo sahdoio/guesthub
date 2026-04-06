@@ -34,7 +34,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_a_guest_actor(): void
+    public function itCreatesAGuestActor(): void
     {
         $id = ActorId::generate();
         $actor = Actor::register(
@@ -60,7 +60,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_an_owner_actor(): void
+    public function itCreatesAnOwnerActor(): void
     {
         $actor = Actor::register(
             uuid: ActorId::generate(),
@@ -79,7 +79,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_actor_without_subject(): void
+    public function itCreatesActorWithoutSubject(): void
     {
         $actor = Actor::register(
             uuid: ActorId::generate(),
@@ -97,7 +97,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function it_changes_password(): void
+    public function itChangesPassword(): void
     {
         $actor = Actor::register(
             uuid: ActorId::generate(),
@@ -119,7 +119,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function it_validates_type_name(): void
+    public function itValidatesTypeName(): void
     {
         $this->assertSame('guest', \Modules\IAM\Domain\ValueObject\TypeName::GUEST->value);
         $this->assertSame('superadmin', \Modules\IAM\Domain\ValueObject\TypeName::SUPERADMIN->value);
@@ -127,14 +127,14 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_empty_hashed_password(): void
+    public function itRejectsEmptyHashedPassword(): void
     {
         $this->expectException(\InvalidArgumentException::class);
         new HashedPassword('');
     }
 
     #[Test]
-    public function it_creates_super_admin_without_account(): void
+    public function itCreatesSuperAdminWithoutAccount(): void
     {
         $actor = Actor::register(
             uuid: ActorId::generate(),
@@ -153,7 +153,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function it_checks_has_type_id(): void
+    public function itChecksHasTypeId(): void
     {
         $typeId1 = TypeId::generate();
         $typeId2 = TypeId::generate();
@@ -176,7 +176,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function it_assigns_a_type(): void
+    public function itAssignsAType(): void
     {
         $actor = Actor::register(
             uuid: ActorId::generate(),
@@ -199,7 +199,7 @@ final class ActorTest extends TestCase
     }
 
     #[Test]
-    public function it_does_not_duplicate_type_on_assign(): void
+    public function itDoesNotDuplicateTypeOnAssign(): void
     {
         $actor = Actor::register(
             uuid: ActorId::generate(),

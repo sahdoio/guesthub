@@ -25,7 +25,7 @@ final class StayCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_lists_stays_for_owner(): void
+    public function itListsStaysForOwner(): void
     {
         $response = $this->actingAs($this->actor)
             ->get('/stays');
@@ -41,7 +41,7 @@ final class StayCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_shows_create_stay_form(): void
+    public function itShowsCreateStayForm(): void
     {
         $response = $this->actingAs($this->actor)
             ->get('/stays/create');
@@ -53,7 +53,7 @@ final class StayCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_a_stay(): void
+    public function itCreatesAStay(): void
     {
         $response = $this->actingAs($this->actor)
             ->post('/stays', [
@@ -77,7 +77,7 @@ final class StayCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_validates_stay_name_is_required(): void
+    public function itValidatesStayNameIsRequired(): void
     {
         $response = $this->actingAs($this->actor)
             ->post('/stays', [
@@ -88,7 +88,7 @@ final class StayCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_shows_a_stay(): void
+    public function itShowsAStay(): void
     {
         $response = $this->actingAs($this->actor)
             ->get('/stays/test-stay');
@@ -103,7 +103,7 @@ final class StayCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_shows_edit_form(): void
+    public function itShowsEditForm(): void
     {
         $response = $this->actingAs($this->actor)
             ->get('/stays/test-stay/edit');
@@ -116,7 +116,7 @@ final class StayCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_updates_a_stay(): void
+    public function itUpdatesAStay(): void
     {
         $response = $this->actingAs($this->actor)
             ->put('/stays/test-stay', [
@@ -138,7 +138,7 @@ final class StayCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_404_for_unknown_slug(): void
+    public function itReturns404ForUnknownSlug(): void
     {
         $this->actingAs($this->actor)
             ->get('/stays/nonexistent-stay')
@@ -146,14 +146,14 @@ final class StayCrudTest extends TestCase
     }
 
     #[Test]
-    public function it_requires_authentication(): void
+    public function itRequiresAuthentication(): void
     {
         $this->get('/stays')
             ->assertRedirect('/login');
     }
 
     #[Test]
-    public function it_blocks_guest_actors(): void
+    public function itBlocksGuestActors(): void
     {
         $guest = $this->createGuestActor();
 

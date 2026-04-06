@@ -45,7 +45,7 @@ final class GuestTest extends TestCase
     }
 
     #[Test]
-    public function it_creates_a_guest_profile(): void
+    public function itCreatesAGuestProfile(): void
     {
         $id = UserId::generate();
 
@@ -74,7 +74,7 @@ final class GuestTest extends TestCase
     }
 
     #[Test]
-    public function it_updates_contact_info(): void
+    public function itUpdatesContactInfo(): void
     {
         $profile = $this->createProfile();
 
@@ -87,7 +87,7 @@ final class GuestTest extends TestCase
     }
 
     #[Test]
-    public function it_changes_loyalty_tier(): void
+    public function itChangesLoyaltyTier(): void
     {
         $profile = $this->createProfile();
 
@@ -98,7 +98,7 @@ final class GuestTest extends TestCase
     }
 
     #[Test]
-    public function it_sets_preferences(): void
+    public function itSetsPreferences(): void
     {
         $profile = $this->createProfile();
 
@@ -109,7 +109,7 @@ final class GuestTest extends TestCase
     }
 
     #[Test]
-    public function entity_equality_by_id(): void
+    public function entityEqualityById(): void
     {
         $id = UserId::generate();
 
@@ -120,7 +120,7 @@ final class GuestTest extends TestCase
     }
 
     #[Test]
-    public function entity_inequality_by_id(): void
+    public function entityInequalityById(): void
     {
         $a = $this->createProfile();
         $b = $this->createProfile();

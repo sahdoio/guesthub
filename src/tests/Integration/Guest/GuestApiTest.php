@@ -67,7 +67,7 @@ final class GuestApiTest extends TestCase
     }
 
     #[Test]
-    public function it_finds_guest_profile_by_uuid(): void
+    public function itFindsGuestProfileByUuid(): void
     {
         $user = $this->createUser();
         $uuid = (string) $user->uuid;
@@ -84,7 +84,7 @@ final class GuestApiTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_null_for_unknown_uuid(): void
+    public function itReturnsNullForUnknownUuid(): void
     {
         $data = $this->api->findByUuid('00000000-0000-0000-0000-000000000000');
 

@@ -47,7 +47,7 @@ final class ReservationLifecycleTest extends TestCase
     // --- Show ---
 
     #[Test]
-    public function it_shows_a_reservation(): void
+    public function itShowsAReservation(): void
     {
         $id = $this->createReservation();
 
@@ -59,7 +59,7 @@ final class ReservationLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function it_returns404_for_unknown_reservation(): void
+    public function itReturns404ForUnknownReservation(): void
     {
         $response = $this->getJson('/api/reservations/00000000-0000-0000-0000-000000000000');
 
@@ -69,7 +69,7 @@ final class ReservationLifecycleTest extends TestCase
     // --- Full Lifecycle ---
 
     #[Test]
-    public function full_lifecycle_create_confirm_checkin_checkout(): void
+    public function fullLifecycleCreateConfirmCheckinCheckout(): void
     {
         $id = $this->createReservation();
 
@@ -101,7 +101,7 @@ final class ReservationLifecycleTest extends TestCase
     // --- Cancellation ---
 
     #[Test]
-    public function cancel_pending_reservation(): void
+    public function cancelPendingReservation(): void
     {
         $id = $this->createReservation();
 
@@ -117,7 +117,7 @@ final class ReservationLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function cancel_confirmed_reservation(): void
+    public function cancelConfirmedReservation(): void
     {
         $id = $this->createReservation();
         $this->postJson("/api/reservations/{$id}/confirm");
@@ -129,7 +129,7 @@ final class ReservationLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function cancel_requires_reason_with_min_length(): void
+    public function cancelRequiresReasonWithMinLength(): void
     {
         $id = $this->createReservation();
 
@@ -141,7 +141,7 @@ final class ReservationLifecycleTest extends TestCase
     // --- Special Requests ---
 
     #[Test]
-    public function add_special_request(): void
+    public function addSpecialRequest(): void
     {
         $id = $this->createReservation();
 
@@ -160,7 +160,7 @@ final class ReservationLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function add_special_request_validates_type(): void
+    public function addSpecialRequestValidatesType(): void
     {
         $id = $this->createReservation();
 
