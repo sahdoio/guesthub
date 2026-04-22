@@ -1,7 +1,7 @@
 # Variables
 DC=docker compose --file docker-compose.yml
 
-.PHONY: help go go-hard up setup down sh test paratest test-coverage logs db-migrate db-seed db-rollback db-reset log clear phpstan pint queue grum
+.PHONY: help go go-hard up setup down sh test paratest test-coverage logs db-migrate db-seed db-rollback db-reset log clear phpstan pint queue grum npm-install
 
 .DEFAULT_GOAL := help
 
@@ -22,6 +22,7 @@ go: ## Start containers, install deps, and run migrations
 	make setup
 	make db-migrate
 	make storage-link
+	make npm-install
 	make vite
 
 go-hard: ## Full reset: remove volume, rebuild, seed database
@@ -34,6 +35,7 @@ go-hard: ## Full reset: remove volume, rebuild, seed database
 	make db-migrate
 	make db-seed
 	make storage-link
+	make npm-install
 	make vite
 
 up: ## Start containers in detached mode with build
@@ -80,6 +82,9 @@ clear: ## Clear all Laravel caches
 	$(DC) exec guesthub php artisan route:clear
 	$(DC) exec guesthub php artisan config:clear
 	$(DC) exec guesthub php artisan optimize:clear
+
+npm-install: ## Install Node dependencies
+	$(DC) exec guesthub-nodejs npm install
 
 vite: ## Start Vite dev server
 	$(DC) exec guesthub-nodejs npm run dev
