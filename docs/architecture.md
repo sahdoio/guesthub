@@ -222,16 +222,17 @@ graph LR
 | Domain port | `Billing\Domain\Service\ReservationGateway` |
 | Domain DTO | `ReservationInfo { reservationId, guestId, stayId, stayName, accountId, checkIn, checkOut, nights, pricePerNight }` |
 | Translation | Namespace change; field mapping is 1:1 (conformist-like but owns the DTO) |
-| Consumers | `OnReservationCreated`, `OnReservationConfirmed` listeners → `CreateInvoiceForReservationHandler` |
+| Consumers | `OnReservationCreated` listener → `CreateInvoiceForReservationHandler` + `IssueInvoiceHandler` |
 
 #### Stay → Billing: Integration Events (PL)
 
 | Event | Payload | Billing Listener | Handler | Effect |
 |---|---|---|---|---|
 | `ReservationCreatedEvent` | reservationId, guestEmail, stayId, checkIn, checkOut, isVip | `OnReservationCreated` (sync) | `CreateInvoiceForReservation` → `IssueInvoice` | Creates and immediately issues invoice |
-| `ReservationConfirmedEvent` | reservationId, guestEmail, stayId, checkIn, checkOut, isVip | `OnReservationConfirmed` (queued) | `CreateInvoiceForReservation` | Creates draft invoice |
 | `GuestCheckedOutEvent` | reservationId, guestEmail | `OnGuestCheckedOut` (queued) | `IssueInvoiceOnCheckout` | Issues invoice if still in draft |
 | `ReservationCancelledEvent` | reservationId, stayId, checkIn, checkOut, reason, freeCancellationUntil | `OnReservationCancelled` (queued) | `CancelReservationBilling` | Voids or refunds invoice |
+
+> `ReservationConfirmedEvent` is published by Stay (for future consumers / audit) but currently has no Billing consumer — invoicing is triggered earlier on `ReservationCreatedEvent`. `GuestCheckedInEvent` is similarly published without a current consumer.
 
 #### Billing → Stay: Integration Events (PL)
 
@@ -246,7 +247,7 @@ graph LR
 - No foreign key constraints across BC boundaries — cross-BC references use UUID strings only
 - All cross-boundary data flows through Integration APIs (OHS), Gateway adapters (ACL), and Integration Events (PL)
 - Each BC's `ServiceProvider` registers only its own DB migrations
-- Integration events carry enriched snapshots; consumers do not call back to the publisher for missing data during event handling (except `OnReservationConfirmed` and `OnReservationCreated` in Billing, which fetch reservation details via `StayApi` for invoice line item calculation)
+- Integration events carry enriched snapshots; consumers do not call back to the publisher for missing data during event handling (except `OnReservationCreated` in Billing, which fetches reservation details via `StayApi` for invoice line item calculation)
 
 ---
 
@@ -375,8 +376,8 @@ Domain events are recorded inside aggregates via `recordEvent()` and pulled by a
 | Event | Recorded When | Payload |
 |---|---|---|
 | `UserCreated` | `User::create()` | `userId`, `name`, `email`, `hashedPassword`, `actorType`, `accountName?`, `accountSlug?` |
-| `ActorRegistered` | `Actor::register()` | `actorId` |
-| `AccountCreated` | `Account::create()` | `accountId` |
+| `ActorRegistered` | `Actor::register()` | `actorId`, `accountId?`, `email` |
+| `AccountCreated` | `Account::create()` | `accountId`, `name` |
 | `UserContactInfoUpdated` | `updateContactInfo()` | `userId` |
 | `UserLoyaltyTierChanged` | `changeLoyaltyTier()` | `userId`, `tier` |
 
@@ -390,8 +391,9 @@ Integration events are enriched, serializable versions of domain events meant fo
 
 | Integration Event | Source Domain Event | Extra Data |
 |---|---|---|
+| `ReservationCreatedEvent` | `ReservationCreated` | guestEmail, stayId, checkIn, checkOut, isVip |
 | `ReservationConfirmedEvent` | `ReservationConfirmed` | guestEmail, stayId, checkIn, checkOut, isVip |
-| `ReservationCancelledEvent` | `ReservationCancelled` | stayId, checkIn, checkOut, reason |
+| `ReservationCancelledEvent` | `ReservationCancelled` | stayId, checkIn, checkOut, reason, freeCancellationUntil |
 | `GuestCheckedInEvent` | `GuestCheckedIn` | guestEmail, isVip |
 | `GuestCheckedOutEvent` | `GuestCheckedOut` | guestEmail |
 
@@ -403,9 +405,17 @@ The Billing BC listens to Stay integration events via thin listeners that delega
 
 | Integration Event | Thin Listener | Handler |
 |---|---|---|
-| `ReservationConfirmedEvent` | `OnReservationConfirmed` | Creates a draft invoice for the reservation |
-| `GuestCheckedOutEvent` | `OnGuestCheckedOut` | `IssueInvoiceOnCheckoutHandler` — triggers post-checkout billing logic |
+| `ReservationCreatedEvent` | `OnReservationCreated` | `CreateInvoiceForReservationHandler` + `IssueInvoiceHandler` — creates and immediately issues invoice |
+| `GuestCheckedOutEvent` | `OnGuestCheckedOut` | `IssueInvoiceOnCheckoutHandler` — issues invoice if still in draft |
 | `ReservationCancelledEvent` | `OnReservationCancelled` | `CancelReservationBillingHandler` — voids/refunds the associated invoice |
+
+### Consumer: Stay BC (cross-BC)
+
+Stay listens to one Billing integration event:
+
+| Integration Event | Thin Listener | Handler |
+|---|---|---|
+| `InvoiceFullyPaidEvent` | `OnInvoiceFullyPaid` | `ConfirmPaidReservationHandler` — confirms reservation (PENDING → CONFIRMED) |
 
 ---
 
@@ -480,12 +490,14 @@ Event::listen(ReservationConfirmed::class, OnReservationConfirmed::class);
 Event::listen(ReservationCancelled::class, OnReservationCancelled::class);
 Event::listen(GuestCheckedIn::class, OnGuestCheckedIn::class);
 Event::listen(GuestCheckedOut::class, OnGuestCheckedOut::class);
+Event::listen(InvoiceFullyPaidEvent::class, OnInvoiceFullyPaid::class);
 ```
 
 And in `BillingServiceProvider::boot()`:
 
 ```php
-Event::listen(ReservationConfirmedEvent::class, OnReservationConfirmed::class);
+Event::listen(ReservationCreatedEvent::class, OnReservationCreated::class);
+Event::listen(InvoiceFullyPaid::class, OnInvoiceFullyPaid::class);
 Event::listen(GuestCheckedOutEvent::class, OnGuestCheckedOut::class);
 Event::listen(ReservationCancelledEvent::class, OnReservationCancelled::class);
 ```
@@ -505,8 +517,9 @@ The Stay BC needs user data (name, email, VIP status) but does not depend on the
 This is an **Anti-Corruption Layer**: the Stay BC translates IAM user data into its own language (`isVip` is derived from `loyalty_tier`).
 
 **Used by:**
-- `OnReservationConfirmed` — enriches integration event with guest email and VIP status
-- `OnGuestCheckedIn` / `OnGuestCheckedOut` — same enrichment
+- `ProcessNewReservationHandler` — enriches `ReservationCreatedEvent` with guest email and VIP status
+- `OnReservationConfirmed` — enriches `ReservationConfirmedEvent` with guest email and VIP status
+- `OnGuestCheckedIn` / `OnGuestCheckedOut` — same enrichment for their respective integration events
 
 ### UserApi (IAM Integration API)
 
