@@ -9,11 +9,12 @@
 | 🟧 Orange | **Event** | Something that happened in the domain (past tense) |
 | 🟦 Blue | **Command** | Intent to cause an event |
 | 🟨 Yellow | **Actor** | Who triggers the command |
-| 🟪 Purple | **Policy** | Reactive rule ("whenever X, then Y") |
+| 🟪 Purple | **Policy** | Reactive rule ("whenever X, then Y") — acts as an **automated actor** that issues a command in response to an event |
 | 🟩 Green | **Read Model** | Data projection for decision-making |
-| 🟥 Red | **Test** | Acceptance criteria |
-| ⬜ Gray | **Question** | Doubts or uncertainties |
+| 🩷 Pink | **External System** | Third-party / outside-the-domain system that produces or consumes events |
 | ◼️ Dark | **Invariant** | Rules that can never be violated |
+
+> **Policies as actors:** every 🟪 Policy in this document reacts to an 🟧 Event by issuing a 🟦 Command — it is the automated counterpart of a 🟨 human Actor. Each policy below is followed by the explicit command it dispatches and the event that command produces.
 
 ---
 
@@ -35,13 +36,24 @@
 > `userId, name, email, hashedPassword, actorType=guest, accountName, accountSlug`
 > Recorded inside `User::create()` aggregate factory
 
-🟪 **Policy:** Whenever User Created, then Provision Actor Account
-> Synchronous listener `OnUserCreated` → `ProvisionActorAccountHandler`
-> Creates Account, resolves user numeric ID, creates Actor with type
-> All within the same DB transaction (via `TransactionManager`)
+🟪 **Policy (automated actor):** Whenever User Created → issue Create Account
+> Synchronous listener inside same DB transaction (via `TransactionManager`)
+
+🟦 **Command:** Create Account
+> `accountId, name, slug`
+
+◼️ **Invariant:** Slug must be unique
 
 🟧 **Event:** Account Created
-> `accountId, name`
+> `accountId, name, slug`
+
+🟪 **Policy (automated actor):** Whenever Account Created → issue Create Actor
+> Synchronous listener inside same DB transaction; resolves user numeric ID + actor type
+
+🟦 **Command:** Create Actor
+> `actorId, accountId, userId, typeId, name, email, hashedPassword`
+
+◼️ **Invariant:** Email must be unique (Actor aggregate, via `EmailUniquenessChecker`)
 
 🟧 **Event:** Actor Registered
 > `actorId, accountId, email, type=GUEST`
@@ -62,11 +74,19 @@
 🟧 **Event:** User Created
 > `userId, name, email, hashedPassword, actorType=owner, accountName, accountSlug`
 
-🟪 **Policy:** Whenever User Created, then Provision Actor Account
-> Same synchronous flow as guest registration (loyaltyTier=null for owners)
+🟪 **Policy (automated actor):** Whenever User Created → issue Create Account
+> Same synchronous chain as guest registration (loyaltyTier=null for owners)
+
+🟦 **Command:** Create Account
+> `accountId, name, slug`
 
 🟧 **Event:** Account Created
-> `accountId, name`
+> `accountId, name, slug`
+
+🟪 **Policy (automated actor):** Whenever Account Created → issue Create Actor
+
+🟦 **Command:** Create Actor
+> `actorId, accountId, userId, typeId, name, email, hashedPassword`
 
 🟧 **Event:** Actor Registered
 > `actorId, accountId, email, type=OWNER`
@@ -81,17 +101,10 @@
 
 🟩 **Read Model:** Login form (email, password)
 
-🟦 **Command:** Authenticate Actor
-> `email, password`
-
 ◼️ **Invariant:** Email must exist in the system
 ◼️ **Invariant:** Password must match the stored hash
 
-🟧 **Event:** Actor Authenticated
-> `actorId, token (Sanctum)`
-
-🟥 **Test:** Login with valid credentials returns token
-🟥 **Test:** Login with invalid credentials returns 401 error
+> Login is handled by Laravel Sanctum (`Auth::attempt` + bearer token issuance). No domain command or event is currently recorded.
 
 ---
 
@@ -99,43 +112,13 @@
 
 🟨 **Actor:** Guest | Owner | SuperAdmin
 
-🟦 **Command:** Revoke Token
-
-🟧 **Event:** Token Revoked
-> `actorId`
-
----
-
-### ⬜ Questions — IAM
-
-- How does password recovery work?
-- Is there an email verification flow?
-- Can Owners be created via API or only via seeder/superadmin?
+> Sanctum revokes the bearer token on logout. No domain command or event is currently recorded.
 
 ---
 
 ## Bounded Context: IAM — User Management
 
 > User management is part of the IAM bounded context (not a separate BC).
-
-### Flow: User Creation (via owner/superadmin API)
-
-🟨 **Actor:** Owner | SuperAdmin
-
-🟩 **Read Model:** Existing user list
-
-🟦 **Command:** Create User
-> `fullName, email, password, phone, document, actorType?, loyaltyTier?, accountName?, accountSlug?`
-
-◼️ **Invariant:** Email must be unique (User aggregate, via `UserEmailUniquenessChecker`)
-
-🟧 **Event:** User Created
-> `userId, name, email, hashedPassword, actorType, accountName?, accountSlug?`
-
-🟪 **Policy:** Whenever User Created, then Provision Actor Account
-> Same synchronous provisioning flow as registration
-
----
 
 ### Flow: User Update
 
@@ -166,14 +149,6 @@
 
 🟩 **User Detail**
 > `fullName, email, phone, document, loyaltyTier, preferences`
-
----
-
-### ⬜ Questions — User
-
-- Is there a history of loyalty tier changes?
-- Are preferences free-text or from a predefined catalog?
-- What is the business rule for loyalty tier upgrade/downgrade?
 
 ---
 
@@ -232,14 +207,18 @@
 🟧 **Event:** Reservation Confirmed
 > `reservationId, confirmedAt`
 
-🟪 **Policy:** Whenever Reservation Confirmed, then Create Invoice
-> Billing BC creates a draft invoice with line items based on stay price and nights
+🟪 **Policy (automated actor):** Whenever Reservation Confirmed → issue Create Invoice for Reservation (cross-BC, Billing)
+
+🟦 **Command (Billing):** Create Invoice for Reservation
+> `reservationId, guestId, accountId, stayName, pricePerNight, nights`
 
 🟧 **Event (Billing):** Invoice Created
 > `invoiceId, reservationId, status=DRAFT`
 
-🟪 **Policy:** Whenever Invoice Created, then Issue Invoice
-> Auto-issues the invoice for payment
+🟪 **Policy (automated actor):** Whenever Invoice Created → issue Issue Invoice (Billing-internal)
+
+🟦 **Command (Billing):** Issue Invoice
+> `invoiceId`
 
 🟧 **Event (Billing):** Invoice Issued
 > `invoiceId, status=ISSUED`
@@ -293,8 +272,10 @@
 🟧 **Event:** Reservation Cancelled
 > `reservationId, reason, cancelledAt`
 
-🟪 **Policy:** Whenever Reservation Cancelled, then Void Invoice
-> Billing BC voids the associated invoice if one exists
+🟪 **Policy (automated actor):** Whenever Reservation Cancelled → issue Void Invoice (cross-BC, Billing)
+
+🟦 **Command (Billing):** Void Invoice
+> `invoiceId, reason`
 
 🟧 **Event (Billing):** Invoice Voided
 > `invoiceId, reason`
@@ -374,19 +355,11 @@ stateDiagram-v2
 
 ---
 
-### ⬜ Questions — Stay & Reservation
-
-- Are notifications sent to guests on status changes?
-- How does overbooking work? Is it allowed?
-- Should there be seasonal pricing on stays?
-
----
-
 ## Bounded Context: Billing (Invoice & Payment Management)
 
 ### Flow: Invoice Creation (via integration event)
 
-🟪 **Policy:** Whenever Reservation Confirmed (Stay BC integration event), then Create Invoice
+🟪 **Policy (automated actor):** Whenever Reservation Confirmed (Stay BC integration event) → issue Create Invoice for Reservation
 
 🟦 **Command:** Create Invoice for Reservation
 > `reservationId, guestId, accountId, stayName, pricePerNight, nights`
@@ -394,7 +367,10 @@ stateDiagram-v2
 🟧 **Event:** Invoice Created
 > `invoiceId, reservationId, status=DRAFT`
 
-🟪 **Policy:** Whenever Invoice Created, then Issue Invoice
+🟪 **Policy (automated actor):** Whenever Invoice Created → issue Issue Invoice
+
+🟦 **Command:** Issue Invoice
+> `invoiceId`
 
 🟧 **Event:** Invoice Issued
 > `invoiceId, status=ISSUED`
@@ -413,7 +389,15 @@ stateDiagram-v2
 🟧 **Event:** Payment Recorded
 > `invoiceId, paymentId, amount, method=CARD, status=PENDING`
 
-🟪 **Policy:** Whenever Payment Succeeded (Stripe webhook or simulated), then Mark Invoice Paid
+🩷 **External System:** Stripe — processes the charge and signals success/failure via webhook
+
+🟧 **Event:** Payment Succeeded
+> `paymentId, invoiceId, amount`
+
+🟪 **Policy (automated actor):** Whenever Payment Succeeded (Stripe webhook or simulated) → issue Mark Invoice Paid
+
+🟦 **Command:** Mark Invoice Paid
+> `invoiceId, paymentId, paidAt`
 
 🟧 **Event:** Invoice Fully Paid
 > `invoiceId, reservationId, paidAt`
@@ -422,7 +406,7 @@ stateDiagram-v2
 
 ### Flow: Invoice Void (via cancellation)
 
-🟪 **Policy:** Whenever Reservation Cancelled (Stay BC integration event), then Void Invoice
+🟪 **Policy (automated actor):** Whenever Reservation Cancelled (Stay BC integration event) → issue Void Invoice
 
 🟦 **Command:** Void Invoice
 > `invoiceId, reason`
@@ -472,14 +456,6 @@ stateDiagram-v2
 
 ---
 
-### ⬜ Questions — Billing
-
-- What is the refund policy?
-- Are partial payments supported?
-- Is there a grace period for payment after invoice issuance?
-
----
-
 ## Bounded Context Integration (Context Map)
 
 ```mermaid
@@ -494,7 +470,7 @@ graph LR
 
 | Source | Target | Pattern | Operation |
 |--------|---------|---------|----------|
-| IAM | IAM (internal) | Domain Events | `UserCreated` → `OnUserCreated` → `ProvisionActorAccountHandler` (synchronous, same transaction) |
+| IAM | IAM (internal) | Domain Events / Policies | `UserCreated` → Policy → `Create Account` → `AccountCreated` → Policy → `Create Actor` → `ActorRegistered` (all synchronous, same transaction) |
 | Stay | IAM | GuestGateway / UserApi | Fetch guest info (name, email, VIP status) for integration events |
 | Stay | Billing | Integration Events | ReservationConfirmed, GuestCheckedOut, ReservationCancelled |
 | Billing | Stay | ReservationGateway | Fetch reservation and stay data for invoice creation |
@@ -523,15 +499,16 @@ sequenceDiagram
     participant IAM
     participant S as Stay
     participant B as Billing
+    participant Stripe
 
     Note over V: Registration & Auth
     V->>IAM: Register User
     IAM->>IAM: User Created (domain event)
-    IAM->>IAM: OnUserCreated → ProvisionActorAccount
-    IAM->>IAM: Account Created + Actor Registered
+    IAM->>IAM: Policy → Create Account → Account Created
+    IAM->>IAM: Policy → Create Actor → Actor Registered
     Note right of IAM: All within same DB transaction
-    V->>IAM: Login
-    IAM->>V: Actor Authenticated (token)
+    V->>IAM: Login (Sanctum)
+    IAM->>V: Bearer token
 
     Note over V: Booking (as Guest)
     V->>S: Create Reservation (stayId, dates, guests)
@@ -543,12 +520,14 @@ sequenceDiagram
     V->>S: Confirm Reservation
     S->>S: Reservation Confirmed
     S->>B: ReservationConfirmedEvent
-    B->>B: Invoice Created & Issued
+    B->>B: Policy → Create Invoice → Invoice Created
+    B->>B: Policy → Issue Invoice → Invoice Issued
 
     Note over V: Payment (as Guest)
     V->>B: Initiate Payment
-    B->>B: Payment Recorded (PENDING)
-    B->>B: Invoice Fully Paid
+    B->>Stripe: Charge
+    Stripe-->>B: Payment Succeeded (webhook)
+    B->>B: Policy → Mark Invoice Paid → Invoice Fully Paid
 
     Note over V: Operations (as Owner)
     V->>S: Check In Guest
