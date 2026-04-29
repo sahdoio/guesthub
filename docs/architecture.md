@@ -122,7 +122,9 @@ PENDING ──> SUCCEEDED
 IAM is the upstream identity provider. It exposes `UserApi` and `AccountGuestApi` as Open Host Services — stable, read-only contracts designed for external consumers. Stay consumes these through Anti-Corruption Layer adapters: `GuestGatewayAdapter` translates IAM's `UserData` into Stay's own `GuestInfo` DTO (deriving `isVip` from loyalty tier), and `AccountGuestGatewayAdapter` delegates guest-account linking to IAM. Stay never imports IAM domain classes; all coupling is to IAM's integration DTOs, translated at the adapter boundary.
 
 **Stay [U] → Billing [D] (OHS/PL + ACL)**
-Stay is the upstream operational core. It exposes `StayApi` as an Open Host Service for synchronous reads and publishes integration events as a Published Language for asynchronous state changes. Billing consumes `StayApi` through `ReservationGatewayAdapter` (ACL), translating Stay's `ReservationData` into Billing's own `ReservationInfo` DTO. Billing also subscribes to Stay's integration events (`ReservationCreatedEvent`, `ReservationConfirmedEvent`, `GuestCheckedOutEvent`, `ReservationCancelledEvent`) to trigger invoice lifecycle operations. Billing owns all translation responsibility.
+Stay is the upstream operational core. It exposes `StayApi` as an Open Host Service for synchronous reads and publishes integration events as a Published Language for asynchronous state changes. Billing consumes `StayApi` through `ReservationGatewayAdapter` (ACL), translating Stay's `ReservationData` into Billing's own `ReservationInfo` DTO. Billing subscribes to three of Stay's integration events (`ReservationCreatedEvent`, `GuestCheckedOutEvent`, `ReservationCancelledEvent`) to trigger invoice lifecycle operations. Billing owns all translation responsibility.
+
+> Stay also publishes `ReservationConfirmedEvent` and `GuestCheckedInEvent`, but no BC currently subscribes to them. They remain in the audit log (`stored_events`) for future consumers.
 
 **Billing [U] → Stay [D] (PL)**
 Billing publishes `InvoiceFullyPaidEvent` as a Published Language event. Stay subscribes to confirm reservations upon full payment. This creates a bidirectional event flow (Stay → Billing for reservation lifecycle, Billing → Stay for payment confirmation), forming a **Partnership** where both teams coordinate changes to shared event contracts.
@@ -151,7 +153,7 @@ graph LR
         direction TB
         Stay_T["stays · stay_images<br/>reservations"]
         Stay_API["OHS: StayApi"]
-        Stay_PL["PL: ReservationCreatedEvent<br/>ReservationConfirmedEvent<br/>GuestCheckedInEvent<br/>GuestCheckedOutEvent<br/>ReservationCancelledEvent"]
+        Stay_PL["PL (consumed): ReservationCreatedEvent<br/>GuestCheckedOutEvent<br/>ReservationCancelledEvent<br/>—<br/>Published, no consumer:<br/>ReservationConfirmedEvent · GuestCheckedInEvent"]
         Stay_ACL["ACL: GuestGatewayAdapter<br/>AccountGuestGatewayAdapter"]
     end
 
@@ -180,7 +182,7 @@ graph LR
 | IAM | Stay | OHS / ACL | Sync (in-process API) | Stay needs guest identity data (name, email, VIP status) to enrich integration events. `UserApi` provides a stable read-only contract; `GuestGatewayAdapter` translates to Stay's `GuestInfo` domain DTO. |
 | IAM | Stay | OHS / ACL | Sync (in-process API) | Stay needs to link guests to accounts and query account-guest associations. `AccountGuestApi` owns the `account_guests` table (IAM); `AccountGuestGatewayAdapter` proxies the calls. |
 | Stay | Billing | OHS / ACL | Sync (in-process API) | Billing needs reservation and stay details (nights, price per night, stay name) for invoice creation. `StayApi` provides the contract; `ReservationGatewayAdapter` translates to Billing's `ReservationInfo` DTO. |
-| Stay | Billing | PL | Async (queued events) | Reservation lifecycle changes (created, confirmed, checked out, cancelled) trigger billing operations (create invoice, issue invoice, void/refund). Events carry enriched snapshots so Billing can act independently. |
+| Stay | Billing | PL | Async (queued events) | Reservation lifecycle changes (created, checked out, cancelled) trigger billing operations (create invoice, issue invoice, void/refund). Events carry enriched snapshots so Billing can act independently. |
 | Billing | Stay | PL | Async (queued events) | Payment completion triggers reservation confirmation. `InvoiceFullyPaidEvent` carries `reservationId` so Stay can confirm the reservation without querying Billing. |
 | Shared | All BCs | Shared Kernel | Compile-time dependency | Domain primitives, application ports, and multi-tenant infrastructure are shared to avoid duplication of foundational abstractions. |
 
@@ -197,7 +199,7 @@ graph LR
 | Domain port | `Stay\Domain\Service\GuestGateway` |
 | Domain DTO | `GuestInfo { guestId, fullName, email, phone, document, isVip }` |
 | Translation | `isVip` derived from `loyaltyTier ∈ {gold, platinum}` |
-| Consumers | `OnReservationConfirmed`, `OnGuestCheckedIn`, `OnGuestCheckedOut` listeners |
+| Consumers | `ProcessNewReservationHandler`, `OnReservationConfirmed`, `OnGuestCheckedIn`, `OnGuestCheckedOut` |
 
 #### IAM → Stay: `AccountGuestApi` (OHS)
 
@@ -425,30 +427,31 @@ The full lifecycle of an event from aggregate to integration to cross-BC consump
 
 ```
 1. Aggregate factory/behavior method
-   │  $this->recordEvent(new ReservationConfirmed($this->uuid))
+   │  $this->recordEvent(new ReservationCreated($this->uuid))
    ▼
 2. Command Handler (extends EventDispatchingHandler)
-   │  $reservation->confirm();
+   │  $reservation = Reservation::create(...);
    │  $this->repository->save($reservation);
    │  $this->dispatchEvents($reservation);  // pulls & dispatches all recorded events
    ▼
 3. LaravelEventDispatcher
    │  Delegates to Laravel's event system
    ▼
-4. Thin Listener (Infrastructure layer)
-   │  OnReservationConfirmed::handle(ReservationConfirmed $event)
-   │  - Maps event → command → calls handler (NO business logic in listener)
-   │  e.g. ProcessNewReservationHandler, ConfirmPaidReservationHandler
+4. Stay Thin Listener (Infrastructure layer)
+   │  OnReservationCreated::handle(ReservationCreated $event)
+   │  - Calls ProcessNewReservationHandler
+   │  - Handler enriches with GuestGateway and dispatches ReservationCreatedEvent (integration event)
    ▼
 5. Integration event is dispatched via Laravel's event system
    │
    ├──> IntegrationEventPublisher (logs the event)
+   ├──> EventStoreRecorder (catch-all, persists to stored_events)
    │
    └──> Billing Thin Listener (cross-BC consumer)
-        │  OnReservationConfirmed::handle(ReservationConfirmedEvent $event)
-        │  - Maps event → command → calls handler
+        │  OnReservationCreated::handle(ReservationCreatedEvent $event)
+        │  - Calls CreateInvoiceForReservationHandler then IssueInvoiceHandler
         ▼
-6. Handler creates Invoice aggregate, records InvoiceCreated domain event
+6. Handler creates Invoice aggregate, records InvoiceCreated + InvoiceIssued domain events
 ```
 
 ### Thin Listeners Pattern
