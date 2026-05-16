@@ -146,13 +146,26 @@ Vite is configured with `usePolling: true` for file watching inside Docker conta
 
 Requirements: Docker and Docker Compose.
 
+**First time setup** — use `make go-hard` to start containers, install dependencies, run migrations, and seed the database with required data (actor types, etc.):
+
+```bash
+make go-hard
+```
+
+Alternatively, start without seeding and seed manually:
+
+```bash
+make go
+make db-seed
+```
+
+**Subsequent runs** — use `make go` to start containers, install dependencies, and run migrations (no seeding):
+
 ```bash
 make go
 ```
 
-This copies `.env.example` to `.env` (if missing), starts the containers, installs Composer dependencies, and runs migrations.
-
-For a full reset (wipes the database volume and seeds):
+For a full reset (wipes the database volume and re-seeds):
 
 ```bash
 make go-hard
